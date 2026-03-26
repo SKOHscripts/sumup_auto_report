@@ -1,0 +1,1471 @@
+{
+  "items": [
+    {
+      "id": "tx_021",
+      "transaction_code": "TECKW5NGCX19",
+      "amount": 8.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-27T09:46:29.000Z",
+      "status": "CANCELLED",
+      "payment_type": "CASH",
+      "product_summary": "Vente livre",
+      "description": "Vente guide pratique",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_019",
+      "transaction_code": "TEY6DPBHSAHX",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-27T09:47:17.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_020",
+      "transaction_code": "TEFPKH1DNMMJ",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-27T17:26:14.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "4242",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_022",
+      "transaction_code": "TEMYZYCWTIQJ",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-28T10:24:17.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "3344",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_025",
+      "transaction_code": "TE9T84AZYTJX",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-28T11:50:43.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Restauration",
+      "description": "Plateau repas",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_024",
+      "transaction_code": "TEJV6OH9SDBD",
+      "amount": 50.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-28T16:09:16.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion bienfaiteur",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_023",
+      "transaction_code": "TEBLJH75LXO6",
+      "amount": 3.0,
+      "currency": "EUR",
+      "timestamp": "2026-02-28T17:14:43.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Limonade",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_027",
+      "transaction_code": "TEEN93IIUC03",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-01T11:34:49.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Vente livre",
+      "description": "Vente publication association",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_026",
+      "transaction_code": "TEZ81SDW4SHN",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-01T13:27:10.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": null
+    },
+    {
+      "id": "tx_028",
+      "transaction_code": "TESV871YZOYN",
+      "amount": 50.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-01T17:49:08.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion bienfaiteur",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "2233",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_031",
+      "transaction_code": "TEGQPKI7P5TB",
+      "amount": 3.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T10:03:25.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Limonade",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_034",
+      "transaction_code": "TEO7UUBCXULJ",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T10:54:11.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Chômeur",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "9988",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_035",
+      "transaction_code": "TEQ77AWUDTSE",
+      "amount": 6.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T14:15:16.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Restauration",
+      "description": "Sandwich + boisson",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_029",
+      "transaction_code": "TETVAZCCBLSK",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T16:07:15.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_030",
+      "transaction_code": "TEIRODXMO5BX",
+      "amount": 50.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T16:13:34.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion bienfaiteur",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "2233",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_033",
+      "transaction_code": "TE8UT0CVS4F8",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T17:42:45.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_032",
+      "transaction_code": "TERHOCN9J2QP",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-02T17:53:00.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Chômeur",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "5566",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_036",
+      "transaction_code": "TETK93TYT7D5",
+      "amount": 8.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-03T10:56:15.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Restauration",
+      "description": "Repas midi",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_040",
+      "transaction_code": "TE72OY0IFZNB",
+      "amount": 15.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-03T12:55:10.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Don libre",
+      "description": "Don à l'association",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_038",
+      "transaction_code": "TEPZUE8YFBNT",
+      "amount": 3.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-03T13:02:00.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Limonade",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_037",
+      "transaction_code": "TEVZHWJR64DP",
+      "amount": 25.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-03T13:07:56.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion famille 2026",
+      "note": "Couple",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "1337",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_039",
+      "transaction_code": "TE8BMYYMU590",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-03T15:08:02.000Z",
+      "status": "CANCELLED",
+      "payment_type": "CASH",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_041",
+      "transaction_code": "TE5IXOKC1MSY",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-04T12:12:52.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": null
+    },
+    {
+      "id": "tx_045",
+      "transaction_code": "TEPHR62GDSWM",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-04T12:27:50.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Cotisation",
+      "description": "Cotisation mensuelle",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "3344",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_046",
+      "transaction_code": "TEIR4COWGZRI",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-04T12:43:19.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "5566",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_043",
+      "transaction_code": "TETZ0YNCXLL4",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-04T13:02:45.000Z",
+      "status": "CANCELLED",
+      "payment_type": "CASH",
+      "product_summary": "Restauration",
+      "description": "Plateau repas",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_044",
+      "transaction_code": "TETGXN0GUO4K",
+      "amount": 18.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-04T13:32:19.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Goodies",
+      "description": "T-shirt association",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_042",
+      "transaction_code": "TE8JDP0LVSNU",
+      "amount": 25.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-04T17:21:01.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion famille 2026",
+      "note": "Couple",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_047",
+      "transaction_code": "TESBI4Q2Y9V8",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-05T10:49:27.000Z",
+      "status": "CANCELLED",
+      "payment_type": "CASH",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_049",
+      "transaction_code": "TEEIYZCOTOHP",
+      "amount": 3.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-05T13:15:17.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Boisson",
+      "description": "Limonade",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_048",
+      "transaction_code": "TEF5Q14J1RIP",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-05T16:39:52.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Vente livre",
+      "description": "Vente publication association",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "2233",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_050",
+      "transaction_code": "TEM148P0TVHH",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T09:54:56.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Cotisation",
+      "description": "Cotisation mensuelle",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_054",
+      "transaction_code": "TE8DALY8OZCY",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T11:38:38.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Goodies",
+      "description": "Tote bag",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_052",
+      "transaction_code": "TEHL1N13JCAT",
+      "amount": 15.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T11:55:29.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Don libre",
+      "description": "Don à l'association",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_055",
+      "transaction_code": "TEUBTXCXAPRP",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T12:06:44.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_053",
+      "transaction_code": "TE8HAFEYUHZ1",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T14:14:41.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Chômeur",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_056",
+      "transaction_code": "TESXW71Q3VLI",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T14:40:57.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_051",
+      "transaction_code": "TEOFQEWAOUAX",
+      "amount": 6.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-06T15:31:01.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Restauration",
+      "description": "Sandwich + boisson",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_058",
+      "transaction_code": "TEXR2DHYLURT",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-07T12:05:15.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Restauration",
+      "description": "Plateau repas",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "1337",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_057",
+      "transaction_code": "TERLRMJKV5US",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-07T13:56:28.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "4499",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_059",
+      "transaction_code": "TELIZL08YG0J",
+      "amount": 3.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-07T15:47:35.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Boisson",
+      "description": "Limonade",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_061",
+      "transaction_code": "TEB7R3OCWBFU",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T09:36:18.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "3344",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_066",
+      "transaction_code": "TEX6GVWRDMLY",
+      "amount": 2.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T09:48:43.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "1337",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_065",
+      "transaction_code": "TERCBPLJD84U",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T10:29:44.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "3344",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_063",
+      "transaction_code": "TEFGCAQVKIZZ",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T10:48:13.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Atelier",
+      "description": "Participation atelier photo",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_062",
+      "transaction_code": "TE2ISQP49KWV",
+      "amount": 25.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T13:05:15.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion famille 2026",
+      "note": "Couple",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_064",
+      "transaction_code": "TETX63CFL0UK",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T16:04:43.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "5566",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_060",
+      "transaction_code": "TEGATJ9TZE5R",
+      "amount": 25.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-08T17:38:18.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion famille 2026",
+      "note": "Couple",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_070",
+      "transaction_code": "TEFGV0EC14M2",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-09T13:26:53.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "5566",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_067",
+      "transaction_code": "TE3TQLL8OS9X",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-09T14:26:44.000Z",
+      "status": "CANCELLED",
+      "payment_type": "CASH",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_068",
+      "transaction_code": "TE1W1HT7PZE9",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-09T17:29:26.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Étudiant",
+      "card": null
+    },
+    {
+      "id": "tx_069",
+      "transaction_code": "TETD96QE3RZS",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-09T18:51:15.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Goodies",
+      "description": "Tote bag",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_001",
+      "transaction_code": "TE8A2F4K1L",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T09:14:22.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_071",
+      "transaction_code": "TEQRL1N759IN",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T09:18:46.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "4499",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_002",
+      "transaction_code": "TE3C9D2M8P",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T10:02:45.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "4242",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_003",
+      "transaction_code": "TE7B1E5N3Q",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T11:30:10.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_075",
+      "transaction_code": "TEMPIOYGGVNY",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T13:57:01.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Étudiant",
+      "card": null
+    },
+    {
+      "id": "tx_074",
+      "transaction_code": "TEIYKID91ZDF",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T14:40:45.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_072",
+      "transaction_code": "TEX39RBSV55P",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T15:02:20.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_073",
+      "transaction_code": "TE8C2JWOCLYT",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-10T17:58:29.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_004",
+      "transaction_code": "TE2G6H0R7S",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T08:55:33.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Étudiant",
+      "card": null
+    },
+    {
+      "id": "tx_079",
+      "transaction_code": "TEE6LOH25NSJ",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T09:19:50.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": null
+    },
+    {
+      "id": "tx_005",
+      "transaction_code": "TE5J4K9T2U",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T09:22:18.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Étudiant",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "1337",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_078",
+      "transaction_code": "TEI2HGJ11YED",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T09:58:38.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_080",
+      "transaction_code": "TEME8F840982",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T11:16:58.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_077",
+      "transaction_code": "TERIUU9K9XJU",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T13:29:54.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_081",
+      "transaction_code": "TEQYYV37DIA5",
+      "amount": 6.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T14:05:50.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Restauration",
+      "description": "Sandwich + boisson",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_006",
+      "transaction_code": "TE9L3M7V5W",
+      "amount": 5.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T14:10:02.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_076",
+      "transaction_code": "TEA26YFPMVXP",
+      "amount": 40.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-11T18:09:14.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle réunion",
+      "note": "Demi-journée",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_085",
+      "transaction_code": "TEUC1HH5LF6A",
+      "amount": 3.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T09:03:50.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Boisson",
+      "description": "Limonade",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_007",
+      "transaction_code": "TE4N8P2X6Y",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T10:05:44.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "5566",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_008",
+      "transaction_code": "TE1Q5R9Z3A",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T10:45:00.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_086",
+      "transaction_code": "TEAA2ILGB0S0",
+      "amount": 2.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T11:08:34.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Boisson",
+      "description": "Café / Boisson bar",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_009",
+      "transaction_code": "TE6S0T4B8C",
+      "amount": 15.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T11:33:27.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Don libre",
+      "description": "Don à l'association",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "9988",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_084",
+      "transaction_code": "TE9MOGE4QXXV",
+      "amount": 25.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T12:54:23.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion famille 2026",
+      "note": "Couple",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_010",
+      "transaction_code": "TE3U7V1D5E",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T14:22:11.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "3344",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_082",
+      "transaction_code": "TE6KOF8KRD5E",
+      "amount": 30.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T14:58:39.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Don libre",
+      "description": "Soutien association",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "9988",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_088",
+      "transaction_code": "TECVCJWTL9TQ",
+      "amount": 80.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T15:43:06.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Location salle",
+      "description": "Location salle soirée",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_083",
+      "transaction_code": "TE05X4W7KYHQ",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T16:23:42.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Goodies",
+      "description": "Tote bag",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "4499",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_087",
+      "transaction_code": "TEHW06XKXB94",
+      "amount": 8.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-12T16:28:49.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Restauration",
+      "description": "Repas midi",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "4242",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_011",
+      "transaction_code": "TE8W2X6F0G",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T09:01:55.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Chômeur",
+      "card": null
+    },
+    {
+      "id": "tx_095",
+      "transaction_code": "TE811KERPETI",
+      "amount": 15.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T09:14:25.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Atelier",
+      "description": "Participation atelier couture",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_012",
+      "transaction_code": "TE5Y9Z3H7I",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T09:45:30.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "7712",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_093",
+      "transaction_code": "TEHPMNZ1UDBF",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T10:09:47.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Atelier",
+      "description": "Participation atelier photo",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_013",
+      "transaction_code": "TE2A6B0J4K",
+      "amount": 25.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T10:15:08.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion famille 2026",
+      "note": "Couple",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "6601",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_014",
+      "transaction_code": "TE7C1D5L9M",
+      "amount": 8.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T12:00:00.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Restauration",
+      "description": "Repas midi",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_090",
+      "transaction_code": "TE3DD03UVULE",
+      "amount": 8.5,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T14:42:16.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Restauration",
+      "description": "Repas midi",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "4499",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_015",
+      "transaction_code": "TE4E8F2N6O",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T14:50:19.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_091",
+      "transaction_code": "TEVMUHXID4N1",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T14:55:42.000Z",
+      "status": "FAILED",
+      "payment_type": "POS",
+      "product_summary": "Restauration",
+      "description": "Plateau repas",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_089",
+      "transaction_code": "TE5T5P5O3O0L",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T15:06:50.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Goodies",
+      "description": "Tote bag",
+      "note": "",
+      "card": null
+    },
+    {
+      "id": "tx_016",
+      "transaction_code": "TE9G3H7P1Q",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T15:30:44.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "2233",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_017",
+      "transaction_code": "TE6I0J4R8S",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T16:12:05.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "4499",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_018",
+      "transaction_code": "TE1K5L9T3U",
+      "amount": 20.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T17:05:33.000Z",
+      "status": "CANCELLED",
+      "payment_type": "POS",
+      "product_summary": "Adhésion",
+      "description": "Adhésion annuelle 2026",
+      "note": "Annulée par le client",
+      "card": {
+        "type": "VISA",
+        "last_4_digits": "8822",
+        "card_type": "debit"
+      }
+    },
+    {
+      "id": "tx_094",
+      "transaction_code": "TERPJ1EPKYRY",
+      "amount": 10.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T18:03:43.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "CASH",
+      "product_summary": "Adhésion",
+      "description": "Adhésion tarif réduit",
+      "note": "Chômeur",
+      "card": null
+    },
+    {
+      "id": "tx_092",
+      "transaction_code": "TEXYBJ17MGFX",
+      "amount": 12.0,
+      "currency": "EUR",
+      "timestamp": "2026-03-13T18:14:51.000Z",
+      "status": "SUCCESSFUL",
+      "payment_type": "POS",
+      "product_summary": "Restauration",
+      "description": "Plateau repas",
+      "note": "",
+      "card": {
+        "type": "MASTERCARD",
+        "last_4_digits": "8731",
+        "card_type": "debit"
+      }
+    }
+  ]
+}

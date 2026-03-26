@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SumUp Transaction Extractor</title>
+    <style>
+        :root {
+            --color-primary: #3280f6;
+            --color-success: #32b8c6;
+            --color-warning: #e68161;
+            --color-error: #c0152f;
+            --color-bg: #fcfcf9;
+            --color-surface: #ffffff;
+            --color-text: #134252;
+            --color-border: #5e5240;
+            --space-16: 16px;
+            --space-8: 8px;
+            --space-4: 4px;
+            --radius-base: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: var(--space-16);
+            font-size: 28px;
+            color: var(--color-text);
+        }
+
+        .card {
+            background: var(--color-surface);
+            border-radius: var(--radius-base);
+            border: 1px solid rgba(94, 82, 64, 0.2);
+            padding: var(--space-16);
+            margin-bottom: var(--space-16);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-16);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--space-8);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: var(--space-8) var(--space-12);
+            border: 1px solid rgba(94, 82, 64, 0.2);
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            font-family: inherit;
+            background-color: var(--color-surface);
+            color: var(--color-text);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-16);
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-8) var(--space-16);
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2970d6;
+            box-shadow: 0 4px 6px rgba(50, 128, 246, 0.15);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(94, 82, 64, 0.12);
+            color: var(--color-text);
+            margin-left: var(--space-8);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(94, 82, 64, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: var(--space-8);
+            margin-top: var(--space-16);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-6) var(--space-12);
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: var(--space-8);
+        }
+
+        .status-success {
+            background: rgba(50, 184, 198, 0.15);
+            color: var(--color-success);
+            border: 1px solid rgba(50, 184, 198, 0.25);
+        }
+
+        .status-error {
+            background: rgba(192, 21, 47, 0.15);
+            color: var(--color-error);
+            border: 1px solid rgba(192, 21, 47, 0.25);
+        }
+
+        .status-loading {
+            background: rgba(50, 128, 246, 0.15);
+            color: var(--color-primary);
+            border: 1px solid rgba(50, 128, 246, 0.25);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(50, 128, 246, 0.3);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: var(--space-4);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .preview {
+            background: #f5f5f5;
+            border: 1px solid rgba(94, 82, 64, 0.2);
+            border-radius: var(--radius-base);
+            padding: var(--space-16);
+            margin-top: var(--space-16);
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .transaction-block {
+            background: var(--color-surface);
+            border: 1px solid rgba(94, 82, 64, 0.15);
+            border-radius: var(--radius-base);
+            padding: var(--space-16);
+            margin-bottom: var(--space-16);
+        }
+
+        .transaction-block h3 {
+            margin-top: 0;
+            margin-bottom: var(--space-8);
+            font-size: 16px;
+            padding-bottom: var(--space-8);
+            border-bottom: 2px solid var(--color-primary);
+        }
+
+        .transaction-item {
+            display: grid;
+            grid-template-columns: 120px 100px 80px 1fr;
+            gap: var(--space-8);
+            padding: var(--space-8) 0;
+            border-bottom: 1px solid rgba(94, 82, 64, 0.1);
+            font-size: 13px;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-label {
+            font-weight: 500;
+            color: rgba(19, 52, 59, 0.7);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .alert {
+            padding: var(--space-12);
+            border-radius: var(--radius-base);
+            margin-bottom: var(--space-16);
+        }
+
+        .alert-info {
+            background: rgba(50, 128, 246, 0.1);
+            color: var(--color-primary);
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .alert-error {
+            background: rgba(192, 21, 47, 0.1);
+            color: var(--color-error);
+            border-left: 3px solid var(--color-error);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧾 Extracteur de Transactions SumUp</h1>
+
+        <div class="card">
+            <h2 style="margin-top: 0; font-size: 18px;">Configuration API</h2>
+            
+            <div class="form-group">
+                <label for="apiKey">Clé API SumUp *</label>
+                <input type="password" id="apiKey" placeholder="Bearer token or API key">
+                <small style="color: #666; display: block; margin-top: 4px;">Votre clé sera stockée localement, jamais envoyée à des serveurs externes.</small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startDate">Date de début *</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="form-group">
+                    <label for="endDate">Date de fin *</label>
+                    <input type="date" id="endDate">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="transactionName">Nom de la transaction à filtrer</label>
+                <input type="text" id="transactionName" placeholder="ex: Adhésion" value="Adhésion">
+                <small style="color: #666; display: block; margin-top: 4px;">Laissez vide pour voir toutes les transactions.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="emailRecipient">Email destinataire (optionnel)</label>
+                <input type="text" id="emailRecipient" placeholder="ex: contact@exemple.com">
+                <small style="color: #666; display: block; margin-top: 4px;">Note: L'envoi par email nécessite un backend. Vous pourrez télécharger le PDF directement.</small>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="fetchBtn" onclick="fetchTransactions()">
+                    Récupérer les transactions
+                </button>
+                <button class="btn btn-secondary" id="downloadBtn" onclick="downloadPDF()" style="display: none;">
+                    Télécharger le PDF
+                </button>
+            </div>
+
+            <div id="statusMessage"></div>
+        </div>
+
+        <div id="previewSection" style="display: none;">
+            <div class="card">
+                <h2 style="margin-top: 0; font-size: 18px;">Aperçu des données</h2>
+                <div id="preview" class="preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        // Initialize date fields with default range (last 30 days)
+        function initializeDates() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('endDate').valueAsDate = today;
+            document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
+        }
+
+        let transactionsData = [];
+
+        async function fetchTransactions() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const filterName = document.getElementById('transactionName').value.trim();
+
+            const statusEl = document.getElementById('statusMessage');
+            const preview = document.getElementById('preview');
+            const previewSection = document.getElementById('previewSection');
+
+            if (!apiKey) {
+                showStatus('❌ Veuillez entrer votre clé API SumUp', 'error', statusEl);
+                return;
+            }
+
+            if (!startDate || !endDate) {
+                showStatus('❌ Veuillez sélectionner une période', 'error', statusEl);
+                return;
+            }
+
+            showStatus('🔄 Récupération des transactions en cours...', 'loading', statusEl);
+            
+            try {
+                // Call API proxy - since direct CORS may fail, we'll prepare data structure locally
+                const transactions = await fetchFromSumUpAPI(apiKey, startDate, endDate, filterName);
+                
+                transactionsData = transactions;
+                
+                // Group transactions by payment type
+                const grouped = groupByPaymentType(transactions);
+                
+                // Display preview
+                displayPreview(grouped, preview, previewSection);
+                
+                showStatus(`✅ ${transactions.length} transaction(s) trouvée(s)`, 'success', statusEl);
+                document.getElementById('downloadBtn').style.display = 'inline-flex';
+                
+            } catch (error) {
+                showStatus(`❌ Erreur: ${error.message}`, 'error', statusEl);
+                console.error('Fetch error:', error);
+            }
+        }
+
+        async function fetchFromSumUpAPI(apiKey, startDate, endDate, filterName) {
+            const base = 'https://api.sumup.com/v0.1';
+            const startIso = new Date(startDate).toISOString();
+            const endIso = new Date(new Date(endDate).getTime() + 86400000).toISOString(); // Include full end date
+            
+            const params = new URLSearchParams({
+                start_date: startIso,
+                end_date: endIso,
+                limit: 1000
+            });
+
+            try {
+                // Try direct fetch first (may fail due to CORS)
+                const response = await fetch(`${base}/transactions?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                let transactions = data.items || data.transactions || [];
+
+                // Filter by transaction name (description/reference matching)
+                if (filterName) {
+                    transactions = transactions.filter(t => {
+                        const desc = (t.description || t.checkout_reference || '').toLowerCase();
+                        return desc.includes(filterName.toLowerCase());
+                    });
+                }
+
+                return transactions;
+                
+            } catch (error) {
+                // Fallback: provide demo data structure for testing
+                console.warn('CORS or API error, using demo data structure:', error);
+                throw new Error('Impossible de récupérer les données. Vérifiez votre clé API et les paramètres CORS.');
+            }
+        }
+
+        function groupByPaymentType(transactions) {
+            const grouped = {
+                'Espèces': [],
+                'Carte Bancaire': [],
+                'Autre': []
+            };
+
+            transactions.forEach(t => {
+                const paymentType = t.payment_type || t.type || 'UNKNOWN';
+                let category = 'Autre';
+
+                if (paymentType.includes('CASH') || paymentType === 'cash') {
+                    category = 'Espèces';
+                } else if (paymentType.includes('CARD') || paymentType.includes('ECOM') || paymentType === 'card' || paymentType === 'credit_card') {
+                    category = 'Carte Bancaire';
+                }
+
+                grouped[category].push(t);
+            });
+
+            return grouped;
+        }
+
+        function displayPreview(grouped, previewEl, sectionEl) {
+            let html = '';
+
+            // Espèces first, then carte
+            const order = ['Espèces', 'Carte Bancaire', 'Autre'];
+
+            order.forEach(type => {
+                const transactions = grouped[type];
+                if (transactions.length === 0) return;
+
+                html += `<div class="transaction-block">
+                    <h3>${type} (${transactions.length})</h3>`;
+
+                const totals = {
+                    amount: 0,
+                    count: transactions.length
+                };
+
+                transactions.forEach(t => {
+                    const amount = parseFloat(t.amount || 0) / 100; // SumUp returns in cents
+                    const currency = t.currency || 'EUR';
+                    const date = t.timestamp || t.transaction_date || t.created_at || 'N/A';
+                    const status = t.status || 'UNKNOWN';
+                    const id = t.transaction_code || t.id || 'N/A';
+
+                    totals.amount += amount;
+
+                    html += `
+                        <div class="transaction-item">
+                            <div class="transaction-label">Date:</div>
+                            <div>${formatDate(date)}</div>
+                            <div class="transaction-label">ID:</div>
+                            <div>${id}</div>
+                        </div>
+                        <div class="transaction-item">
+                            <div class="transaction-label">Montant:</div>
+                            <div>${amount.toFixed(2)} ${currency}</div>
+                            <div class="transaction-label">Statut:</div>
+                            <div>${status}</div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div style="border-top: 2px solid #5e5240; margin-top: 8px; padding-top: 8px; font-weight: bold;">
+                        Total ${type}: ${totals.amount.toFixed(2)} EUR (${totals.count} transactions)
+                    </div>
+                </div>`;
+            });
+
+            previewEl.innerHTML = html;
+            sectionEl.style.display = 'block';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString || dateString === 'N/A') return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit'
+            });
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('preview');
+            const opt = {
+                margin: 10,
+                filename: 'transactions-sumup.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function showStatus(message, type, element) {
+            let className = 'status-' + type;
+            let icon = '';
+            
+            if (type === 'loading') {
+                icon = '<span class="spinner"></span>';
+            }
+
+            element.innerHTML = `<div class="status ${className}">${icon}${message}</div>`;
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initializeDates);
+    </script>
+</body>
+</html>
