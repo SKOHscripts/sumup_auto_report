@@ -167,6 +167,70 @@ def _get_description(txn: dict) -> str:
     return txn.get("description") or txn.get("note") or "-"
 
 
+def _normalize_for_match(text: str) -> str:
+    return remove_accents((text or "").lower()).strip()
+
+
+def _get_active_filters(filters: list = None) -> list:
+    active = [remove_accents(kw.lower()) for kw in (filters or TRANSACTION_FILTERS) if kw.strip()]
+
+    if active:
+        return active
+
+    return ["adhesion"]
+
+
+def _matches_adhesion_label(text: str, filters: list = None) -> bool:
+    normalized = _normalize_for_match(text)
+
+    return any(kw in normalized for kw in _get_active_filters(filters))
+
+
+def count_adhesions_in_txn(txn: dict, filters: list = None) -> int:
+    products = txn.get("products") or []
+    total = 0
+
+    if isinstance(products, list) and products:
+        for p in products:
+            if not isinstance(p, dict):
+                continue
+
+            name = (p.get("name") or "").strip()
+            variant = (p.get("description") or "").strip()
+            label = f"{name} ({variant})" if variant else name
+
+            if not _matches_adhesion_label(label, filters):
+                continue
+
+            try:
+                qty = int(p.get("quantity") or 1)
+            except Exception:
+                qty = 1
+
+            total += max(qty, 1)
+
+        if total > 0:
+            return total
+
+    desc = _get_description(txn)
+
+    if not _matches_adhesion_label(desc, filters):
+        return 0
+
+    normalized_desc = _normalize_for_match(desc)
+
+    matches = re.findall(r"(\d+)\s*x\s*adhesion", normalized_desc)
+
+    if matches:
+        return sum(int(m) for m in matches)
+
+    return 1
+
+
+def count_adhesions_in_group(txns: list, filters: list = None) -> int:
+    return sum(count_adhesions_in_txn(txn, filters=filters) for txn in txns)
+
+
 def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
     """GET /v0.1/transactions  - ou lecture depuis un fichier mock."""
 
@@ -248,11 +312,35 @@ def filter_adhesions(txns: list, filters: list = None) -> list:
     return filtered
 
 
+def get_count_label(filters: list = None, default_label: str = "adhésion") -> str:
+    active = [kw.strip() for kw in (filters or TRANSACTION_FILTERS) if kw and kw.strip()]
+
+    if not active:
+        return default_label
+
+    if len(active) == 1:
+        return active[0]
+
+    return " / ".join(active)
+
+
+def format_count_label(count: int, filters: list = None, default_label: str = "adhésion") -> str:
+    label = get_count_label(filters=filters, default_label=default_label)
+
+    if count <= 1:
+        return label
+
+    if label.endswith("s"):
+        return label
+
+    return f"{label}s"
+
 # ─── 3. CATÉGORISATION PAR TYPE DE PAIEMENT ───────────────────────────────────
 # SumUp expose :
 #   txn["payment_type"]       -> "CASH", "POS", "ECOM", "MOTO"…
 #   txn["card"]["type"]       -> "VISA", "MASTERCARD", "AMEX"…
 #   txn["card"]["card_type"]  -> parfois "debit", "credit"
+
 
 def get_category(txn: dict) -> str:
     """Retourne CASH | VISA | MASTERCARD | OTHER."""
@@ -350,7 +438,8 @@ class AdhesionPDF(FPDF):
         return self.w - self.l_margin - self.r_margin
 
     def _safe(self, text, max_len=999) -> str:
-        t = str(text or "-").encode("latin-1", errors="replace").decode("latin-1")
+        t = str(text or "-").replace("€", "EUR")
+        t = t.encode("latin-1", errors="replace").decode("latin-1")
 
         return (t[:max_len - 3] + "...") if len(t) > max_len else t
 
@@ -370,7 +459,7 @@ class AdhesionPDF(FPDF):
         self.ln(3)
         self.set_font("Helvetica", "B", 15)
         self.set_text_color(*PALETTE["text_dark"])
-        self.cell(pw * 0.58, 9, " Rapport des Adhesions SumUp",
+        self.cell(pw * 0.58, 9, " Rapport des Adhésions SumUp",
                   border=0, fill=False, new_x="RIGHT", new_y="TOP")
 
         # Période + date à droite
@@ -561,8 +650,10 @@ class AdhesionPDF(FPDF):
         self.set_text_color(*PALETTE["text_dark"])
 
     # ── Sous-total de section ─────────────────────────────────────────────────
-    def section_total(self, txns: list, cat: str):
-        total = sum(float(t.get("amount", 0) or 0) for t in txns)
+    def section_total(self, txns: list, cat: str, filters: list = None):
+        total_amount = sum(float(t.get("amount", 0) or 0) for t in txns)
+        total_count = count_adhesions_in_group(txns, filters=filters)
+        count_label = format_count_label(total_count, filters=filters, default_label="adhésion")
         color = PALETTE[cat]
         pw = self._pw()
 
@@ -570,12 +661,28 @@ class AdhesionPDF(FPDF):
         # Texte gauche : count, en gris
         self.set_font("Helvetica", "", 7.5)
         self.set_text_color(*PALETTE["text_mid"])
-        self.cell(pw - 68, 6, f" {len(txns)} transaction(s) - {SECTION_LABELS[cat]}", border=0, align="L")
+        self.cell(
+            pw - 68,
+            6,
+            f" {total_count} {count_label} - {SECTION_LABELS[cat]}",
+            border=0,
+            fill=False,
+            align="L",
+            )
 
         # Texte droit : sous-total coloré
         self.set_font("Helvetica", "B", 9)
         self.set_text_color(*color)
-        self.cell(68, 6, f"Sous-total : {total:.2f} EUR", border=0, align="R", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            68,
+            6,
+            f"Sous-total : {total_amount:.2f} EUR",
+            border=0,
+            fill=False,
+            align="R",
+            new_x="LMARGIN",
+            new_y="NEXT",
+            )
 
         # Ligne de séparation légère
         self.set_draw_color(*PALETTE["divider"])
@@ -587,7 +694,7 @@ class AdhesionPDF(FPDF):
         self.ln(6)
 
 
-def generate_pdf(groups: dict, start: str, end: str, path: str):
+def generate_pdf(groups: dict, start: str, end: str, path: str, filters: list = None):
     pdf = AdhesionPDF(start, end)
     pdf.add_page()
 
@@ -605,8 +712,9 @@ def generate_pdf(groups: dict, start: str, end: str, path: str):
         for i, txn in enumerate(txns):
             pdf.transaction_row(txn, even=(i % 2 == 0))
 
-        pdf.section_total(txns, cat)
-        grand_count += len(txns)
+        pdf.section_total(txns, cat, filters=filters)
+
+        grand_count += count_adhesions_in_group(txns, filters=filters)
         grand_total += sum(float(t.get("amount", 0) or 0) for t in txns)
 
     # ── Total général ─────────────────────────────────────────────────────────
@@ -621,27 +729,48 @@ def generate_pdf(groups: dict, start: str, end: str, path: str):
     y = pdf.get_y()
     pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
 
+    count_label = format_count_label(grand_count, filters=filters, default_label="adhésion")
+
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(*PALETTE["text_mid"])
-    pdf.cell(pw - 80, 11, f" TOTAL GENERAL - {grand_count} adhesion(s)", border=0, align="L")
+    pdf.cell(
+        pw - 80,
+        11,
+        f" TOTAL GENERAL - {grand_count} {count_label}",
+        border=0,
+        fill=False,
+        align="L",
+    )
 
     pdf.set_font("Helvetica", "B", 14)
     pdf.set_text_color(*PALETTE["accent"])
-    pdf.cell(80, 11, f"{grand_total:.2f} EUR", border=0, align="R", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(
+        80,
+        11,
+        f"{grand_total:.2f} EUR",
+        border=0,
+        fill=False,
+        align="R",
+        new_x="LMARGIN",
+        new_y="NEXT",
+    )
 
     # Ligne basse
     y = pdf.get_y()
     pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
 
     pdf.output(path)
-    log.info(f"PDF genere -> {path} ({grand_count} adhesion(s), {grand_total:.2f} EUR)")
+    log.info(f"PDF genere -> {path} ({grand_count} {count_label}, {grand_total:.2f} EUR)")
 
     return grand_count, grand_total
+
 # ─── 5. ENVOI EMAIL (multi-destinataires) ─────────────────────────────────────
 
 
 def send_report_email(pdf_path: str, start: str, end: str,
-                      groups: dict, grand_count: int, grand_total: float):
+                      groups: dict, grand_count: int, grand_total: float,
+                      filters: list = None):
+
     section_lines = []
 
     for cat in SECTION_ORDER:
@@ -649,19 +778,24 @@ def send_report_email(pdf_path: str, start: str, end: str,
 
         if not txns:
             continue
-        total = sum(float(t.get("amount", 0) or 0) for t in txns)
+
+        total_amount = sum(float(t.get("amount", 0) or 0) for t in txns)
+        total_count = count_adhesions_in_group(txns, filters=filters)
+        count_label = format_count_label(total_count, filters=filters, default_label="adhésion")
+
         section_lines.append(
-            f" {SECTION_LABELS[cat]:<28} {len(txns):>3} transaction(s) {total:>8.2f} EUR"
+            f" {SECTION_LABELS[cat]:<28} {total_count:>3} {count_label:<12} {total_amount:>8.2f} EUR"
             )
 
-    sections_str = "\n".join(section_lines) if section_lines else " (aucune transaction)"
+    sections_str = "\n".join(section_lines) if section_lines else " (aucune adhésion)"
     logs_str = build_log_footer(_log_buffer)
     now_str = datetime.now().strftime("%d/%m/%Y à %H:%M")
+    total_label = format_count_label(grand_count, filters=filters, default_label="adhésion")
 
     body = f"""\
 Bonjour,
 
-Veuillez trouver en pièce jointe le rapport des adhésions SumUp
+Veuillez trouver en pièce jointe le rapport SumUp
 pour la période du {start} au {end}.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -671,7 +805,7 @@ RÉSUMÉ DE LA PÉRIODE — {start} au {end}
 {sections_str}
 
 {'─' * 50}
-TOTAL {grand_count:>3} transaction(s) {grand_total:>8.2f} EUR
+TOTAL {grand_count:>3} {total_label} {grand_total:>8.2f} EUR
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 JOURNAL D'EXÉCUTION — généré le {now_str}
@@ -686,8 +820,8 @@ Corentin via {Path(__file__).name}
     """
 
     subject = (
-        f"Rapport Adhésions SumUp — {start} au {end} "
-        f"({grand_count} tx, {grand_total:.2f} EUR)"
+        f"Rapport SumUp — {start} au {end} "
+        f"({grand_count} {total_label}, {grand_total:.2f} EUR)"
         )
 
     send_email(
@@ -731,11 +865,26 @@ def run_report(start: str = None, end: str = None, send_mail: bool = True,
     log.info("Étape 3/4 - Tri et génération du PDF…")
     groups = group_by_payment(adhesions)
     output_pdf = BASE_DIR / f"rapport_adhesions_{start[:10]}_{end[:10]}.pdf"
-    grand_count, grand_total = generate_pdf(groups, start[:10], end[:10], str(output_pdf))
+    grand_count, grand_total = generate_pdf(
+        groups,
+        start[:10],
+        end[:10],
+        output_pdf,
+        filters=filters,
+        )
 
     if send_mail:
         log.info("Étape 4/4 - Envoi par email…")
-        send_report_email(str(output_pdf), start[:10], end[:10], groups, grand_count, grand_total)
+        send_report_email(
+            output_pdf,
+            start[:10],
+            end[:10],
+            groups,
+            grand_count,
+            grand_total,
+            filters=filters,
+            )
+
     else:
         log.info("Étape 4/4 - Envoi email ignoré (--no-mail).")
 
