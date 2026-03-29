@@ -1,13 +1,10 @@
 # requirements.txt — SumUp Adhésions Report
 
 # Appels HTTP vers l'API SumUp
-requests
+requests>=2.31
 
 # Génération de PDF
-fpdf2
+fpdf2>=2.7,<3
 
 # Chargement du fichier .env
-python-dotenv>
-
-# Stockage sécurisé des credentials dans le trousseau OS
-keyring
+python-dotenv>=1.0
