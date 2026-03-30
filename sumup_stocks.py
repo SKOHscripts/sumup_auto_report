@@ -749,8 +749,11 @@ class StockPDF(FPDF):
         if not weeks or not sales:
             self.set_font("Helvetica", "I", 8)
             self.set_text_color(*PALETTE["text_mid"])
-            self.cell(0, 6, self._safe("Aucune donnée hebdomadaire disponible."),
-                      new_x="LMARGIN", new_y="NEXT")
+            self.cell(
+                0, 6,
+                self._safe("Aucune donnée hebdomadaire disponible."),
+                new_x="LMARGIN", new_y="NEXT"
+            )
             self.set_text_color(*PALETTE["text_dark"])
 
             return
@@ -807,6 +810,7 @@ class StockPDF(FPDF):
 
         ax.plot(range(len(weeks)), stock_curve, color="#3c78dc", linewidth=2.2,
                 marker="o", markersize=4, label="Stock estime")
+
         ax.plot(
             range(len(weeks) - 1, len(all_labels)),
             [stock_curve[-1]] + future_stock if stock_curve else future_stock,
@@ -859,24 +863,26 @@ class StockPDF(FPDF):
             + [float(kpi["reorder_point"] or 0)]
         )
         ax.set_ylim(0, ymax * 1.20)
-
         fig.tight_layout()
 
         buf = io.BytesIO()
-        fig.savefig(buf, format="png", dpi=160, bbox_inches="tight")
+        fig.savefig(buf, format="png", dpi=160)
         plt.close(fig)
         buf.seek(0)
 
-        chart_h = 60
+        chart_w = self._pw()
+        chart_h = 72
+        y0 = self.get_y()
 
-        if self.get_y() + chart_h > self.h - self.b_margin:
+        if y0 + chart_h > self.h - self.b_margin:
             self.add_page()
+            y0 = self.get_y()
 
-        self.image(buf, x=self.l_margin, y=self.get_y(), w=self._pw())
-        self.ln(chart_h + 4)
-
+        self.image(buf, x=self.l_margin, y=y0, w=chart_w, h=chart_h)
+        self.set_y(y0 + chart_h + 4)
 
 # ─── Page 1 : Synthèse globale ────────────────────────────────────────────────
+
 
 def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_range: list):
     pdf.add_page()
