@@ -1,0 +1,18 @@
+[
+  {
+    "sku": "adhesion_annuelle",
+    "label": "Adhésions",
+    "enabled": true,
+    "unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhesion",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 0,
+    "safety_stock": 0,
+    "reorder_point": 0,
+    "target_stock": 0
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "sku": "adhesion_annuelle",
+    "stock_on_hand": 0,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": null,
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  }
+]
