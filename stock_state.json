@@ -7,5 +7,149 @@
     "incoming_eta": null,
     "last_inventory_date": "2026-03-30",
     "inventory_count_method": "manual"
+  },
+  {
+    "sku": "bieres_pression_33cl",
+    "stock_on_hand": 96,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "chips",
+    "stock_on_hand": 19,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "bieres_saint_patrick_25cl",
+    "stock_on_hand": 22,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "vin_blanc",
+    "stock_on_hand": 16,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "jus_pomme_verre",
+    "stock_on_hand": 18,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "kir",
+    "stock_on_hand": 14,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "vin_rouge",
+    "stock_on_hand": 10,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "jus_pomme_bio_20cl_brique",
+    "stock_on_hand": 8,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "biscuit_sucre",
+    "stock_on_hand": 12,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": null,
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "saucissons_mini_sachet",
+    "stock_on_hand": 8,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "eau_gazeuse",
+    "stock_on_hand": 6,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": null,
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "the",
+    "stock_on_hand": 6,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "lipton_ice_tea",
+    "stock_on_hand": 5,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "sirop_grenadine",
+    "stock_on_hand": 4,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "bieres_commerce_blonde_25cl",
+    "stock_on_hand": 7,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
+  },
+  {
+    "sku": "bieres_commerce_ambree_25cl",
+    "stock_on_hand": 5,
+    "stock_reserved": 0,
+    "incoming_qty": 0,
+    "incoming_eta": "2026-04-03",
+    "last_inventory_date": "2026-03-30",
+    "inventory_count_method": "manual"
   }
 ]

@@ -2,7 +2,7 @@
   {
     "sku": "adhesion_annuelle",
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "category": "adhesions",
     "sumup_match": {
@@ -10,9 +10,214 @@
       "variant": ""
     },
     "pack_size": 1,
-    "supplier_lead_time_days": 0,
-    "safety_stock": 0,
-    "reorder_point": 0,
-    "target_stock": 0
+    "supplier_lead_time_days": 0
+  },
+  {
+    "sku": "bieres_pression_33cl",
+    "label": "Bières pression 33 cL",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Pression 33 cL"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "chips",
+    "label": "Chips",
+    "enabled": true,
+    "unit": "sachet",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Chips",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "bieres_saint_patrick_25cl",
+    "label": "Bières Saint Patrick 25 cL",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Saint Patrick 25 cL"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "vin_blanc",
+    "label": "Vin blanc",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Blanc"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "jus_pomme_verre",
+    "label": "Jus de pomme verre",
+    "enabled": true,
+    "unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Jus de pomme verre"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "kir",
+    "label": "Kir",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Kir",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "vin_rouge",
+    "label": "Vin rouge",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Rouge"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "jus_pomme_bio_20cl_brique",
+    "label": "Jus de pomme bio 20 cL brique",
+    "enabled": true,
+    "unit": "brique",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Jus de pomme bio 20 cL brique"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "biscuit_sucre",
+    "label": "Biscuit sucré",
+    "enabled": true,
+    "unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Biscuit sucré",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "saucissons_mini_sachet",
+    "label": "Saucissons mini sachet",
+    "enabled": true,
+    "unit": "sachet",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Saucissons mini sachet",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "eau_gazeuse",
+    "label": "Eau gazeuse",
+    "enabled": true,
+    "unit": "bouteille",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Eau gazeuse",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "the",
+    "label": "Thé",
+    "enabled": true,
+    "unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Thé",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "lipton_ice_tea",
+    "label": "Lipton Ice Tea",
+    "enabled": true,
+    "unit": "bouteille",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Lipton Ice Tea"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "sirop_grenadine",
+    "label": "Sirop grenadine",
+    "enabled": true,
+    "unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Sirop",
+      "variant": "Grenadine"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "bieres_commerce_blonde_25cl",
+    "label": "Bières commerce blonde 25 cL",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Commerce blonde 25 cL"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "bieres_commerce_ambree_25cl",
+    "label": "Bières commerce ambrée 25 cL",
+    "enabled": true,
+    "unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Commerce ambrée 25 cL"
+    },
+    "pack_size": 1,
+    "supplier_lead_time_days": 7
   }
 ]
