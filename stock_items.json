@@ -1,0 +1,489 @@
+[
+  {
+    "sku": "adhesion_annuelle",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": true,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": false,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhesion",
+      "variant": "5EUR"
+    }
+  },
+  {
+    "sku": "adhesion_annuelle",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": true,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": false,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhesion",
+      "variant": "10EUR"
+    }
+  },
+  {
+    "sku": "bieres_pression_33cl",
+    "stock_sku": "bieres_pression",
+    "is_stock_reference": true,
+    "label": "Bières pression 33 cL",
+    "stock_label": "Bières pression",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Pression 33 cL"
+    },
+    "pack_size": 30,
+    "consumption_per_sale": 0.33,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 60,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "bieres_saint_patrick_25cl",
+    "stock_sku": "bieres_pression",
+    "is_stock_reference": false,
+    "label": "Bières Saint Patrick 25 cL",
+    "stock_label": "Bières pression",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Saint Patrick 25 cL"
+    },
+    "pack_size": 30,
+    "consumption_per_sale": 0.25,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "chips",
+    "stock_sku": "chips",
+    "is_stock_reference": true,
+    "label": "Chips",
+    "stock_label": "Chips",
+    "enabled": true,
+    "unit": "sachet",
+    "stock_unit": "sachet",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Chips",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 19,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "jus_pomme_verre",
+    "stock_sku": "jus_pomme_verre",
+    "is_stock_reference": true,
+    "label": "Jus de pomme verre",
+    "stock_label": "Jus de pomme verre",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Jus de pomme verre"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 18,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "vin_blanc",
+    "stock_sku": "vin_blanc",
+    "is_stock_reference": true,
+    "stock_label": "Vin blanc",
+    "enabled": true,
+    "stock_unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Blanc"
+    },
+    "pack_size": 5,
+    "consumption_per_sale": 0.2,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 3.6,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "kir",
+    "stock_sku": "vin_blanc",
+    "is_stock_reference": true,
+    "stock_label": "Kir",
+    "enabled": true,
+    "stock_unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Kir",
+      "variant": ""
+    },
+    "consumption_per_sale": 0.2,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "vin_rouge",
+    "stock_sku": "vin_rouge",
+    "is_stock_reference": true,
+    "label": "Vin rouge",
+    "stock_label": "Vin rouge",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Rouge"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 10,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "jus_pomme_bio_20cl_brique",
+    "stock_sku": "jus_pomme_bio_20cl_brique",
+    "is_stock_reference": true,
+    "label": "Jus de pomme bio 20 cL brique",
+    "stock_label": "Jus de pomme bio 20 cL brique",
+    "enabled": true,
+    "unit": "brique",
+    "stock_unit": "brique",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Jus de pomme bio 20 cL brique"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 8,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "biscuit_sucre",
+    "stock_sku": "biscuit_sucre",
+    "is_stock_reference": true,
+    "label": "Biscuit sucré",
+    "stock_label": "Biscuit sucré",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Biscuit sucré",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 12,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": null,
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "saucissons_mini_sachet",
+    "stock_sku": "saucissons_mini_sachet",
+    "is_stock_reference": true,
+    "label": "Saucissons mini sachet",
+    "stock_label": "Saucissons mini sachet",
+    "enabled": true,
+    "unit": "sachet",
+    "stock_unit": "sachet",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Saucissons mini sachet",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 8,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "eau_gazeuse",
+    "stock_sku": "eau_gazeuse",
+    "is_stock_reference": true,
+    "label": "Eau gazeuse",
+    "stock_label": "Eau gazeuse",
+    "enabled": true,
+    "unit": "bouteille",
+    "stock_unit": "bouteille",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Eau gazeuse",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 6,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": null,
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "the",
+    "stock_sku": "the",
+    "is_stock_reference": true,
+    "label": "Thé",
+    "stock_label": "Thé",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Thé",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 6,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "lipton_ice_tea",
+    "stock_sku": "lipton_ice_tea",
+    "is_stock_reference": true,
+    "label": "Lipton Ice Tea",
+    "stock_label": "Lipton Ice Tea",
+    "enabled": true,
+    "unit": "bouteille",
+    "stock_unit": "bouteille",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Lipton Ice Tea"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 5,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "sirop_grenadine",
+    "stock_sku": "sirop_grenadine",
+    "is_stock_reference": true,
+    "label": "Sirop grenadine",
+    "stock_label": "Sirop grenadine",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Sirop",
+      "variant": "Grenadine"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 4,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "bieres_commerce_blonde_25cl",
+    "stock_sku": "bieres_commerce_blonde_25cl",
+    "is_stock_reference": true,
+    "label": "Bières commerce blonde 25 cL",
+    "stock_label": "Bières commerce blonde 25 cL",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Commerce blonde 25 cL"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 7,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "bieres_commerce_ambree_25cl",
+    "stock_sku": "bieres_commerce_ambree_25cl",
+    "is_stock_reference": true,
+    "label": "Bières commerce ambrée 25 cL",
+    "stock_label": "Bières commerce ambrée 25 cL",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Commerce ambrée 25 cL"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 5,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "expresso",
+    "stock_sku": "cafe_espresso",
+    "is_stock_reference": true,
+    "label": "Expresso",
+    "stock_label": "Café espresso",
+    "enabled": true,
+    "unit": "tasse",
+    "stock_unit": "g",
+    "category": "boissons_chaudes",
+    "sumup_match": {
+      "name": "Expresso",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 8,
+    "supplier_lead_time_days": 7,
+    "stock_state": {
+      "stock_on_hand": 2000,
+      "stock_reserved": 0,
+      "incoming_qty": 200,
+      "incoming_eta": "2026-04-03",
+      "last_inventory_date": "2026-03-30",
+      "inventory_count_method": "manual"
+    }
+  },
+  {
+    "sku": "expresso_double",
+    "stock_sku": "cafe_espresso",
+    "is_stock_reference": false,
+    "label": "Expresso Double",
+    "stock_label": "Café espresso",
+    "enabled": true,
+    "unit": "tasse",
+    "stock_unit": "g",
+    "category": "boissons_chaudes",
+    "sumup_match": {
+      "name": "Expresso Double",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 16,
+    "supplier_lead_time_days": 7
+  },
+  {
+    "sku": "expresso_allonge",
+    "stock_sku": "cafe_espresso",
+    "is_stock_reference": false,
+    "label": "Expresso allongé",
+    "stock_label": "Café espresso",
+    "enabled": true,
+    "unit": "tasse",
+    "stock_unit": "g",
+    "category": "boissons_chaudes",
+    "sumup_match": {
+      "name": "Expresso allongé",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 8,
+    "supplier_lead_time_days": 7
+  }
+]
