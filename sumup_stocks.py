@@ -125,37 +125,103 @@ def week_start(year: int, week: int) -> date:
     return start_of_week1 + timedelta(weeks=week - 1)
 
 
+def format_sumup_display(item: dict) -> str:
+    sm = item.get("sumup_match", {})
+    name = (sm.get("name") or item.get("label") or item.get("sku") or "").strip()
+    variant = (sm.get("variant") or "").strip()
+
+    return f"{name} ({variant})" if variant else name
+
+
+def fmt_num(value, decimals=2, width=6):
+    if value is None:
+        return "N/A"
+
+    return f"{float(value):{width}.{decimals}f}"
 # ─── 2. CHARGEMENT DES FICHIERS DE CONFIGURATION ─────────────────────────────
 
-def load_stock_items(path: Path) -> list:
-    """Charge le catalogue d'articles à suivre depuis stock_items.json."""
 
+def load_stock_items(path: Path) -> list:
     if not path.exists():
         raise FileNotFoundError(f"stock_items.json introuvable : {path}")
+
     with open(path, "r", encoding="utf-8") as f:
         items = json.load(f)
-    enabled = [i for i in items if i.get("enabled", True)]
-    log.info(f"Catalogue : {len(enabled)}/{len(items)} article(s) actif(s) chargé(s)")
+
+    enabled = []
+
+    for raw in items:
+        if not raw.get("enabled", True):
+            continue
+
+        item = dict(raw)
+        item["stock_sku"] = item.get("stock_sku") or item["sku"]
+        item["stock_label"] = item.get("stock_label") or item.get("label") or item["stock_sku"]
+        item["stock_unit"] = item.get("stock_unit") or item.get("unit") or "piece"
+        item["consumption_per_sale"] = float(item.get(
+            "consumption_per_sale",
+            item.get("pack_size", 1) or 1,
+            ))
+        item["is_stock_reference"] = bool(item.get("is_stock_reference")) or bool(item.get("stock_state"))
+        enabled.append(item)
+
+    log.info(f"Catalogue unifie : {len(enabled)}/{len(items)} article(s) actif(s) charge(s)")
 
     return enabled
 
 
 def load_stock_state(path: Path) -> dict:
-    """Charge l'état de stock depuis stock_state.json. Retourne un dict indexé par sku."""
+    log.warning("stock_state.json separe n'est plus utilise : l'etat est lu dans stock_items.json.")
 
-    if not path.exists():
-        log.warning(f"stock_state.json introuvable : {path} - état de stock vide")
+    return {}
 
-        return {}
-    with open(path, "r", encoding="utf-8") as f:
-        states = json.load(f)
-    result = {s["sku"]: s for s in states if "sku" in s}
-    log.info(f"État de stock : {len(result)} SKU(s) chargé(s)")
 
-    return result
+def build_stock_groups(stock_items: list) -> list:
+    grouped = defaultdict(list)
 
+    for item in stock_items:
+        grouped[item["stock_sku"]].append(item)
+
+    groups = []
+
+    for stock_sku, items in grouped.items():
+        refs_with_state = [i for i in items if i.get("stock_state")]
+
+        if len(refs_with_state) > 1:
+            log.warning(f"{stock_sku}: plusieurs lignes portent stock_state ; la premiere sera utilisee.")
+
+        reference = refs_with_state[0] if refs_with_state else None
+
+        if reference is None:
+            reference = next((i for i in items if i.get("is_stock_reference")), None) or items[0]
+
+        groups.append({
+            "stock_sku": stock_sku,
+            "reference_item": reference,
+            "items": items,
+            "state": dict(reference.get("stock_state") or {}),
+        })
+
+    return groups
+
+
+def aggregate_weekly_stock_usage(stock_items: list, weekly_sales: dict, weeks_range: list) -> dict:
+    weekly_usage = defaultdict(lambda: defaultdict(float))
+
+    for item in stock_items:
+        stock_sku = item["stock_sku"]
+        factor = float(item.get("consumption_per_sale", 1) or 1)
+
+        for week_label in weeks_range:
+            sold_qty = weekly_sales.get(item["sku"], {}).get(week_label, 0)
+
+            if sold_qty:
+                weekly_usage[stock_sku][week_label] += sold_qty * factor
+
+    return weekly_usage
 
 # ─── 3. RÉCUPÉRATION ET ENRICHISSEMENT DES TRANSACTIONS ──────────────────────
+
 
 def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
     if mock_file:
@@ -341,7 +407,7 @@ def aggregate_weekly_sales(
 
             if sku:
                 pack = item.get("pack_size", 1) or 1
-                weekly_sales[sku][week_label] += qty * pack
+                weekly_sales[sku][week_label] += qty
             else:
                 unmapped[(name, variant)] += qty
 
@@ -389,43 +455,47 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
     }
 
 
-def compute_indicators(item: dict, state: dict, weekly_sales: dict, weeks_range: list) -> dict:
-    sku = item["sku"]
-    sales_by_week = weekly_sales.get(sku, {})
+def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict, weeks_range: list) -> dict:
+    ref = stock_group["reference_item"]
+    items = stock_group["items"]
+    state = stock_group["state"]
+    stock_sku = stock_group["stock_sku"]
 
-    sales_series = [sales_by_week.get(w, 0) for w in weeks_range]
-    total_sold = sum(sales_series)
+    usage_by_week = weekly_usage.get(stock_sku, {})
+    usage_series = [round(float(usage_by_week.get(w, 0)), 2) for w in weeks_range]
+
+    total_used = sum(usage_series)
     n_weeks = len(weeks_range)
-    n_zero_weeks = sum(1 for s in sales_series if s == 0)
+    n_zero_weeks = sum(1 for s in usage_series if s == 0)
 
-    sales_7d = sales_series[-1] if sales_series else 0
-    sales_28d = sum(sales_series[-4:]) if len(sales_series) >= 4 else sum(sales_series)
+    usage_7d = usage_series[-1] if usage_series else 0
+    usage_28d = sum(usage_series[-4:]) if len(usage_series) >= 4 else sum(usage_series)
 
-    avg_weekly = total_sold / n_weeks if n_weeks > 0 else 0
-    last4 = sales_series[-4:] if len(sales_series) >= 4 else sales_series
+    avg_weekly = total_used / n_weeks if n_weeks > 0 else 0
+    last4 = usage_series[-4:] if len(usage_series) >= 4 else usage_series
     avg_rolling4 = sum(last4) / len(last4) if last4 else 0
 
-    prev_week_sales = sales_series[-2] if len(sales_series) >= 2 else None
+    prev_week_usage = usage_series[-2] if len(usage_series) >= 2 else None
     variation_pct = None
 
-    if prev_week_sales is not None and prev_week_sales > 0:
-        variation_pct = ((sales_7d - prev_week_sales) / prev_week_sales) * 100
-    elif prev_week_sales == 0 and sales_7d > 0:
+    if prev_week_usage is not None and prev_week_usage > 0:
+        variation_pct = ((usage_7d - prev_week_usage) / prev_week_usage) * 100
+    elif prev_week_usage == 0 and usage_7d > 0:
         variation_pct = 100.0
 
     proj_next_week = round(avg_rolling4, 1)
     proj_4_weeks = round(avg_rolling4 * PROJECTION_WEEKS, 1)
 
-    stock_on_hand = int(state.get("stock_on_hand", 0) or 0)
-    stock_reserved = int(state.get("stock_reserved", 0) or 0)
-    incoming_qty = int(state.get("incoming_qty", 0) or 0)
+    stock_on_hand = float(state.get("stock_on_hand", 0) or 0)
+    stock_reserved = float(state.get("stock_reserved", 0) or 0)
+    incoming_qty = float(state.get("incoming_qty", 0) or 0)
     incoming_eta = state.get("incoming_eta") or None
     last_inventory_date = state.get("last_inventory_date") or "N/A"
     inventory_method = state.get("inventory_count_method") or "N/A"
 
     available_stock = stock_on_hand - stock_reserved
 
-    thresholds = compute_dynamic_thresholds(item, avg_rolling4, sales_7d)
+    thresholds = compute_dynamic_thresholds(ref, avg_rolling4, usage_7d)
     safety_stock = thresholds["safety_stock"]
     reorder_point = thresholds["reorder_point"]
     target_stock = thresholds["target_stock"]
@@ -441,10 +511,10 @@ def compute_indicators(item: dict, state: dict, weekly_sales: dict, weeks_range:
     rupture_date = None
 
     if coverage_weeks is not None:
-        rupture_dt = date.today() + timedelta(weeks=coverage_weeks)
-        rupture_date = rupture_dt.isoformat()
+        rupture_dt = datetime.now() + timedelta(weeks=coverage_weeks)
+        rupture_date = rupture_dt.date().isoformat()
 
-    qty_to_order = max(0, target_stock - effective_stock_now)
+    qty_to_order = max(0.0, float(target_stock) - effective_stock_now)
 
     if avg_rolling4 <= 0 and effective_stock_now <= 0:
         status = "N/A"
@@ -459,12 +529,35 @@ def compute_indicators(item: dict, state: dict, weekly_sales: dict, weeks_range:
     else:
         status = "OK"
 
+    linked_items = []
+
+    for item in items:
+        own_sales_series = [weekly_sales.get(item["sku"], {}).get(w, 0) for w in weeks_range]
+        sm = item.get("sumup_match", {})
+        sm_name = (sm.get("name") or item.get("label") or item["sku"]).strip()
+        sm_variant = (sm.get("variant") or "").strip()
+
+        linked_items.append({
+            "sku": item["sku"],
+            "label": item.get("label", item["sku"]),
+            "sumup_name": sm_name,
+            "sumup_variant": sm_variant,
+            "sumup_display": format_sumup_display(item),
+            "unit": item.get("unit", "piece"),
+            "consumption_per_sale": item.get("consumption_per_sale", 1),
+            "sales_28d": sum(own_sales_series[-4:]) if len(own_sales_series) >= 4 else sum(own_sales_series),
+            "sales_total": sum(own_sales_series),
+        })
+
     return {
-        "sku": sku,
-        "label": item.get("label", sku),
-        "category": item.get("category", ""),
-        "unit": item.get("unit", "piece"),
-        "sumup_match": item.get("sumup_match", {}),
+        "sku": stock_sku,
+        "stock_sku": stock_sku,
+        "label": ref.get("stock_label") or ref.get("label", stock_sku),
+        "category": ref.get("category", ""),
+        "unit": ref.get("stock_unit") or ref.get("unit", "piece"),
+        "sumup_match": ref.get("sumup_match", {}),
+        "linked_items": linked_items,
+        "linked_items_count": len(linked_items),
 
         "stock_on_hand": stock_on_hand,
         "stock_reserved": stock_reserved,
@@ -480,11 +573,15 @@ def compute_indicators(item: dict, state: dict, weekly_sales: dict, weeks_range:
         "reorder_point": reorder_point,
         "target_stock": target_stock,
 
-        "sales_series": sales_series,
+        "sales_series": usage_series,
+        "usage_series": usage_series,
         "weeks_range": weeks_range,
-        "total_sold": total_sold,
-        "sales_7d": sales_7d,
-        "sales_28d": sales_28d,
+        "total_sold": round(total_used, 2),
+        "total_used": round(total_used, 2),
+        "sales_7d": round(usage_7d, 2),
+        "usage_7d": round(usage_7d, 2),
+        "sales_28d": round(usage_28d, 2),
+        "usage_28d": round(usage_28d, 2),
         "avg_weekly": round(avg_weekly, 2),
         "avg_rolling4": round(avg_rolling4, 2),
         "variation_pct": round(variation_pct, 1) if variation_pct is not None else None,
@@ -657,7 +754,7 @@ class StockPDF(FPDF):
     # ── Tableau des ventes hebdomadaires ────────────────────────────────────
     def weekly_table(self, kpi: dict):
         weeks = kpi["weeks_range"]
-        sales = kpi["sales_series"]
+        sales = kpi.get("usage_series", kpi["sales_series"])
         pw = self._pw()
         n = len(weeks)
 
@@ -699,7 +796,7 @@ class StockPDF(FPDF):
         self.set_line_width(0.2)
         self.set_draw_color(*PALETTE["divider"])
         self.cell(col_week, head_h, "Semaine", border=0, align="C")
-        self.cell(col_qty, head_h, "Qte vendue", border=0, align="R")
+        self.cell(col_qty, head_h, "Conso stock", border=0, align="R")
         self.cell(col_avg, head_h, "Moy. glissante", border=0, align="R")
         self.cell(col_var, head_h, "Variation", border=0, align="R",
                   new_x="LMARGIN", new_y="NEXT")
@@ -741,7 +838,10 @@ class StockPDF(FPDF):
 
     def weekly_graph(self, kpi: dict):
         import io
+        import math
         import matplotlib.pyplot as plt
+        import matplotlib.dates as mdates
+        from datetime import datetime, timedelta
 
         weeks = kpi["weeks_range"]
         sales = kpi["sales_series"]
@@ -758,111 +858,215 @@ class StockPDF(FPDF):
 
             return
 
-        current_stock = float(kpi["available_stock"])
-        incoming_qty = float(kpi["incoming_qty"])
+        current_stock = float(kpi["available_stock"] or 0)
+        incoming_qty = float(kpi["incoming_qty"] or 0)
+        effective_stock_now = current_stock + incoming_qty
         avg_week = float(kpi["avg_rolling4"] or 0)
 
+        # ── Reconstruction de la courbe historique hebdomadaire ──
         stock_curve = []
-        running_stock = current_stock + incoming_qty
+        running_stock = effective_stock_now
 
         for qty in reversed(sales):
-            running_stock += qty
+            running_stock += float(qty or 0)
 
         for qty in sales:
-            running_stock -= qty
-            stock_curve.append(max(running_stock, 0))
+            running_stock -= float(qty or 0)
+            stock_curve.append(max(running_stock, 0.0))
 
-        future_weeks = []
+        week_dates = []
+
+        for lbl in weeks:
+            try:
+                year = int(lbl.split("-W")[0])
+                week = int(lbl.split("-W")[1])
+                week_dates.append(datetime.combine(week_start(year, week), datetime.min.time()))
+            except Exception:
+                continue
+
+        if not week_dates:
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(*PALETTE["text_mid"])
+            self.cell(
+                0, 6,
+                self._safe("Impossible de construire l'axe temporel."),
+                new_x="LMARGIN", new_y="NEXT"
+            )
+            self.set_text_color(*PALETTE["text_dark"])
+
+            return
+
+        def fmt_qty(v: float) -> str:
+            if abs(v - round(v)) < 1e-9:
+                return str(int(round(v)))
+
+            return f"{v:.2f}"
+
+        now_dt = datetime.now().replace(microsecond=0)
+
+        # ── Historique : on peut rejoindre 'aujourd'hui' seulement si la valeur
+        # est identique au dernier point hebdo, pour éviter de raconter une fausse histoire.
+        history_dates = list(week_dates)
+        history_values = list(stock_curve)
+
+        if history_values:
+            last_hist_stock = float(history_values[-1])
+
+            if now_dt > history_dates[-1] and abs(effective_stock_now - last_hist_stock) < 1e-9:
+                history_dates.append(now_dt)
+                history_values.append(last_hist_stock)
+
+        # ── Tendance : départ au dernier point HEBDO, pas au jour courant ──
+        start_idx = max(0, len(week_dates) - 4)
+        trend_start_dt = week_dates[start_idx]
+        trend_start_stock = float(stock_curve[start_idx]) if stock_curve else float(current_stock + incoming_qty)
+
+        rupture_dt = None
+        rupture_label = None
+
+        future_dates = []
         future_stock = []
-        trend_stock = stock_curve[-1] if stock_curve else current_stock
 
-        last_label = weeks[-1]
-        try:
-            year = int(last_label.split("-W")[0])
-            week = int(last_label.split("-W")[1])
-        except Exception:
-            year = datetime.now().year
-            week = 1
+        if avg_week > 0 and trend_start_stock > 0:
+            weeks_to_rupture = trend_start_stock / avg_week
+            rupture_dt = trend_start_dt + timedelta(weeks=weeks_to_rupture)
+            rupture_label = rupture_dt.strftime("%d/%m/%Y")
 
-        for i in range(1, 5):
-            next_week = week + i
-            next_year = year
+            n_future = max(4, int(math.floor(weeks_to_rupture)) + 2)
 
-            while next_week > 52:
-                next_week -= 52
-                next_year += 1
-            future_weeks.append(f"{next_year}-W{next_week:02d}")
-            trend_stock -= avg_week
-            future_stock.append(max(trend_stock, 0))
+            for i in range(1, n_future + 1):
+                dt_i = trend_start_dt + timedelta(weeks=i)
+                val_i = trend_start_stock - (avg_week * i)
+                future_dates.append(dt_i)
+                future_stock.append(max(val_i, 0.0))
 
-        all_labels = weeks + future_weeks
-        all_stock = stock_curve + future_stock
+            # On ne garde pour la ligne que les points hebdo avant la rupture,
+            # puis on ajoute le point précis de rupture à 0.
+            trend_dates = [trend_start_dt]
+            trend_values = [trend_start_stock]
 
-        rupture_index = None
+            for dt_i, val_i in zip(future_dates, future_stock):
+                if dt_i < rupture_dt:
+                    trend_dates.append(dt_i)
+                    trend_values.append(val_i)
 
-        for i, val in enumerate(all_stock):
-            if val <= 0:
-                rupture_index = i
+            trend_dates.append(rupture_dt)
+            trend_values.append(0.0)
+        else:
+            # Pas de consommation exploitable : on trace une ligne plate sur 4 semaines
+            future_dates = [trend_start_dt + timedelta(weeks=i) for i in range(1, 5)]
+            future_stock = [trend_start_stock for _ in future_dates]
+            trend_dates = [trend_start_dt] + future_dates
+            trend_values = [trend_start_stock] + future_stock
 
-                break
+        safety_stock = float(kpi.get("safety_stock") or 0)
+        reorder_point = float(kpi.get("reorder_point") or 0)
+        target_stock = float(kpi.get("target_stock") or 0)
 
         fig, ax = plt.subplots(figsize=(8.6, 3.8), dpi=160)
 
-        ax.plot(range(len(weeks)), stock_curve, color="#3c78dc", linewidth=2.2,
-                marker="o", markersize=4, label="Stock estime")
-
+        # Historique
         ax.plot(
-            range(len(weeks) - 1, len(all_labels)),
-            [stock_curve[-1]] + future_stock if stock_curve else future_stock,
+            history_dates,
+            history_values,
+            color="#3c78dc",
+            linewidth=2.2,
+            marker="o",
+            markersize=4,
+            label="Historique de stock",
+        )
+
+        # Tendance
+        ax.plot(
+            trend_dates,
+            trend_values,
             color="#cc4125",
             linewidth=2.0,
             linestyle="--",
             marker="o",
             markersize=3.5,
-            label="Tendance"
+            label="Tendance",
         )
 
-        ax.axhspan(0, max(1, kpi["safety_stock"]), color="#f4cccc", alpha=0.35, label="Zone basse")
-        ax.axhline(kpi["safety_stock"], color="#e69138", linestyle=":", linewidth=1.3)
-        ax.axhline(kpi["reorder_point"], color="#bf9000", linestyle=":", linewidth=1.3)
+        # Seuils
+        ax.axvspan(week_dates[start_idx], week_dates[-1], color="#ddebf7", alpha=0.18, label="Période de tendance")
+        ax.axhspan(0, max(1.0, safety_stock), color="#f4cccc", alpha=0.35, label="Zone basse")
+        ax.axhline(safety_stock, color="#e69138", linestyle=":", linewidth=1.3)
+        ax.axhline(reorder_point, color="#bf9000", linestyle=":", linewidth=1.3)
 
-        if rupture_index is not None:
-            ax.axvline(rupture_index, color="#990000", linestyle="--", linewidth=1.2)
-            label_y = max(all_stock) * 0.18 if max(all_stock) > 0 else 1
+        plotted_values = (
+            [1.0]
+            + [float(v) for v in history_values]
+            + [float(v) for v in trend_values]
+            + [target_stock]
+            + [reorder_point]
+            + [safety_stock]
+        )
+        ymax = max(plotted_values) if plotted_values else 1.0
+        ymax = max(ymax, 1.0)
+
+        # Barre verticale exacte au point où la tendance touche 0
+
+        if rupture_dt is not None:
+            ax.axvline(rupture_dt, color="#990000", linestyle="--", linewidth=1.2)
+            label_y = ymax * 0.18 if ymax > 0 else 1.0
             ax.annotate(
-                f"Rupture estimee\n{all_labels[rupture_index]}",
-                xy=(rupture_index, max(all_stock[rupture_index], 0)),
-                xytext=(rupture_index + 0.2, label_y),
+                f"Rupture estimee\n{rupture_label}",
+                xy=(rupture_dt, 0.0),
+                xytext=(rupture_dt + timedelta(days=2), label_y),
                 fontsize=8,
                 color="#990000",
                 arrowprops=dict(arrowstyle="->", color="#990000", lw=1),
                 bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#990000", alpha=0.9),
             )
 
-        for i, y in enumerate(stock_curve):
-            ax.annotate(str(int(round(y))), (i, y), textcoords="offset points",
-                        xytext=(0, 7), ha="center", fontsize=7, color="#3c78dc")
+        # Etiquettes historique
 
-        for i, y in enumerate(future_stock, start=len(weeks)):
-            ax.annotate(str(int(round(y))), (i, y), textcoords="offset points",
-                        xytext=(0, 7), ha="center", fontsize=7, color="#cc4125")
+        for x, y in zip(week_dates, stock_curve):
+            ax.annotate(
+                fmt_qty(y),
+                (x, y),
+                textcoords="offset points",
+                xytext=(0, 7),
+                ha="center",
+                fontsize=7,
+                color="#3c78dc",
+            )
 
-        ax.set_title("Evolution du stock et tendance", fontsize=11)
-        ax.set_ylabel("Quantite")
-        ax.set_xticks(range(len(all_labels)))
-        ax.set_xticklabels(all_labels, rotation=35, ha="right", fontsize=7)
+        # Etiquettes projection : seulement sur les ticks hebdo de projection
+
+        for x, y in zip(future_dates, future_stock):
+            ax.annotate(
+                fmt_qty(y),
+                (x, y),
+                textcoords="offset points",
+                xytext=(0, 7),
+                ha="center",
+                fontsize=7,
+                color="#cc4125",
+            )
+
+            ax.set_title("Evolution du stock et tendance", fontsize=11)
+        ax.set_ylabel(f"Quantite [{kpi.get("unit") or "S.U."}]")
+
+        ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-W%W"))
+        plt.setp(ax.get_xticklabels(), rotation=35, ha="right", fontsize=7)
+
         ax.tick_params(axis="y", labelsize=8)
         ax.grid(axis="y", linestyle=":", linewidth=0.7, alpha=0.5)
         ax.legend(loc="upper right", fontsize=8)
 
-        ymax = max(
-            [1]
-            + [float(v) for v in stock_curve]
-            + [float(v) for v in future_stock]
-            + [float(kpi["target_stock"] or 0)]
-            + [float(kpi["reorder_point"] or 0)]
-        )
         ax.set_ylim(0, ymax * 1.20)
+
+        xmin = week_dates[0] - timedelta(days=2)
+        xmax_candidates = [future_dates[-1] + timedelta(days=4) if future_dates else trend_start_dt + timedelta(weeks=4)]
+
+        if rupture_dt is not None:
+            xmax_candidates.append(rupture_dt + timedelta(days=4))
+        xmax = max(xmax_candidates)
+        ax.set_xlim(xmin, xmax)
+
         fig.tight_layout()
 
         buf = io.BytesIO()
@@ -966,27 +1170,38 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
 
 # ─── Pages article ────────────────────────────────────────────────────────────
 
+
 def render_article_page(pdf: StockPDF, kpi: dict):
     pdf.add_page()
-    pw = pdf._pw()
 
-    # ── En-tête article ──
     sm = kpi["sumup_match"]
     variant_str = sm.get("variant") or "(sans variante)"
-    pdf.section_title(f"Article : {kpi['label']}  [{kpi['sku']}]")
+
+    pdf.section_title(f"Stock : {kpi['label']} [{kpi['stock_sku']}]")
+
+    linked_text = ", ".join(
+        it.get("sumup_display") or it.get("label") or it.get("sku")
+
+        for it in kpi.get("linked_items", [])
+    )
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies : {linked_text}", 220))
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.ln(1)
 
     pdf.kpi_block([
-        # ("SKU", kpi["sku"]),
-        ("Libelle", kpi["label"]),
-        ("Variante SumUp", variant_str),
         # ("Categorie", kpi["category"]),
-        ("Unite", kpi["unit"]),
-        ("Stock disponible", kpi["available_stock"]),
-        ("Stock arrivant", kpi["incoming_qty"]),
+        # ("Variante SumUp", variant_str),
+        ("Stock SKU", kpi["stock_sku"]),
+        ("Articles relies", kpi["linked_items_count"]),
+        ("Unite stock", kpi["unit"]),
+        (f"Stock disponible [{kpi['unit']}]", kpi["available_stock"]),
+        (f"Stock arrivant [{kpi['unit']}]", kpi["incoming_qty"]),
         ("ETA reappro", kpi["incoming_eta"] or "N/A"),
-        ("Stock securite (auto)", kpi["safety_stock"]),
-        ("Point de commande (auto)", kpi["reorder_point"]),
-        ("Stock cible (auto)", kpi["target_stock"]),
+        (f"Stock securite (auto) [{kpi['unit']}]", kpi["safety_stock"]),
+        (f"Point de commande (auto) [{kpi['unit']}]", kpi["reorder_point"]),
+        (f"Stock cible (auto) [{kpi['unit']}]", kpi["target_stock"]),
         ("Dernier inventaire", kpi["last_inventory_date"]),
     ])
 
@@ -995,21 +1210,21 @@ def render_article_page(pdf: StockPDF, kpi: dict):
 
     # ── Bloc KPIs ──
     pdf.section_title("Indicateurs cles")
-    cov = f"{kpi['coverage_weeks']:.1f} sem." if kpi["coverage_weeks"] is not None else "N/A"
     # var = f"{kpi['variation_pct']:+.1f}%" if kpi["variation_pct"] is not None else "N/A"
+    cov = f"{kpi['coverage_weeks']:.1f} sem." if kpi["coverage_weeks"] is not None else "N/A"
     pdf.kpi_block([
         # ("Ventes 7 jours", kpi["sales_7d"]),
-        ("Ventes 28 jours", kpi["sales_28d"]),
-        ("Moyenne hebdomadaire simu", kpi["avg_weekly"]),
+        ("Conso 28 jours", kpi["usage_28d"]),
+        ("Moyenne hebdo conso", kpi["avg_weekly"]),
         ("Moy. glissante 4 sem.", kpi["avg_rolling4"]),
         # ("Projection sem. suiv.", kpi["proj_next_week"]),
         # ("Projection vente 4 sem.", kpi["proj_4_weeks"]),
         ("Couverture estimee", cov),
         ("Date rupture estimee", kpi["rupture_date"] or "N/A"),
-        (f"Qte a commander [{kpi["unit"]}]", kpi["qty_to_order"]),
+        (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
         # ("Variation S vs S-1", var),
         # ("Sem. sans vente", kpi["n_zero_weeks"]),
-        ("Total vendu (periode)", kpi["total_sold"]),
+        ("Total consomme (periode)", kpi["total_used"]),
     ])
 
     # ── Tableau hebdomadaire ──
@@ -1110,14 +1325,15 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
 
 def export_csv_summary(all_kpis: list, path: str):
     fields = [
-        # "sku", "label", "category", "unit",
+        "stock_sku", "label", "category", "unit",
         "available_stock", "incoming_qty", "incoming_eta",
         "safety_stock", "reorder_point", "target_stock",
-        "sales_7d", "sales_28d", "avg_weekly", "avg_rolling4",
+        "usage_7d", "usage_28d", "avg_weekly", "avg_rolling4",
         "proj_next_week", "proj_4_weeks",
         "coverage_weeks", "rupture_date", "qty_to_order",
-        "variation_pct", "n_zero_weeks", "total_sold",
+        "variation_pct", "n_zero_weeks", "total_used",
         "status", "last_inventory_date", "inventory_method",
+        "linked_items_count",
     ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
@@ -1129,17 +1345,19 @@ def export_csv_summary(all_kpis: list, path: str):
 def export_csv_history(all_kpis: list, path: str):
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["sku", "label", "week", "qty_sold"])
+        writer.writerow(["stock_sku", "label", "week", "qty_used", "unit"])
 
         for kpi in all_kpis:
-            for w, s in zip(kpi["weeks_range"], kpi["sales_series"]):
-                writer.writerow([kpi["sku"], kpi["label"], w, s])
+            for w, s in zip(kpi["weeks_range"], kpi.get("usage_series", kpi["sales_series"])):
+                writer.writerow([kpi["stock_sku"], kpi["label"], w, s, kpi["unit"]])
+
     log.info(f"CSV historique -> {path}")
 
 
 # ─── 9. ENVOI EMAIL ───────────────────────────────────────────────────────────
 
 def send_stock_email(
+    weeks: str,
     pdf_path: str,
     csv_path: str,
     week_label: str,
@@ -1173,7 +1391,8 @@ pour la semaine {week_label}.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RESUME - Semaine {week_label}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+Durée d’historique  : {weeks} semaines
+Stock auto aiguë    : {PROJECTION_WEEKS} semaines
 Articles suivis     : {len(all_kpis)}
 Articles en alerte  : {n_alert}
 {order_lines}
@@ -1214,16 +1433,13 @@ def run_stock_report(
     state_file: Path = None,
 ):
     items_file = items_file or BASE_DIR / "stock_items.json"
-    state_file = state_file or BASE_DIR / "stock_state.json"
 
     now = datetime.now(timezone.utc)
-    # Calcul de la fenêtre temporelle
     end_dt = now
     start_dt = end_dt - timedelta(weeks=weeks)
     start = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
     end = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # Semaines ISO dans la plage
     weeks_range = []
     cursor = start_dt
     seen = set()
@@ -1238,39 +1454,37 @@ def run_stock_report(
     current_week = iso_week_label(now)
     log.info(f"══ Rapport Stocks SumUp ══ {weeks} semaines | Semaine courante : {current_week}")
 
-    # 1. Chargement configuration
-    log.info("Étape 1/5 - Chargement des fichiers de configuration…")
+    log.info("Étape 1/5 - Chargement du catalogue unifie…")
     stock_items = load_stock_items(items_file)
-    stock_state = load_stock_state(state_file)
+    stock_groups = build_stock_groups(stock_items)
     sku_index = build_sku_index(stock_items)
 
-    # 2. Transactions
-    log.info("Étape 2/5 - Récupération des transactions…")
+    if state_file:
+        log.info("Le fichier stock_state.json separe est ignore : stock_state est lu depuis le catalogue unifie.")
+
+    log.info("Étape 2/5 - Recuperation des transactions…")
     headers_api = {"Authorization": f"Bearer {SUMUP_API_KEY}"}
     all_txns = fetch_transactions(start, end, mock_file=mock_file)
     if not mock_file:
         all_txns = enrich_transactions(all_txns, headers_api)
 
-    # 3. Agrégation
-    log.info("Étape 3/5 - Agrégation hebdomadaire…")
+    log.info("Étape 3/5 - Agregation hebdomadaire…")
     weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
+    weekly_usage = aggregate_weekly_stock_usage(stock_items, weekly_sales, weeks_range)
     if unmapped:
-        log.warning(f"{len(unmapped)} produit(s) SumUp non mappé(s) au catalogue")
+        log.warning(f"{len(unmapped)} produit(s) SumUp non mappe(s) au catalogue")
 
-    # 4. Calcul indicateurs
-    log.info("Étape 4/5 - Calcul des indicateurs…")
+    log.info("Étape 4/5 - Calcul des indicateurs centralises…")
     all_kpis = []
-    for item in stock_items:
-        state = stock_state.get(item["sku"], {})
-        kpi = compute_indicators(item, state, weekly_sales, weeks_range)
+    for group in stock_groups:
+        kpi = compute_indicators(group, weekly_sales, weekly_usage, weeks_range)
         all_kpis.append(kpi)
         log.info(
-            f"  {kpi['sku']:30s} | stock={kpi['available_stock']:4d} "
-            f"| vendu={kpi['total_sold']:4d} | statut={kpi['status']}"
+            f" {kpi['stock_sku']:30s} | stock={fmt_num(kpi['available_stock'])} "
+            f"| vendu={fmt_num(kpi['total_sold'])} | statut={kpi['status']}"
         )
 
-    # 5. Génération des fichiers
-    log.info("Étape 5/5 - Génération des fichiers…")
+    log.info("Étape 5/5 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")
     pdf_path = str(BASE_DIR / f"rapport_stocks_{safe_week}.pdf")
     csv_path = str(BASE_DIR / f"rapport_stocks_{safe_week}.csv")
@@ -1281,11 +1495,11 @@ def run_stock_report(
     export_csv_history(all_kpis, hist_path)
 
     if send_mail:
-        send_stock_email(pdf_path, csv_path, current_week, all_kpis)
+        send_stock_email(weeks, pdf_path, csv_path, current_week, all_kpis)
     else:
-        log.info("Envoi email ignoré (--no-mail).")
+        log.info("Envoi email ignore (--no-mail).")
 
-    log.info("══ Terminé ══")
+    log.info("══ Termine ══")
     return all_kpis, unmapped
 
 
