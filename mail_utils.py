@@ -44,13 +44,23 @@ def setup_memory_log_capture(datefmt="%Y-%m-%d %H:%M:%S"):
     return buffer, handler
 
 
+def _parse_email_list(value):
+    return [e.strip() for e in (value or "").split(",") if e.strip()]
+
+
 def get_email_settings():
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", 587))
     smtp_user = os.getenv("SMTP_USER")
     smtp_pass = os.getenv("SMTP_PASS")
     email_from = os.getenv("EMAIL_FROM", smtp_user)
-    email_to_list = [e.strip() for e in os.getenv("EMAIL_TO", "").split(",") if e.strip()]
+
+    mailing_lists = {
+        "default": _parse_email_list(os.getenv("EMAIL_TO")),
+        "all_ca": _parse_email_list(os.getenv("EMAIL_TO_SUMUP_ALL_CA")),
+        "finance": _parse_email_list(os.getenv("EMAIL_TO_SUMUP_FINANCE")),
+        "vie": _parse_email_list(os.getenv("EMAIL_TO_SUMUP_VIE")),
+        }
 
     return {
         "SMTP_HOST": smtp_host,
@@ -58,8 +68,29 @@ def get_email_settings():
         "SMTP_USER": smtp_user,
         "SMTP_PASS": smtp_pass,
         "EMAIL_FROM": email_from,
-        "EMAIL_TO_LIST": email_to_list,
+        "EMAIL_TO_LIST": mailing_lists["default"],
+        "MAILING_LISTS": mailing_lists,
         }
+
+
+def resolve_recipients(mailing_list=None, to_list=None, settings=None):
+    settings = settings or get_email_settings()
+
+    if to_list:
+        return list(to_list)
+
+    if mailing_list is None:
+        return settings["EMAIL_TO_LIST"]
+
+    if isinstance(mailing_list, str):
+        recipients = settings["MAILING_LISTS"].get(mailing_list, [])
+
+        return recipients
+
+    if isinstance(mailing_list, (list, tuple, set)):
+        return list(mailing_list)
+
+    raise TypeError("mailing_list doit être None, une clé str, ou une liste/tuple/set d'emails")
 
 
 def send_email(
@@ -67,17 +98,22 @@ def send_email(
     body,
     attachments=None,
     to_list=None,
+    mailing_list=None,
     from_addr=None,
     logger=None,
         ):
     logger = logger or logging.getLogger(__name__)
     settings = get_email_settings()
 
-    recipients = to_list or settings["EMAIL_TO_LIST"]
+    recipients = resolve_recipients(
+        mailing_list=mailing_list,
+        to_list=to_list,
+        settings=settings,
+        )
     sender = from_addr or settings["EMAIL_FROM"]
 
     if not recipients:
-        logger.warning("Aucun destinataire défini (EMAIL_TO vide). Email non envoyé.")
+        logger.warning("Aucun destinataire défini. Email non envoyé.")
 
         return False
 
@@ -106,7 +142,7 @@ def send_email(
             maintype, subtype = "application", "pdf"
         elif suffix == ".png":
             maintype, subtype = "image", "png"
-        elif suffix == ".jpg" or suffix == ".jpeg":
+        elif suffix in [".jpg", ".jpeg"]:
             maintype, subtype = "image", "jpeg"
         elif suffix == ".csv":
             maintype, subtype = "text", "csv"

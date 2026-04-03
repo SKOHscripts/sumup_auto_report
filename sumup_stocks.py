@@ -44,7 +44,7 @@ from mail_utils import (
     setup_memory_log_capture,
     send_email,
     build_log_footer,
-)
+    )
 
 
 # ─── Vérification version fpdf2 ───────────────────────────────────────────────
@@ -65,7 +65,7 @@ def _check_fpdf_version():
         raise RuntimeError(
             f"Version fpdf incompatible: {version}. "
             "Installez fpdf2>=2.5.2 (recommandé: fpdf2>=2.7,<3)."
-        )
+            )
 
 
 _check_fpdf_version()
@@ -77,7 +77,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-)
+    )
 log = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -87,7 +87,7 @@ load_project_env(
     env_file=ENV_FILE,
     required_vars=["SUMUP_API_KEY"],
     logger=log,
-)
+    )
 
 _log_buffer, _log_handler = setup_memory_log_capture()
 SUMUP_API_KEY = os.getenv("SUMUP_API_KEY")
@@ -103,7 +103,7 @@ def remove_accents(text: str) -> str:
         c for c in unicodedata.normalize("NFD", text)
 
         if unicodedata.category(c) != "Mn"
-    )
+        )
 
 
 def normalize(text: str) -> str:
@@ -200,7 +200,7 @@ def build_stock_groups(stock_items: list) -> list:
             "reference_item": reference,
             "items": items,
             "state": dict(reference.get("stock_state") or {}),
-        })
+            })
 
     return groups
 
@@ -246,9 +246,9 @@ def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
             "order": "descending",
             "oldest_time": start,
             "newest_time": end,
-        },
+            },
         timeout=20,
-    )
+        )
     resp.raise_for_status()
     data = resp.json()
 
@@ -280,7 +280,7 @@ def enrich_transactions(txns: list, headers: dict) -> list:
                 headers=headers,
                 params={"id": txn_id},
                 timeout=10,
-            )
+                )
 
             if resp.status_code == 200:
                 detail = resp.json()
@@ -312,7 +312,7 @@ def build_sku_index(stock_items: list) -> dict:
         key = (
             normalize(sm.get("name", "")),
             normalize(sm.get("variant", "")),
-        )
+            )
         index[key] = item
 
     return index
@@ -351,10 +351,10 @@ def match_product_to_sku(name: str, variant: str, sku_index: dict) -> tuple:
 # ─── 5. AGRÉGATION HEBDOMADAIRE ──────────────────────────────────────────────
 
 def aggregate_weekly_sales(
-    txns: list,
-    sku_index: dict,
-    weeks_range: list,
-) -> tuple:
+        txns: list,
+        sku_index: dict,
+        weeks_range: list,
+        ) -> tuple:
     """
     Retourne :
       - weekly_sales  : dict { sku: { week_label: qty } }
@@ -415,7 +415,7 @@ def aggregate_weekly_sales(
         {"name": k[0], "variant": k[1], "total_qty": v}
 
         for k, v in sorted(unmapped.items(), key=lambda x: -x[1])
-    ]
+        ]
 
     return weekly_sales, unmapped_list
 
@@ -437,7 +437,7 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
             "safety_stock": 0,
             "reorder_point": 0,
             "target_stock": 0,
-        }
+            }
 
     safety_stock = math.ceil(max(weekly_demand, sales_7d))
     reorder_point = math.ceil((weekly_demand * lead_time_weeks) + safety_stock)
@@ -452,7 +452,7 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
         "safety_stock": int(safety_stock),
         "reorder_point": int(reorder_point),
         "target_stock": int(target_stock),
-    }
+        }
 
 
 def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict, weeks_range: list) -> dict:
@@ -547,7 +547,7 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
             "consumption_per_sale": item.get("consumption_per_sale", 1),
             "sales_28d": sum(own_sales_series[-4:]) if len(own_sales_series) >= 4 else sum(own_sales_series),
             "sales_total": sum(own_sales_series),
-        })
+            })
 
     return {
         "sku": stock_sku,
@@ -593,7 +593,7 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
         "rupture_date": rupture_date,
         "qty_to_order": qty_to_order,
         "status": status,
-    }
+        }
 
 
 # ─── 7. GÉNÉRATION PDF ────────────────────────────────────────────────────────
@@ -617,8 +617,8 @@ PALETTE = {
         "A COMMANDER": (255, 228, 210),
         "RISQUE RUPTURE": (255, 215, 220),
         "N/A": (240, 240, 240),
-    },
-}
+        },
+    }
 
 
 class StockPDF(FPDF):
@@ -641,7 +641,7 @@ class StockPDF(FPDF):
             "“": '"',
             "”": '"',
             "\u00a0": " ",
-        }
+            }
 
         for src, dst in replacements.items():
             t = t.replace(src, dst)
@@ -700,7 +700,7 @@ class StockPDF(FPDF):
             border=0,
             new_x="LMARGIN",
             new_y="NEXT",
-        )
+            )
         self.set_draw_color(*PALETTE["divider"])
         self.set_line_width(0.2)
         y = self.get_y()
@@ -853,7 +853,7 @@ class StockPDF(FPDF):
                 0, 6,
                 self._safe("Aucune donnée hebdomadaire disponible."),
                 new_x="LMARGIN", new_y="NEXT"
-            )
+                )
             self.set_text_color(*PALETTE["text_dark"])
 
             return
@@ -891,7 +891,7 @@ class StockPDF(FPDF):
                 0, 6,
                 self._safe("Impossible de construire l'axe temporel."),
                 new_x="LMARGIN", new_y="NEXT"
-            )
+                )
             self.set_text_color(*PALETTE["text_dark"])
 
             return
@@ -974,7 +974,7 @@ class StockPDF(FPDF):
             marker="o",
             markersize=4,
             label="Historique de stock",
-        )
+            )
 
         # Tendance
         ax.plot(
@@ -986,7 +986,7 @@ class StockPDF(FPDF):
             marker="o",
             markersize=3.5,
             label="Tendance",
-        )
+            )
 
         # Seuils
         ax.axvspan(week_dates[start_idx], week_dates[-1], color="#ddebf7", alpha=0.18, label="Période de tendance")
@@ -1001,7 +1001,7 @@ class StockPDF(FPDF):
             + [target_stock]
             + [reorder_point]
             + [safety_stock]
-        )
+            )
         ymax = max(plotted_values) if plotted_values else 1.0
         ymax = max(ymax, 1.0)
 
@@ -1018,7 +1018,7 @@ class StockPDF(FPDF):
                 color="#990000",
                 arrowprops=dict(arrowstyle="->", color="#990000", lw=1),
                 bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#990000", alpha=0.9),
-            )
+                )
 
         # Etiquettes historique
 
@@ -1031,7 +1031,7 @@ class StockPDF(FPDF):
                 ha="center",
                 fontsize=7,
                 color="#3c78dc",
-            )
+                )
 
         # Etiquettes projection : seulement sur les ticks hebdo de projection
 
@@ -1044,7 +1044,7 @@ class StockPDF(FPDF):
                 ha="center",
                 fontsize=7,
                 color="#cc4125",
-            )
+                )
 
             ax.set_title("Evolution du stock et tendance", fontsize=11)
         ax.set_ylabel(f"Quantite [{kpi.get("unit") or "S.U."}]")
@@ -1104,7 +1104,7 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
         ("Articles en alerte", n_alert),
         ("Articles a commander", n_order),
         ("Risques de rupture", n_rupture),
-    ])
+        ])
 
     # Tableau statuts
     pdf.section_title("Etat des articles", PALETTE["accent"])
@@ -1183,7 +1183,7 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         it.get("sumup_display") or it.get("label") or it.get("sku")
 
         for it in kpi.get("linked_items", [])
-    )
+        )
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(*PALETTE["text_mid"])
     pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies : {linked_text}", 220))
@@ -1203,7 +1203,7 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         (f"Point de commande (auto) [{kpi['unit']}]", kpi["reorder_point"]),
         (f"Stock cible (auto) [{kpi['unit']}]", kpi["target_stock"]),
         ("Dernier inventaire", kpi["last_inventory_date"]),
-    ])
+        ])
 
     # Badge statut
     pdf.status_badge(kpi["status"])
@@ -1225,7 +1225,7 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         # ("Variation S vs S-1", var),
         # ("Sem. sans vente", kpi["n_zero_weeks"]),
         ("Total consomme (periode)", kpi["total_used"]),
-    ])
+        ])
 
     # ── Tableau hebdomadaire ──
     pdf.section_title("Evolution du stock")
@@ -1334,7 +1334,7 @@ def export_csv_summary(all_kpis: list, path: str):
         "variation_pct", "n_zero_weeks", "total_used",
         "status", "last_inventory_date", "inventory_method",
         "linked_items_count",
-    ]
+        ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -1360,9 +1360,10 @@ def send_stock_email(
     weeks: str,
     pdf_path: str,
     csv_path: str,
+    hist_path: str,
     week_label: str,
     all_kpis: list,
-):
+        ):
     n_alert = sum(1 for k in all_kpis if k["status"] in ("SURVEILLANCE", "A COMMANDER", "RISQUE RUPTURE"))
     to_order = [k for k in all_kpis if k["status"] in ("A COMMANDER", "RISQUE RUPTURE")]
 
@@ -1375,7 +1376,7 @@ def send_stock_email(
             order_lines += (
                 f"  - {k['label']} [{k['sku']}] : {k['qty_to_order']} {k['unit']}(s)  "
                 f"- Statut : {k['status']}\n"
-            )
+                )
     else:
         order_lines = "\nAucun article a commander cette semaine.\n"
 
@@ -1406,21 +1407,24 @@ JOURNAL D'EXECUTION - genere le {now_str}
 
 Cordialement,
 Corentin via sumup_stocks.py
-"""
+    """
     subject = (
         f"Rapport Stocks SumUp - {week_label} "
         f"({len(all_kpis)} articles, {n_alert} alerte(s))"
-    )
+        )
     attachments = [pdf_path]
     if csv_path and Path(csv_path).exists():
         attachments.append(csv_path)
+    if hist_path and Path(hist_path).exists():
+        attachments.append(hist_path)
 
     send_email(
         subject=subject,
         body=body,
         attachments=attachments,
+        mailing_list="default",
         logger=log,
-    )
+        )
 
 
 # ─── 10. PIPELINE PRINCIPAL ───────────────────────────────────────────────────
@@ -1431,7 +1435,7 @@ def run_stock_report(
     mock_file: str = None,
     items_file: Path = None,
     state_file: Path = None,
-):
+        ):
     items_file = items_file or BASE_DIR / "stock_items.json"
 
     now = datetime.now(timezone.utc)
@@ -1482,7 +1486,7 @@ def run_stock_report(
         log.info(
             f" {kpi['stock_sku']:30s} | stock={fmt_num(kpi['available_stock'])} "
             f"| vendu={fmt_num(kpi['total_sold'])} | statut={kpi['status']}"
-        )
+            )
 
     log.info("Étape 5/5 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")
@@ -1495,7 +1499,7 @@ def run_stock_report(
     export_csv_history(all_kpis, hist_path)
 
     if send_mail:
-        send_stock_email(weeks, pdf_path, csv_path, current_week, all_kpis)
+        send_stock_email(weeks, pdf_path, csv_path, hist_path, current_week, all_kpis)
     else:
         log.info("Envoi email ignore (--no-mail).")
 
@@ -1510,27 +1514,27 @@ def main():
         description="Rapport hebdomadaire de gestion des stocks SumUp",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
-    )
+        )
     parser.add_argument(
         "--weeks", type=int, default=DEFAULT_WEEKS,
         help=f"Nombre de semaines d'historique (défaut : {DEFAULT_WEEKS})",
-    )
+        )
     parser.add_argument(
         "--no-mail", action="store_true",
         help="Génère les fichiers sans envoyer l'email",
-    )
+        )
     parser.add_argument(
         "--mock", metavar="FICHIER",
         help="Utilise un fichier JSON local à la place de l'API SumUp",
-    )
+        )
     parser.add_argument(
         "--items", metavar="FICHIER", default=None,
         help="Chemin vers stock_items.json (défaut : ./stock_items.json)",
-    )
+        )
     parser.add_argument(
         "--state", metavar="FICHIER", default=None,
         help="Chemin vers stock_state.json (défaut : ./stock_state.json)",
-    )
+        )
     args = parser.parse_args()
 
     run_stock_report(
@@ -1539,7 +1543,7 @@ def main():
         mock_file=args.mock,
         items_file=Path(args.items) if args.items else None,
         state_file=Path(args.state) if args.state else None,
-    )
+        )
 
 
 if __name__ == "__main__":
