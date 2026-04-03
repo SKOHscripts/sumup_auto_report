@@ -45,11 +45,7 @@
     },
     "pack_size": 30,
     "consumption_per_sale": 0.33,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 60,
       "stock_reserved": 0,
@@ -75,11 +71,7 @@
     },
     "pack_size": 30,
     "consumption_per_sale": 0.25,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7
-=======
     "supplier_lead_time_days": 4
->>>>>>> Stashed changes
   },
   {
     "sku": "chips",
@@ -97,11 +89,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 19,
       "stock_reserved": 0,
@@ -117,11 +105,7 @@
     "is_stock_reference": true,
     "label": "Jus de pomme verre",
     "stock_label": "Jus de pomme verre",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "verre",
     "stock_unit": "verre",
     "category": "soft",
@@ -131,11 +115,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 18,
       "stock_reserved": 0,
@@ -159,11 +139,7 @@
     },
     "pack_size": 5,
     "consumption_per_sale": 0.2,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 3.6,
       "stock_reserved": 0,
@@ -186,11 +162,7 @@
       "variant": ""
     },
     "consumption_per_sale": 0.2,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7
-=======
     "supplier_lead_time_days": 4
->>>>>>> Stashed changes
   },
   {
     "sku": "vin_rouge",
@@ -198,11 +170,7 @@
     "is_stock_reference": true,
     "label": "Vin rouge",
     "stock_label": "Vin rouge",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "verre",
     "stock_unit": "verre",
     "category": "bar",
@@ -212,11 +180,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 10,
       "stock_reserved": 0,
@@ -232,11 +196,7 @@
     "is_stock_reference": true,
     "label": "Jus de pomme bio 20 cL brique",
     "stock_label": "Jus de pomme bio 20 cL brique",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "brique",
     "stock_unit": "brique",
     "category": "soft",
@@ -246,11 +206,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 8,
       "stock_reserved": 0,
@@ -266,11 +222,7 @@
     "is_stock_reference": true,
     "label": "Biscuit sucré",
     "stock_label": "Biscuit sucré",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "piece",
     "stock_unit": "piece",
     "category": "snacking",
@@ -280,11 +232,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 12,
       "stock_reserved": 0,
@@ -300,11 +248,7 @@
     "is_stock_reference": true,
     "label": "Saucissons mini sachet",
     "stock_label": "Saucissons mini sachet",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "sachet",
     "stock_unit": "sachet",
     "category": "snacking",
@@ -314,11 +258,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 8,
       "stock_reserved": 0,
@@ -334,11 +274,7 @@
     "is_stock_reference": true,
     "label": "Eau gazeuse",
     "stock_label": "Eau gazeuse",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "bouteille",
     "stock_unit": "bouteille",
     "category": "soft",
@@ -348,11 +284,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 6,
       "stock_reserved": 0,
@@ -368,11 +300,7 @@
     "is_stock_reference": true,
     "label": "Thé",
     "stock_label": "Thé",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "verre",
     "stock_unit": "verre",
     "category": "soft",
@@ -382,11 +310,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 6,
       "stock_reserved": 0,
@@ -402,11 +326,7 @@
     "is_stock_reference": true,
     "label": "Lipton Ice Tea",
     "stock_label": "Lipton Ice Tea",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "bouteille",
     "stock_unit": "bouteille",
     "category": "soft",
@@ -416,11 +336,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 5,
       "stock_reserved": 0,
@@ -436,11 +352,7 @@
     "is_stock_reference": true,
     "label": "Sirop grenadine",
     "stock_label": "Sirop grenadine",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "verre",
     "stock_unit": "verre",
     "category": "soft",
@@ -450,11 +362,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 4,
       "stock_reserved": 0,
@@ -470,11 +378,7 @@
     "is_stock_reference": true,
     "label": "Bières commerce blonde 25 cL",
     "stock_label": "Bières commerce blonde 25 cL",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "verre",
     "stock_unit": "verre",
     "category": "bar",
@@ -484,11 +388,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 7,
       "stock_reserved": 0,
@@ -504,11 +404,7 @@
     "is_stock_reference": true,
     "label": "Bières commerce ambrée 25 cL",
     "stock_label": "Bières commerce ambrée 25 cL",
-<<<<<<< Updated upstream
-    "enabled": true,
-=======
     "enabled": false,
->>>>>>> Stashed changes
     "unit": "verre",
     "stock_unit": "verre",
     "category": "bar",
@@ -518,11 +414,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 1,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-=======
     "supplier_lead_time_days": 4,
->>>>>>> Stashed changes
     "stock_state": {
       "stock_on_hand": 5,
       "stock_reserved": 0,
@@ -548,21 +440,12 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 8,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7,
-    "stock_state": {
-      "stock_on_hand": 2000,
-      "stock_reserved": 0,
-      "incoming_qty": 200,
-      "incoming_eta": "2026-04-03",
-=======
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 2000,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
->>>>>>> Stashed changes
       "last_inventory_date": "2026-03-30",
       "inventory_count_method": "manual"
     }
@@ -583,11 +466,7 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 16,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7
-=======
     "supplier_lead_time_days": 4
->>>>>>> Stashed changes
   },
   {
     "sku": "expresso_allonge",
@@ -605,10 +484,6 @@
     },
     "pack_size": 1,
     "consumption_per_sale": 8,
-<<<<<<< Updated upstream
-    "supplier_lead_time_days": 7
-=======
     "supplier_lead_time_days": 4
->>>>>>> Stashed changes
   }
 ]
