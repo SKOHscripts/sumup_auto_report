@@ -397,12 +397,23 @@
     "consumption_per_sale": 0.015,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1.5,
+      "stock_on_hand": 1.46,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
       "last_inventory_date": "2026-03-30",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "last_auto_update": "2026-04-04",
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-03-30",
+          "to_date": "2026-04-04",
+          "consumed_qty": 0.04,
+          "previous_stock_on_hand": 1.5,
+          "new_stock_on_hand": 1.46
+        }
+      ]
     }
   },
   {
