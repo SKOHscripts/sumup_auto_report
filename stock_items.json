@@ -47,7 +47,7 @@
     "consumption_per_sale": 0.33,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 60,
+      "stock_on_hand": 30,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
