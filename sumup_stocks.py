@@ -1655,7 +1655,7 @@ Corentin via sumup_stocks.py
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="all_ca",
+        mailing_list="default",
         logger=log,
         )
 
