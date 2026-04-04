@@ -1028,8 +1028,8 @@
     "consumption_per_sale": 0.2,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Cidre - Cidre verre",
-      "variant": ""
+      "name": "Cidre",
+      "variant": "Cidre verre"
     },
     "stock_state": {
       "stock_on_hand": 0,
