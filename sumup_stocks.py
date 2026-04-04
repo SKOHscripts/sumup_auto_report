@@ -138,6 +138,239 @@ def fmt_num(value, decimals=2, width=6):
         return "N/A"
 
     return f"{float(value):{width}.{decimals}f}"
+
+
+def load_stock_items_raw(path: Path) -> list:
+    if not path.exists():
+        raise FileNotFoundError(f"stock_items.json introuvable : {path}")
+
+    with open(path, "r", encoding="utf-8") as f:
+        items = json.load(f)
+
+    if not isinstance(items, list):
+        raise ValueError("stock_items.json doit contenir une liste JSON")
+
+    return items
+
+
+def prepare_enabled_stock_items(raw_items: list) -> list:
+    enabled = []
+
+    for raw in raw_items:
+        item = dict(raw)
+        item["_raw_ref"] = raw
+        item["stock_sku"] = item.get("stock_sku") or item["sku"]
+        item["stock_label"] = item.get("stock_label") or item.get("label") or item["stock_sku"]
+        item["stock_unit"] = item.get("stock_unit") or item.get("unit") or "piece"
+        item["consumption_per_sale"] = float(
+            item.get("consumption_per_sale", item.get("pack_size", 1) or 1)
+        )
+        item["is_stock_reference"] = bool(item.get("is_stock_reference")) or bool(item.get("stock_state"))
+
+        if not item.get("enabled", True):
+            continue
+
+        enabled.append(item)
+
+    log.info(f"Catalogue unifie : {len(enabled)}/{len(raw_items)} article(s) actif(s) charge(s)")
+
+    return enabled
+
+
+def load_stock_items(path: Path) -> list:
+    return prepare_enabled_stock_items(load_stock_items_raw(path))
+
+
+def save_stock_items(path: Path, raw_items: list):
+    tmp_path = Path(str(path) + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(raw_items, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    tmp_path.replace(path)
+
+
+def get_refresh_start_dt(stock_groups: list, fallback_start_dt: datetime) -> datetime:
+    anchor_dates = []
+
+    for group in stock_groups:
+        ref = group["reference_item"]
+        state = ref.get("stock_state") or {}
+        anchor = state.get("last_auto_update") or state.get("last_inventory_date")
+
+        if not anchor:
+            continue
+
+        try:
+            anchor_date = date.fromisoformat(anchor)
+        except Exception:
+            continue
+
+        anchor_dates.append(datetime.combine(anchor_date, datetime.min.time(), tzinfo=timezone.utc))
+
+    if not anchor_dates:
+        return fallback_start_dt
+
+    return min(fallback_start_dt, min(anchor_dates))
+
+
+def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dict, as_of: date) -> dict:
+    """
+    Agrège l'utilisation des stocks en une seule passe sur les transactions,
+    en fonction d'une date d'ancrage spécifique à chaque stock_sku.
+    Complexité : O(T) où T est le nombre de transactions.
+    """
+    usage_by_stock_sku = defaultdict(float)
+
+    for txn in txns:
+        status = (txn.get("status") or "").upper()
+
+        if status in ("FAILED", "CANCELLED"):
+            continue
+
+        ts = txn.get("timestamp") or txn.get("transaction_date", "")
+        try:
+            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            txn_date = dt.date()
+        except Exception:
+            continue
+
+        if txn_date > as_of:
+            continue
+
+        products = txn.get("products") or []
+
+        # Cas de Fallback
+
+        if not products:
+            summary = txn.get("product_summary", "")
+            sku, item = match_product_to_sku(summary, "", sku_index)
+
+            if sku and item:
+                stock_sku = item["stock_sku"]
+                anchor = anchors_by_sku.get(stock_sku)
+                # On vérifie l'ancre: l'ancre est exclue, le as_of est inclus
+
+                if anchor and txn_date > anchor:
+                    usage = float(item.get("consumption_per_sale", 1) or 1)
+                    usage_by_stock_sku[stock_sku] += usage
+                    log.warning(f"Fallback product_summary utilisé pour {stock_sku} (quantité 1 déduite).")
+
+            continue
+
+        # Cas Nominal
+
+        for p in products:
+            if not isinstance(p, dict):
+                continue
+
+            name = (p.get("name") or "").strip()
+            variant = (p.get("description") or "").strip()
+
+            try:
+                qty = int(p.get("quantity") or 1)
+            except Exception:
+                qty = 1
+
+            sku, item = match_product_to_sku(name, variant, sku_index)
+
+            if not sku or not item:
+                continue
+
+            stock_sku = item["stock_sku"]
+            anchor = anchors_by_sku.get(stock_sku)
+
+            if anchor and txn_date > anchor:
+                usage = qty * float(item.get("consumption_per_sale", 1) or 1)
+                usage_by_stock_sku[stock_sku] += usage
+
+    return usage_by_stock_sku
+
+
+def refresh_stock_state_in_items(stock_items, stock_groups, txns, sku_index, as_of=None):
+    """
+    Met à jour l'état du stock dans le catalogue unifié de manière optimisée.
+    Complexité : O(G + T)
+    """
+    as_of = as_of or date.today()
+    changed = False
+
+    # --- Phase 1: Préparation des ancres ---
+    anchors_by_sku = {}
+    valid_groups = {}  # Pour garder le contexte lors de l'application
+
+    for group in stock_groups:
+        ref = group["reference_item"]
+        state = ref.get("stock_state") or {}
+        anchor_str = state.get("last_auto_update") or state.get("last_inventory_date")
+
+        if not anchor_str:
+            continue
+
+        try:
+            anchor_date = date.fromisoformat(anchor_str)
+        except Exception:
+            continue
+
+        if anchor_date >= as_of:
+            continue
+
+        stock_sku = group["stock_sku"]
+        anchors_by_sku[stock_sku] = anchor_date
+        valid_groups[stock_sku] = (group, anchor_date)
+
+    if not anchors_by_sku:
+        return False
+
+    # --- Phase 2: Agrégation unique (Single-Pass) ---
+    usages = aggregate_stock_usage_since(
+        txns=txns,
+        sku_index=sku_index,
+        anchors_by_sku=anchors_by_sku,
+        as_of=as_of
+    )
+
+    # --- Phase 3: Application et Sauvegarde en mémoire ---
+
+    for stock_sku, (group, anchor_date) in valid_groups.items():
+        usage = usages.get(stock_sku, 0.0)
+
+        if usage <= 0:
+            continue
+
+        ref = group["reference_item"]
+        raw_ref = ref.get("_raw_ref", ref)
+        state = dict(raw_ref.get("stock_state") or {})
+
+        current_stock = float(state.get("stock_on_hand", 0) or 0)
+        new_stock = max(0.0, current_stock - usage)
+
+        history = list(state.get("stock_history") or [])
+        history.append({
+            "type": "auto_refresh",
+            "from_date": anchor_date.isoformat(),
+            "to_date": as_of.isoformat(),
+            "consumed_qty": round(usage, 2),
+            "previous_stock_on_hand": round(current_stock, 2),
+            "new_stock_on_hand": round(new_stock, 2),
+        })
+
+        # Mutabilité sur le dict d'origine
+        state["stock_on_hand"] = round(new_stock, 2)
+        state["last_auto_update"] = as_of.isoformat()
+        state["stock_history"] = history
+
+        raw_ref["stock_state"] = state
+        ref["stock_state"] = dict(state)
+        changed = True
+
+        log.info(
+            f"Maj auto stock {stock_sku}: "
+            f"{current_stock:.2f} -> {new_stock:.2f} "
+            f"(conso {usage:.2f} depuis {anchor_date.isoformat()})"
+        )
+
+    return changed
+
 # ─── 2. CHARGEMENT DES FICHIERS DE CONFIGURATION ─────────────────────────────
 
 
@@ -1435,17 +1668,15 @@ def run_stock_report(
     mock_file: str = None,
     items_file: Path = None,
     state_file: Path = None,
-        ):
+):
     items_file = items_file or BASE_DIR / "stock_items.json"
 
     now = datetime.now(timezone.utc)
     end_dt = now
-    start_dt = end_dt - timedelta(weeks=weeks)
-    start = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    analysis_start_dt = end_dt - timedelta(weeks=weeks)
 
     weeks_range = []
-    cursor = start_dt
+    cursor = analysis_start_dt
     seen = set()
     while cursor <= end_dt:
         lbl = iso_week_label(cursor)
@@ -1458,27 +1689,55 @@ def run_stock_report(
     current_week = iso_week_label(now)
     log.info(f"══ Rapport Stocks SumUp ══ {weeks} semaines | Semaine courante : {current_week}")
 
-    log.info("Étape 1/5 - Chargement du catalogue unifie…")
-    stock_items = load_stock_items(items_file)
+    log.info("Étape 1/6 - Chargement du catalogue unifie…")
+    raw_items = load_stock_items_raw(items_file)
+    stock_items = prepare_enabled_stock_items(raw_items)
     stock_groups = build_stock_groups(stock_items)
     sku_index = build_sku_index(stock_items)
 
     if state_file:
         log.info("Le fichier stock_state.json separe est ignore : stock_state est lu depuis le catalogue unifie.")
 
-    log.info("Étape 2/5 - Recuperation des transactions…")
+    fetch_start_dt = get_refresh_start_dt(stock_groups, analysis_start_dt)
+    fetch_start = fetch_start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    fetch_end = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    log.info(
+        f"Étape 2/6 - Recuperation des transactions… "
+        f"(fenetre analyse={analysis_start_dt.date()}..{end_dt.date()} | "
+        f"fenetre fetch={fetch_start_dt.date()}..{end_dt.date()})"
+    )
     headers_api = {"Authorization": f"Bearer {SUMUP_API_KEY}"}
-    all_txns = fetch_transactions(start, end, mock_file=mock_file)
+    all_txns = fetch_transactions(fetch_start, fetch_end, mock_file=mock_file)
     if not mock_file:
         all_txns = enrich_transactions(all_txns, headers_api)
 
-    log.info("Étape 3/5 - Agregation hebdomadaire…")
+    log.info("Étape 3/6 - Agregation hebdomadaire…")
     weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
     weekly_usage = aggregate_weekly_stock_usage(stock_items, weekly_sales, weeks_range)
     if unmapped:
         log.warning(f"{len(unmapped)} produit(s) SumUp non mappe(s) au catalogue")
 
-    log.info("Étape 4/5 - Calcul des indicateurs centralises…")
+    log.info("Étape 4/6 - Mise a jour automatique des stocks…")
+    stocks_updated = refresh_stock_state_in_items(
+        stock_items=stock_items,  # Gardé si conservé dans la signature locale, sinon à enlever
+        stock_groups=stock_groups,
+        txns=all_txns,
+        sku_index=sku_index,
+        as_of=now.date(),
+    )
+
+    if stocks_updated:
+        save_stock_items(items_file, raw_items)
+        log.info(f"Catalogue mis a jour : {items_file}")
+
+        stock_items = prepare_enabled_stock_items(raw_items)
+        stock_groups = build_stock_groups(stock_items)
+        sku_index = build_sku_index(stock_items)
+    else:
+        log.info("Aucune mise a jour automatique du stock necessaire.")
+
+    log.info("Étape 5/6 - Calcul des indicateurs centralises…")
     all_kpis = []
     for group in stock_groups:
         kpi = compute_indicators(group, weekly_sales, weekly_usage, weeks_range)
@@ -1486,9 +1745,9 @@ def run_stock_report(
         log.info(
             f" {kpi['stock_sku']:30s} | stock={fmt_num(kpi['available_stock'])} "
             f"| vendu={fmt_num(kpi['total_sold'])} | statut={kpi['status']}"
-            )
+        )
 
-    log.info("Étape 5/5 - Generation des fichiers…")
+    log.info("Étape 6/6 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")
     pdf_path = str(BASE_DIR / f"rapport_stocks_{safe_week}.pdf")
     csv_path = str(BASE_DIR / f"rapport_stocks_{safe_week}.csv")
