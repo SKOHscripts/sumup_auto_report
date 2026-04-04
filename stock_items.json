@@ -557,7 +557,7 @@
   },
   {
     "sku": "tisane",
-    "stock_sku": "tisane",
+    "stock_sku": "the",
     "is_stock_reference": true,
     "label": "Tisane",
     "stock_label": "Tisane",
@@ -732,7 +732,7 @@
   },
   {
     "sku": "saucissons_et_saucisses_s_ches_saucissons_mini_sachet",
-    "stock_sku": "saucissons_et_saucisses_s_ches_saucissons_mini_sachet",
+    "stock_sku": "saucissons_mini_sachet",
     "is_stock_reference": true,
     "label": "Saucissons et saucisses sèches - Saucissons mini sachet",
     "stock_label": "Saucissons et saucisses sèches - Saucissons mini sachet",
@@ -1017,8 +1017,8 @@
     "consumption_per_sale": 0.2,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Cidre - Cidre verre",
-      "variant": ""
+      "name": "Cidre",
+      "variant": "Cidre verre"
     },
     "stock_state": {
       "stock_on_hand": 0,
@@ -1405,23 +1405,6 @@
     "pack_size": 1
   },
   {
-    "sku": "-_22",
-    "stock_sku": "inconnu",
-    "is_stock_reference": false,
-    "label": "Inconnu",
-    "stock_label": "Inconnu",
-    "enabled": true,
-    "unit": "piece",
-    "stock_unit": "piece",
-    "category": "a_classer",
-    "sumup_match": {
-      "name": "-",
-      "variant": ""
-    },
-    "consumption_per_sale": 1,
-    "pack_size": 1
-  },
-  {
     "sku": "biere_du_commerce_ambree_25_cl_23",
     "stock_sku": "bieres_commerce_ambree_25cl",
     "is_stock_reference": false,
@@ -1508,7 +1491,7 @@
   },
   {
     "sku": "mini_saucissons_sachet_28",
-    "stock_sku": "saucissons_et_saucisses_s_ches_saucissons_mini_sachet",
+    "stock_sku": "saucissons_mini_sachet",
     "is_stock_reference": false,
     "label": "Mini saucissons sachet",
     "stock_label": "Saucissons et saucisses sèches - Saucissons mini sachet",
