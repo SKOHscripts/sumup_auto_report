@@ -397,23 +397,12 @@
     "consumption_per_sale": 0.015,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1.46,
+      "stock_on_hand": 1.5,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
       "last_inventory_date": "2026-03-30",
-      "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-04",
-      "stock_history": [
-        {
-          "type": "auto_refresh",
-          "from_date": "2026-03-30",
-          "to_date": "2026-04-04",
-          "consumed_qty": 0.04,
-          "previous_stock_on_hand": 1.5,
-          "new_stock_on_hand": 1.46
-        }
-      ]
+      "inventory_count_method": "manual"
     }
   },
   {
@@ -1028,8 +1017,8 @@
     "consumption_per_sale": 0.2,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Cidre",
-      "variant": "Cidre verre"
+      "name": "Cidre - Cidre verre",
+      "variant": ""
     },
     "stock_state": {
       "stock_on_hand": 0,
@@ -1040,5 +1029,600 @@
       "inventory_count_method": "manual",
       "stock_history": []
     }
+  },
+  {
+    "sku": "adhesion_5eur_0",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": false,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhésion",
+      "variant": "5EUR"
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "biere_pression_33_cl_1",
+    "stock_sku": "bieres_pression",
+    "is_stock_reference": false,
+    "label": "Bières pression",
+    "stock_label": "Bières pression",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bière Pression 33 cl",
+      "variant": ""
+    },
+    "consumption_per_sale": 0.33,
+    "pack_size": 1
+  },
+  {
+    "sku": "vin_blanc_2",
+    "stock_sku": "vin_blanc",
+    "is_stock_reference": false,
+    "label": "Vin blanc",
+    "stock_label": "Vin blanc",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin Blanc",
+      "variant": ""
+    },
+    "consumption_per_sale": 0.2,
+    "pack_size": 1
+  },
+  {
+    "sku": "4_bugnes_3",
+    "stock_sku": "bugnes",
+    "is_stock_reference": false,
+    "label": "4 Bugnes",
+    "stock_label": "4 Bugnes",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "4 Bugnes",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "jus_et_sodas_jus_de_pomme_verre_4",
+    "stock_sku": "jus_pomme_verre",
+    "is_stock_reference": false,
+    "label": "Jus de pomme verre",
+    "stock_label": "Jus de pomme verre",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Jus de pomme verre"
+    },
+    "consumption_per_sale": 0.2,
+    "pack_size": 1
+  },
+  {
+    "sku": "olives_vertes_anchois_5",
+    "stock_sku": "olives_vertes_anchois",
+    "is_stock_reference": false,
+    "label": "Olives vertes",
+    "stock_label": "Olives vertes anchois",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Olives vertes, anchois",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "adhesion_5eur_6",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": false,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhésion 5EUR",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "non_adherent_7",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": false,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Non adhérent",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "don_1eur_8",
+    "stock_sku": "don",
+    "is_stock_reference": false,
+    "label": "Don",
+    "stock_label": "Don",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "dons",
+    "sumup_match": {
+      "name": "Don 1EUR",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "adhesion_10eur_9",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": false,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhésion",
+      "variant": "10EUR"
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "vin_rouge_10",
+    "stock_sku": "vin_rouge",
+    "is_stock_reference": false,
+    "label": "Vin rouge",
+    "stock_label": "Vin rouge",
+    "enabled": true,
+    "unit": "L",
+    "stock_unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin Rouge",
+      "variant": ""
+    },
+    "consumption_per_sale": 0.2,
+    "pack_size": 1
+  },
+  {
+    "sku": "jus_de_pomme_verre_11",
+    "stock_sku": "jus_pomme_verre",
+    "is_stock_reference": false,
+    "label": "Jus de pomme, verre",
+    "stock_label": "Jus de pomme verre",
+    "enabled": true,
+    "unit": "verre",
+    "stock_unit": "verre",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus de pomme, verre",
+      "variant": ""
+    },
+    "consumption_per_sale": 0.2,
+    "pack_size": 1
+  },
+  {
+    "sku": "jus_de_pomme_bio_20cl_brick_12",
+    "stock_sku": "jus_pomme_bio_20cl_brique",
+    "is_stock_reference": false,
+    "label": "Jus de pomme bio 20cL",
+    "stock_label": "Jus de pomme bio 20 cL brique",
+    "enabled": true,
+    "unit": "brique",
+    "stock_unit": "brique",
+    "category": "soft",
+    "sumup_match": {
+      "name": "jus de pomme bio 20cl brick",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "sirop_citron_13",
+    "stock_sku": "sirop_citron",
+    "is_stock_reference": false,
+    "label": "Sirop citron",
+    "stock_label": "Sirop citron",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Sirop",
+      "variant": "Citron"
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "biere_du_commerce_25_cl_14",
+    "stock_sku": "bieres_commerce_blonde_25cl",
+    "is_stock_reference": false,
+    "label": "Bières commerce blonde 25 cL",
+    "stock_label": "Bières commerce blonde 25 cL",
+    "enabled": true,
+    "unit": "bouteille",
+    "stock_unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bière du commerce 25 cl",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "saucissons_et_saucisses_seches_saucisson_15",
+    "stock_sku": "saucissons_et_saucisses_s_ches_saucisse",
+    "is_stock_reference": false,
+    "label": "Saucisse",
+    "stock_label": "Saucissons et saucisses sèches - Saucisse",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Saucissons et saucisses sèches",
+      "variant": "Saucisson"
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "orangina_16",
+    "stock_sku": "jus_sodas_orangina",
+    "is_stock_reference": false,
+    "label": "Orangina",
+    "stock_label": "Jus & Sodas - Orangina",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Orangina",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "don_17",
+    "stock_sku": "don",
+    "is_stock_reference": false,
+    "label": "Don",
+    "stock_label": "Don",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "dons",
+    "sumup_match": {
+      "name": "Don",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "sirop_menthe_18",
+    "stock_sku": "sirop_menthe",
+    "is_stock_reference": false,
+    "label": "Sirop menthe",
+    "stock_label": "Sirop menthe",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Sirop",
+      "variant": "Menthe"
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "adhesion_10eur_19",
+    "stock_sku": "adhesion_annuelle",
+    "is_stock_reference": false,
+    "label": "Adhésions",
+    "stock_label": "Adhésions",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "adhesions",
+    "sumup_match": {
+      "name": "Adhésion 10EUR",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "lipton_ice_tea_20",
+    "stock_sku": "lipton_ice_tea",
+    "is_stock_reference": false,
+    "label": "Lipton Ice Tea",
+    "stock_label": "Lipton Ice Tea",
+    "enabled": true,
+    "unit": "bouteille",
+    "stock_unit": "bouteille",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Lipton Ice tea",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "biere_pomme_21",
+    "stock_sku": "bi_res_pomme",
+    "is_stock_reference": false,
+    "label": "Bière Pomme",
+    "stock_label": "Bières - Pomme",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bière Pomme",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "-_22",
+    "stock_sku": "inconnu",
+    "is_stock_reference": false,
+    "label": "Inconnu",
+    "stock_label": "Inconnu",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "-",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "biere_du_commerce_ambree_25_cl_23",
+    "stock_sku": "bieres_commerce_ambree_25cl",
+    "is_stock_reference": false,
+    "label": "Bières commerce ambrée 25 cL",
+    "stock_label": "Bières commerce ambrée 25 cL",
+    "enabled": true,
+    "unit": "bouteille",
+    "stock_unit": "verre",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bière du commerce ambrée 25 cl",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "coca_24",
+    "stock_sku": "jus_sodas_coca_cola_classique",
+    "is_stock_reference": false,
+    "label": "Coca Cola",
+    "stock_label": "Jus & Sodas - Coca Cola classique",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Coca",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "coca_sans_sucre_25",
+    "stock_sku": "jus_sodas_coca_cola_zero",
+    "is_stock_reference": false,
+    "label": "Coca Cola sans sucre",
+    "stock_label": "Jus & Sodas - Coca Cola Zero",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Coca sans sucre",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "jus_divers_et_multifruits_26",
+    "stock_sku": "jus_divers",
+    "is_stock_reference": false,
+    "label": "Jus divers",
+    "stock_label": "Jus divers",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus divers et multifruits",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "saucisson_ficelle_unite_27",
+    "stock_sku": "saucisson_ficelle",
+    "is_stock_reference": false,
+    "label": "Saucisson ficelle",
+    "stock_label": "Saucisson ficelle",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Saucisson ficelle unité",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "mini_saucissons_sachet_28",
+    "stock_sku": "saucissons_et_saucisses_s_ches_saucissons_mini_sachet",
+    "is_stock_reference": false,
+    "label": "Mini saucissons sachet",
+    "stock_label": "Saucissons et saucisses sèches - Saucissons mini sachet",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Mini saucissons sachet",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "tartinade_29",
+    "stock_sku": "tartinade",
+    "is_stock_reference": false,
+    "label": "Tartinade",
+    "stock_label": "Tartinade",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Tartinade",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "oasis_30",
+    "stock_sku": "jus_sodas_oasis",
+    "is_stock_reference": false,
+    "label": "Oasis",
+    "stock_label": "Jus & Sodas - Oasis",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Oasis",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "jus_d_orange_bio_20_cl_brick_31",
+    "stock_sku": "jus_sodas_jus_de_orange_bio_20_cl_brique",
+    "is_stock_reference": false,
+    "label": "Jus d'orange bio",
+    "stock_label": "Jus & Sodas - Jus de orange bio 20 cL brique",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "jus d'orange bio 20 cl brick",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "montant_personnalise_32",
+    "stock_sku": "don",
+    "is_stock_reference": false,
+    "label": "Montant personnalisé",
+    "stock_label": "Montant personnalisé",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "dons",
+    "sumup_match": {
+      "name": "Montant personnalisé",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "biere_pomme_33",
+    "stock_sku": "bi_res_pomme",
+    "is_stock_reference": false,
+    "label": "Bière Pomme",
+    "stock_label": "Bières - Pomme",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bière Pomme",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "sku": "brique_jus_de_pomme_bio_20cl_34",
+    "stock_sku": "jus_pomme_bio_20cl_brique",
+    "is_stock_reference": false,
+    "label": "Jus de pomme bio 20cL",
+    "stock_label": "Jus de pomme bio 20 cL brique",
+    "enabled": true,
+    "unit": "brique",
+    "stock_unit": "brique",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Brique jus de pomme bio 20cl",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
   }
-]
+    ]
