@@ -136,7 +136,7 @@
       "variant": "Jus de pomme verre"
     },
     "pack_size": 1,
-    "consumption_per_sale": 1,
+    "consumption_per_sale": 0.2,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 18,
@@ -204,7 +204,7 @@
     "label": "Vin rouge",
     "stock_label": "Vin rouge",
     "enabled": true,
-    "unit": "verre",
+    "unit": "L",
     "stock_unit": "verre",
     "category": "bar",
     "sumup_match": {
@@ -212,7 +212,7 @@
       "variant": "Rouge"
     },
     "pack_size": 1,
-    "consumption_per_sale": 1,
+    "consumption_per_sale": 0.2,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 15,
@@ -334,7 +334,7 @@
     "label": "Thé",
     "stock_label": "Thé",
     "enabled": true,
-    "unit": "verre",
+    "unit": "sachet",
     "stock_unit": "verre",
     "category": "soft",
     "sumup_match": {
@@ -386,7 +386,7 @@
     "label": "Sirop grenadine",
     "stock_label": "Sirop grenadine",
     "enabled": true,
-    "unit": "verre",
+    "unit": "L",
     "stock_unit": "verre",
     "category": "soft",
     "sumup_match": {
@@ -394,10 +394,10 @@
       "variant": "Grenadine"
     },
     "pack_size": 1,
-    "consumption_per_sale": 1,
+    "consumption_per_sale": 0.015,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 4,
+      "stock_on_hand": 1.5,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
@@ -412,7 +412,7 @@
     "label": "Bières commerce blonde 25 cL",
     "stock_label": "Bières commerce blonde 25 cL",
     "enabled": true,
-    "unit": "verre",
+    "unit": "bouteille",
     "stock_unit": "verre",
     "category": "bar",
     "sumup_match": {
@@ -438,7 +438,7 @@
     "label": "Bières commerce ambrée 25 cL",
     "stock_label": "Bières commerce ambrée 25 cL",
     "enabled": true,
-    "unit": "verre",
+    "unit": "bouteille",
     "stock_unit": "verre",
     "category": "bar",
     "sumup_match": {
@@ -562,7 +562,7 @@
     "label": "Tisane",
     "stock_label": "Tisane",
     "enabled": true,
-    "unit": "piece",
+    "unit": "sachet",
     "stock_unit": "piece",
     "consumption_per_sale": 1,
     "category": "a_classer",
@@ -592,8 +592,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Bières - Pomme",
-      "variant": ""
+      "name": "Bières",
+      "variant": "Pomme"
     },
     "stock_state": {
       "stock_on_hand": 29,
@@ -617,8 +617,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Jus & Sodas - Oasis",
-      "variant": ""
+      "name": "Jus & Sodas",
+      "variant": "Oasis"
     },
     "stock_state": {
       "stock_on_hand": 22,
@@ -667,8 +667,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Jus & Sodas - Jus de orange bio 20 cL brique",
-      "variant": ""
+      "name": "Jus & Sodas",
+      "variant": "Jus de orange bio 20 cL brique"
     },
     "stock_state": {
       "stock_on_hand": 19,
@@ -717,8 +717,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Jus & Sodas - Coca Cola classique",
-      "variant": ""
+      "name": "Jus & Sodas",
+      "variant": "Coca Cola classique"
     },
     "stock_state": {
       "stock_on_hand": 14,
@@ -742,8 +742,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Saucissons et saucisses sèches - Saucissons mini sachet",
-      "variant": ""
+      "name": "Saucissons et saucisses sèches",
+      "variant": "Saucissons mini sachet"
     },
     "stock_state": {
       "stock_on_hand": 14,
@@ -767,8 +767,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Jus & Sodas - Orangina",
-      "variant": ""
+      "name": "Jus & Sodas",
+      "variant": "Orangina"
     },
     "stock_state": {
       "stock_on_hand": 12,
@@ -812,13 +812,13 @@
     "label": "Cidre - Cidre bouteille",
     "stock_label": "Cidre - Cidre bouteille",
     "enabled": true,
-    "unit": "piece",
+    "unit": "L",
     "stock_unit": "piece",
-    "consumption_per_sale": 1,
+    "consumption_per_sale": 0.2,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Cidre - Cidre bouteille",
-      "variant": ""
+      "name": "Cidre",
+      "variant": "Cidre bouteille"
     },
     "stock_state": {
       "stock_on_hand": 6,
@@ -842,8 +842,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Jus & Sodas - Coca Cola Zero",
-      "variant": ""
+      "name": "Jus & Sodas",
+      "variant": "Coca Cola Zero"
     },
     "stock_state": {
       "stock_on_hand": 4,
@@ -867,8 +867,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Saucissons et saucisses sèches - Saucisse",
-      "variant": ""
+      "name": "Saucissons et saucisses sèches",
+      "variant": "Saucisse"
     },
     "stock_state": {
       "stock_on_hand": 3,
@@ -992,8 +992,8 @@
     "consumption_per_sale": 1,
     "category": "a_classer",
     "sumup_match": {
-      "name": "Bières - Artisanale 33 cL",
-      "variant": ""
+      "name": "Bières",
+      "variant": "Artisanale 33 cL"
     },
     "stock_state": {
       "stock_on_hand": 0,
@@ -1012,9 +1012,9 @@
     "label": "Cidre - Cidre verre",
     "stock_label": "Cidre - Cidre verre",
     "enabled": true,
-    "unit": "piece",
+    "unit": "L",
     "stock_unit": "piece",
-    "consumption_per_sale": 1,
+    "consumption_per_sale": 0.2,
     "category": "a_classer",
     "sumup_match": {
       "name": "Cidre - Cidre verre",
