@@ -143,7 +143,7 @@
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -203,7 +203,7 @@
     "is_stock_reference": true,
     "label": "Vin rouge",
     "stock_label": "Vin rouge",
-    "enabled": false,
+    "enabled": true,
     "unit": "verre",
     "stock_unit": "verre",
     "category": "bar",
@@ -215,11 +215,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 10,
+      "stock_on_hand": 15,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -229,7 +229,7 @@
     "is_stock_reference": true,
     "label": "Jus de pomme bio 20 cL brique",
     "stock_label": "Jus de pomme bio 20 cL brique",
-    "enabled": false,
+    "enabled": true,
     "unit": "brique",
     "stock_unit": "brique",
     "category": "soft",
@@ -241,11 +241,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 8,
+      "stock_on_hand": 3,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -255,7 +255,7 @@
     "is_stock_reference": true,
     "label": "Biscuit sucré",
     "stock_label": "Biscuit sucré",
-    "enabled": false,
+    "enabled": true,
     "unit": "piece",
     "stock_unit": "piece",
     "category": "snacking",
@@ -267,11 +267,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 12,
+      "stock_on_hand": 27,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -281,7 +281,7 @@
     "is_stock_reference": true,
     "label": "Saucissons mini sachet",
     "stock_label": "Saucissons mini sachet",
-    "enabled": false,
+    "enabled": true,
     "unit": "sachet",
     "stock_unit": "sachet",
     "category": "snacking",
@@ -307,7 +307,7 @@
     "is_stock_reference": true,
     "label": "Eau gazeuse",
     "stock_label": "Eau gazeuse",
-    "enabled": false,
+    "enabled": true,
     "unit": "bouteille",
     "stock_unit": "bouteille",
     "category": "soft",
@@ -319,11 +319,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 6,
+      "stock_on_hand": 25,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -333,7 +333,7 @@
     "is_stock_reference": true,
     "label": "Thé",
     "stock_label": "Thé",
-    "enabled": false,
+    "enabled": true,
     "unit": "verre",
     "stock_unit": "verre",
     "category": "soft",
@@ -345,11 +345,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 6,
+      "stock_on_hand": 42,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -359,7 +359,7 @@
     "is_stock_reference": true,
     "label": "Lipton Ice Tea",
     "stock_label": "Lipton Ice Tea",
-    "enabled": false,
+    "enabled": true,
     "unit": "bouteille",
     "stock_unit": "bouteille",
     "category": "soft",
@@ -371,11 +371,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 5,
+      "stock_on_hand": 16,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -385,7 +385,7 @@
     "is_stock_reference": true,
     "label": "Sirop grenadine",
     "stock_label": "Sirop grenadine",
-    "enabled": false,
+    "enabled": true,
     "unit": "verre",
     "stock_unit": "verre",
     "category": "soft",
@@ -411,7 +411,7 @@
     "is_stock_reference": true,
     "label": "Bières commerce blonde 25 cL",
     "stock_label": "Bières commerce blonde 25 cL",
-    "enabled": false,
+    "enabled": true,
     "unit": "verre",
     "stock_unit": "verre",
     "category": "bar",
@@ -423,11 +423,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 7,
+      "stock_on_hand": 14,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -437,7 +437,7 @@
     "is_stock_reference": true,
     "label": "Bières commerce ambrée 25 cL",
     "stock_label": "Bières commerce ambrée 25 cL",
-    "enabled": false,
+    "enabled": true,
     "unit": "verre",
     "stock_unit": "verre",
     "category": "bar",
@@ -449,11 +449,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 5,
+      "stock_on_hand": 8,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-05",
       "inventory_count_method": "manual"
     }
   },
@@ -529,5 +529,505 @@
     "pack_size": 1,
     "consumption_per_sale": 8,
     "supplier_lead_time_days": 4
+  },
+  {
+    "sku": "olives_vertes_anchois",
+    "stock_sku": "olives_vertes_anchois",
+    "is_stock_reference": true,
+    "label": "Olives vertes anchois",
+    "stock_label": "Olives vertes anchois",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Olives vertes anchois",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 95,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "tisane",
+    "stock_sku": "tisane",
+    "is_stock_reference": true,
+    "label": "Tisane",
+    "stock_label": "Tisane",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Tisane",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 54,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "bi_res_pomme",
+    "stock_sku": "bi_res_pomme",
+    "is_stock_reference": true,
+    "label": "Bières - Pomme",
+    "stock_label": "Bières - Pomme",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Bières - Pomme",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 29,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "jus_sodas_oasis",
+    "stock_sku": "jus_sodas_oasis",
+    "is_stock_reference": true,
+    "label": "Jus & Sodas - Oasis",
+    "stock_label": "Jus & Sodas - Oasis",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Jus & Sodas - Oasis",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 22,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "eau_plate_btl_50_cl",
+    "stock_sku": "eau_plate_btl_50_cl",
+    "is_stock_reference": true,
+    "label": "Eau plate btl 50 cl",
+    "stock_label": "Eau plate btl 50 cl",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Eau plate btl 50 cl",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 19,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "jus_sodas_jus_de_orange_bio_20_cl_brique",
+    "stock_sku": "jus_sodas_jus_de_orange_bio_20_cl_brique",
+    "is_stock_reference": true,
+    "label": "Jus & Sodas - Jus de orange bio 20 cL brique",
+    "stock_label": "Jus & Sodas - Jus de orange bio 20 cL brique",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Jus & Sodas - Jus de orange bio 20 cL brique",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 19,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "chocolat_chaud",
+    "stock_sku": "chocolat_chaud",
+    "is_stock_reference": true,
+    "label": "Chocolat chaud",
+    "stock_label": "Chocolat chaud",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Chocolat chaud",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 15,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "jus_sodas_coca_cola_classique",
+    "stock_sku": "jus_sodas_coca_cola_classique",
+    "is_stock_reference": true,
+    "label": "Jus & Sodas - Coca Cola classique",
+    "stock_label": "Jus & Sodas - Coca Cola classique",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Jus & Sodas - Coca Cola classique",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 14,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "saucissons_et_saucisses_s_ches_saucissons_mini_sachet",
+    "stock_sku": "saucissons_et_saucisses_s_ches_saucissons_mini_sachet",
+    "is_stock_reference": true,
+    "label": "Saucissons et saucisses sèches - Saucissons mini sachet",
+    "stock_label": "Saucissons et saucisses sèches - Saucissons mini sachet",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Saucissons et saucisses sèches - Saucissons mini sachet",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 14,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "jus_sodas_orangina",
+    "stock_sku": "jus_sodas_orangina",
+    "is_stock_reference": true,
+    "label": "Jus & Sodas - Orangina",
+    "stock_label": "Jus & Sodas - Orangina",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Jus & Sodas - Orangina",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 12,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "fromage_ap_ritif",
+    "stock_sku": "fromage_ap_ritif",
+    "is_stock_reference": true,
+    "label": "Fromage apéritif",
+    "stock_label": "Fromage apéritif",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Fromage apéritif",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 7,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "cidre_cidre_bouteille",
+    "stock_sku": "cidre_cidre_bouteille",
+    "is_stock_reference": true,
+    "label": "Cidre - Cidre bouteille",
+    "stock_label": "Cidre - Cidre bouteille",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Cidre - Cidre bouteille",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 6,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "jus_sodas_coca_cola_zero",
+    "stock_sku": "jus_sodas_coca_cola_zero",
+    "is_stock_reference": true,
+    "label": "Jus & Sodas - Coca Cola Zero",
+    "stock_label": "Jus & Sodas - Coca Cola Zero",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Jus & Sodas - Coca Cola Zero",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 4,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "saucissons_et_saucisses_s_ches_saucisse",
+    "stock_sku": "saucissons_et_saucisses_s_ches_saucisse",
+    "is_stock_reference": true,
+    "label": "Saucissons et saucisses sèches - Saucisse",
+    "stock_label": "Saucissons et saucisses sèches - Saucisse",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Saucissons et saucisses sèches - Saucisse",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 3,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "pop_corn_sal",
+    "stock_sku": "pop_corn_sal",
+    "is_stock_reference": true,
+    "label": "Pop corn salé",
+    "stock_label": "Pop corn salé",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Pop corn salé",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 3,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "schweppes_agrumes",
+    "stock_sku": "schweppes_agrumes",
+    "is_stock_reference": true,
+    "label": "Schweppes agrumes",
+    "stock_label": "Schweppes agrumes",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Schweppes agrumes",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 2,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "sachet_cacahuetes",
+    "stock_sku": "sachet_cacahuetes",
+    "is_stock_reference": true,
+    "label": "Sachet cacahuetes",
+    "stock_label": "Sachet cacahuetes",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Sachet cacahuetes",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 1,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "pate_en_croute",
+    "stock_sku": "pate_en_croute",
+    "is_stock_reference": true,
+    "label": "Pate en croute",
+    "stock_label": "Pate en croute",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Pate en croute",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 1,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "bi_res_artisanale_33_cl",
+    "stock_sku": "bi_res_artisanale_33_cl",
+    "is_stock_reference": true,
+    "label": "Bières - Artisanale 33 cL",
+    "stock_label": "Bières - Artisanale 33 cL",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Bières - Artisanale 33 cL",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 0,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "sku": "cidre_cidre_verre",
+    "stock_sku": "cidre_cidre_verre",
+    "is_stock_reference": true,
+    "label": "Cidre - Cidre verre",
+    "stock_label": "Cidre - Cidre verre",
+    "enabled": true,
+    "unit": "piece",
+    "stock_unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "a_classer",
+    "sumup_match": {
+      "name": "Cidre - Cidre verre",
+      "variant": ""
+    },
+    "stock_state": {
+      "stock_on_hand": 0,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-05",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
   }
 ]
