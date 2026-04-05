@@ -70,7 +70,7 @@ def _check_fpdf_version():
 
 _check_fpdf_version()
 
-DEFAULT_WEEKS = 8
+DEFAULT_WEEKS = 4
 PROJECTION_WEEKS = 4
 
 logging.basicConfig(
@@ -1655,7 +1655,7 @@ Corentin via sumup_stocks.py
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="default",
+        mailing_list="all_ca",
         logger=log,
         )
 
