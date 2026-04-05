@@ -20,7 +20,7 @@ fi
 git pull --rebase -X theirs origin master
 
 # 3. Exécution du script Python
-/usr/bin/python3 "$DIR/sumup_stocks.py" >> "$DIR/sumup_stocks.log" 2>&1
+/usr/bin/python3 "$DIR/sumup_stocks.py --weeks 4" >> "$DIR/sumup_stocks.log" 2>&1
 
 # 4. On commite et on pousse la nouvelle version fraîchement calculée pour ne rien perdre
 if [ -n "$(git status --porcelain stock_items.json)" ]; then
