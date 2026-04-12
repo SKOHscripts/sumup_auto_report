@@ -127,7 +127,7 @@ def week_start(year: int, week: int) -> date:
 
 def format_sumup_display(item: dict) -> str:
     sm = item.get("sumup_match", {})
-    name = (sm.get("name") or item.get("label") or item.get("sku") or "").strip()
+    name = (sm.get("name") or item.get("label") or item.get("stock_sku") or "").strip()
     variant = (sm.get("variant") or "").strip()
 
     return f"{name} ({variant})" if variant else name
@@ -446,7 +446,7 @@ def aggregate_weekly_stock_usage(stock_items: list, weekly_sales: dict, weeks_ra
         factor = float(item.get("consumption_per_sale", 1) or 1)
 
         for week_label in weeks_range:
-            sold_qty = weekly_sales.get(item["sku"], {}).get(week_label, 0)
+            sold_qty = weekly_sales.get(item["stock_sku"], {}).get(week_label, 0)
 
             if sold_qty:
                 weekly_usage[stock_sku][week_label] += sold_qty * factor
@@ -563,20 +563,20 @@ def match_product_to_sku(name: str, variant: str, sku_index: dict) -> tuple:
     key = (norm_name, norm_variant)
 
     if key in sku_index:
-        return sku_index[key]["sku"], sku_index[key]
+        return sku_index[key]["stock_sku"], sku_index[key]
 
     # Correspondance name seul si la config n'a pas de variant
     key_no_variant = (norm_name, "")
 
     if key_no_variant in sku_index:
-        return sku_index[key_no_variant]["sku"], sku_index[key_no_variant]
+        return sku_index[key_no_variant]["stock_sku"], sku_index[key_no_variant]
 
     # Correspondance partielle : le nom SumUp contient le nom config
 
     for (idx_name, idx_variant), item in sku_index.items():
         if idx_name and idx_name in norm_name:
             if not idx_variant or idx_variant in norm_variant:
-                return item["sku"], item
+                return item["stock_sku"], item
 
     return None, None
 
@@ -765,14 +765,14 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
     linked_items = []
 
     for item in items:
-        own_sales_series = [weekly_sales.get(item["sku"], {}).get(w, 0) for w in weeks_range]
+        own_sales_series = [weekly_sales.get(item["stock_sku"], {}).get(w, 0) for w in weeks_range]
         sm = item.get("sumup_match", {})
-        sm_name = (sm.get("name") or item.get("label") or item["sku"]).strip()
+        sm_name = (sm.get("name") or item.get("label") or item["stock_sku"]).strip()
         sm_variant = (sm.get("variant") or "").strip()
 
         linked_items.append({
-            "sku": item["sku"],
-            "label": item.get("label", item["sku"]),
+            "stock_sku": item["stock_sku"],
+            "label": item.get("label", item["stock_sku"]),
             "sumup_name": sm_name,
             "sumup_variant": sm_variant,
             "sumup_display": format_sumup_display(item),
@@ -783,7 +783,7 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
             })
 
     return {
-        "sku": stock_sku,
+        "stock_sku": stock_sku,
         "stock_sku": stock_sku,
         "label": ref.get("stock_label") or ref.get("label", stock_sku),
         "category": ref.get("category", ""),
@@ -1342,11 +1342,12 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
     # Tableau statuts
     pdf.section_title("Etat des articles", PALETTE["accent"])
     # col_sku = pw * 0.22
-    col_lbl = pw * 0.42
-    col_stk = pw * 0.12
-    col_cov = pw * 0.12
+    col_lbl = pw * 0.32
+    col_unit = pw * 0.1
+    col_stk = pw * 0.1
+    col_cov = pw * 0.1
     col_cmd = pw * 0.12
-    col_sta = pw * 0.12
+    col_sta = pw * 0.22
     head_h = 7.0
     row_h = 6.5
 
@@ -1361,6 +1362,7 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
     pdf.set_draw_color(*PALETTE["divider"])
     # pdf.cell(col_sku, head_h, "SKU", border=0, align="L")
     pdf.cell(col_lbl, head_h, "Libelle", border=0, align="L")
+    pdf.cell(col_unit, head_h, "Unité", border=0, align="R")
     pdf.cell(col_stk, head_h, "Stock dispo", border=0, align="R")
     pdf.cell(col_cov, head_h, "Couverture", border=0, align="R")
     pdf.cell(col_cmd, head_h, "A commander", border=0, align="R")
@@ -1384,12 +1386,13 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
         status_color = pdf._status_color(status)
         cov = f"{kpi['coverage_weeks']:.1f} sem." if kpi['coverage_weeks'] is not None else "N/A"
 
-        pdf.set_font("Helvetica", "", 7.5)
+        pdf.set_font("Helvetica", "", 6.5)
         pdf.set_text_color(*PALETTE["text_mid"])
-        # pdf.cell(col_sku, row_h, pdf._safe(kpi["sku"], 20), border="B", align="L")
+        # pdf.cell(col_sku, row_h, pdf._safe(kpi["stock_sku"], 20), border="B", align="L")
         pdf.set_text_color(*PALETTE["text_dark"])
-        pdf.cell(col_lbl, row_h, pdf._safe(kpi["label"], 40), border="B", align="L")
-        pdf.cell(col_stk, row_h, str(kpi["available_stock"]), border="B", align="R")
+        pdf.cell(col_lbl, row_h, pdf._safe(kpi["label"], 70), border="B", align="L")
+        pdf.cell(col_unit, row_h, f"{str(kpi["unit"])}", border="B", align="R")
+        pdf.cell(col_stk, row_h, f"{str(kpi["available_stock"])}", border="B", align="R")
         pdf.cell(col_cov, row_h, cov, border="B", align="R")
         pdf.cell(col_cmd, row_h, str(kpi["qty_to_order"]), border="B", align="R")
         pdf.set_font("Helvetica", "B", 7.5)
@@ -1410,10 +1413,10 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     sm = kpi["sumup_match"]
     variant_str = sm.get("variant") or "(sans variante)"
 
-    pdf.section_title(f"Stock : {kpi['label']} [{kpi['stock_sku']}]")
+    pdf.section_title(f"Stock : {kpi['label']}")
 
     linked_text = ", ".join(
-        it.get("sumup_display") or it.get("label") or it.get("sku")
+        it.get("sumup_display") or it.get("label") or it.get("stock_sku")
 
         for it in kpi.get("linked_items", [])
         )
@@ -1607,7 +1610,7 @@ def send_stock_email(
 
         for k in to_order:
             order_lines += (
-                f"  - {k['label']} [{k['sku']}] : {k['qty_to_order']} {k['unit']}(s)  "
+                f"  - {k['label']} [{k['stock_sku']}] : {k['qty_to_order']} {k['unit']}(s)  "
                 f"- Statut : {k['status']}\n"
                 )
     else:

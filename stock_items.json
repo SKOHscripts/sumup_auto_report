@@ -36,7 +36,6 @@
     "stock_sku": "adhesion_annuelle"
   },
   {
-    "sku": "bieres_pression_33cl",
     "stock_sku": "bieres_pression",
     "is_stock_reference": true,
     "label": "Bières pression 33 cL",
@@ -170,7 +169,6 @@
     "stock_sku": "vin_blanc"
   },
   {
-    "sku": "kir",
     "stock_sku": "vin_blanc",
     "is_stock_reference": false,
     "label": "Kir",
@@ -409,7 +407,6 @@
     }
   },
   {
-    "sku": "expresso",
     "stock_sku": "cafe_espresso",
     "is_stock_reference": true,
     "label": "Expresso",
@@ -436,7 +433,6 @@
     }
   },
   {
-    "sku": "expresso_double",
     "stock_sku": "cafe_espresso",
     "is_stock_reference": false,
     "label": "Expresso Double",
@@ -453,7 +449,6 @@
     "supplier_lead_time_days": 4
   },
   {
-    "sku": "expresso_allonge",
     "stock_sku": "cafe_espresso",
     "is_stock_reference": false,
     "label": "Expresso allongé",
@@ -488,11 +483,20 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-05",
+          "to_date": "2026-04-12",
+          "consumed_qty": 10.0,
+          "previous_stock_on_hand": 95.0,
+          "new_stock_on_hand": 85.0
+        }
+      ],
+      "last_auto_update": "2026-04-12"
     }
   },
   {
-    "sku": "tisane",
     "stock_sku": "the",
     "is_stock_reference": false,
     "label": "Tisane",
@@ -524,7 +528,17 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-05",
+          "to_date": "2026-04-12",
+          "consumed_qty": 7.0,
+          "previous_stock_on_hand": 29.0,
+          "new_stock_on_hand": 22.0
+        }
+      ],
+      "last_auto_update": "2026-04-12"
     }
   },
   {
@@ -678,7 +692,17 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-05",
+          "to_date": "2026-04-12",
+          "consumed_qty": 3.0,
+          "previous_stock_on_hand": 14.0,
+          "new_stock_on_hand": 11.0
+        }
+      ],
+      "last_auto_update": "2026-04-12"
     }
   },
   {
@@ -716,17 +740,26 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 7,
+      "stock_on_hand": 6.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-05",
+          "to_date": "2026-04-12",
+          "consumed_qty": 1.0,
+          "previous_stock_on_hand": 7.0,
+          "new_stock_on_hand": 6.0
+        }
+      ],
+      "last_auto_update": "2026-04-12"
     }
   },
   {
-    "sku": "cidre_cidre_bouteille",
     "stock_sku": "cidre",
     "is_stock_reference": true,
     "label": "Cidre - Cidre bouteille",
@@ -771,7 +804,6 @@
     }
   },
   {
-    "sku": "saucissons_et_saucisses_s_ches_saucisse",
     "stock_sku": "saucisse",
     "is_stock_reference": true,
     "label": "Saucissons et saucisses sèches - Saucisse",
@@ -812,7 +844,17 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-05",
+          "to_date": "2026-04-12",
+          "consumed_qty": 1.0,
+          "previous_stock_on_hand": 3.0,
+          "new_stock_on_hand": 2.0
+        }
+      ],
+      "last_auto_update": "2026-04-12"
     }
   },
   {
@@ -856,7 +898,17 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-05",
+          "to_date": "2026-04-12",
+          "consumed_qty": 1.0,
+          "previous_stock_on_hand": 1.0,
+          "new_stock_on_hand": 0.0
+        }
+      ],
+      "last_auto_update": "2026-04-12"
     }
   },
   {
@@ -882,7 +934,6 @@
     }
   },
   {
-    "sku": "biere_artisanale",
     "stock_sku": "bieres_pression",
     "is_stock_reference": false,
     "label": "Bières - Artisanale 33 cL",
@@ -896,7 +947,6 @@
     }
   },
   {
-    "sku": "cidre_cidre_verre",
     "stock_sku": "cidre",
     "is_stock_reference": false,
     "label": "Cidre - Cidre verre",
@@ -910,7 +960,6 @@
     }
   },
   {
-    "sku": "adhesion_5eur_0",
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
@@ -924,7 +973,6 @@
     "consumption_per_sale": 1
   },
   {
-    "sku": "biere_pression_33_cl_1",
     "stock_sku": "bieres_pression",
     "is_stock_reference": false,
     "label": "Bières pression",
@@ -939,7 +987,6 @@
     "pack_size": 1
   },
   {
-    "sku": "vin_blanc_2",
     "stock_sku": "vin_blanc",
     "is_stock_reference": false,
     "label": "Vin blanc",
@@ -954,7 +1001,6 @@
     "pack_size": 1
   },
   {
-    "sku": "4_bugnes_3",
     "stock_sku": "bugnes",
     "is_stock_reference": true,
     "label": "4 Bugnes",
@@ -979,7 +1025,6 @@
     }
   },
   {
-    "sku": "jus_et_sodas_jus_de_pomme_verre_4",
     "stock_sku": "jus_pomme_verre",
     "is_stock_reference": false,
     "label": "Jus de pomme verre",
@@ -994,7 +1039,6 @@
     "pack_size": 1
   },
   {
-    "sku": "olives_vertes_anchois_5",
     "stock_sku": "olives_vertes_anchois",
     "is_stock_reference": false,
     "label": "Olives vertes",
@@ -1010,7 +1054,6 @@
     "pack_size": 1
   },
   {
-    "sku": "adhesion_5eur_6",
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
@@ -1024,7 +1067,6 @@
     "consumption_per_sale": 1
   },
   {
-    "sku": "non_adherent_7",
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
@@ -1038,7 +1080,6 @@
     "consumption_per_sale": 1
   },
   {
-    "sku": "don_1eur_8",
     "stock_sku": "don",
     "is_stock_reference": false,
     "label": "Don",
@@ -1053,7 +1094,6 @@
     "pack_size": 1
   },
   {
-    "sku": "adhesion_10eur_9",
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
@@ -1067,7 +1107,6 @@
     "consumption_per_sale": 1
   },
   {
-    "sku": "vin_rouge_10",
     "stock_sku": "vin_rouge",
     "is_stock_reference": false,
     "label": "Vin rouge",
@@ -1082,7 +1121,6 @@
     "pack_size": 1
   },
   {
-    "sku": "jus_de_pomme_verre_11",
     "stock_sku": "jus_pomme_verre",
     "is_stock_reference": false,
     "label": "Jus de pomme, verre",
@@ -1098,7 +1136,6 @@
     "pack_size": 1
   },
   {
-    "sku": "jus_de_pomme_bio_20cl_brick_12",
     "stock_sku": "jus_pomme_bio_20cl_brique",
     "is_stock_reference": false,
     "label": "Jus de pomme bio 20cL",
@@ -1114,7 +1151,6 @@
     "pack_size": 1
   },
   {
-    "sku": "sirop_citron_13",
     "stock_sku": "sirop_citron",
     "is_stock_reference": true,
     "label": "Sirop citron",
@@ -1139,7 +1175,6 @@
     }
   },
   {
-    "sku": "biere_du_commerce_25_cl_14",
     "stock_sku": "bieres_commerce_blonde_25cl",
     "is_stock_reference": false,
     "label": "Bières commerce blonde 25 cL",
@@ -1155,7 +1190,6 @@
     "pack_size": 1
   },
   {
-    "sku": "saucissons_et_saucisses_seches_saucisson_15",
     "stock_sku": "saucisse",
     "is_stock_reference": false,
     "label": "Saucisse",
@@ -1171,7 +1205,6 @@
     "pack_size": 1
   },
   {
-    "sku": "orangina_16",
     "stock_sku": "jus_sodas_orangina",
     "is_stock_reference": false,
     "label": "Orangina",
@@ -1187,7 +1220,6 @@
     "pack_size": 1
   },
   {
-    "sku": "don_17",
     "stock_sku": "don",
     "is_stock_reference": false,
     "label": "Don",
@@ -1202,7 +1234,6 @@
     "pack_size": 1
   },
   {
-    "sku": "sirop_menthe_18",
     "stock_sku": "sirop_menthe",
     "is_stock_reference": true,
     "label": "Sirop menthe",
@@ -1217,7 +1248,7 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1.0,
+      "stock_on_hand": 0.9,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -1227,7 +1258,6 @@
     }
   },
   {
-    "sku": "adhesion_10eur_19",
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
@@ -1241,7 +1271,6 @@
     "consumption_per_sale": 1
   },
   {
-    "sku": "lipton_ice_tea_20",
     "stock_sku": "lipton_ice_tea",
     "is_stock_reference": false,
     "label": "Lipton Ice Tea",
@@ -1256,7 +1285,6 @@
     "pack_size": 1
   },
   {
-    "sku": "biere_pomme_21",
     "stock_sku": "bi_res_pomme",
     "is_stock_reference": false,
     "label": "Bière Pomme",
@@ -1283,7 +1311,6 @@
     }
   },
   {
-    "sku": "biere_du_commerce_ambree_25_cl_23",
     "stock_sku": "bieres_commerce_ambree_25cl",
     "is_stock_reference": false,
     "label": "Bières commerce ambrée 25 cL",
@@ -1299,7 +1326,6 @@
     "pack_size": 1
   },
   {
-    "sku": "coca_24",
     "stock_sku": "jus_sodas_coca_cola_classique",
     "is_stock_reference": false,
     "label": "Coca Cola",
@@ -1315,7 +1341,6 @@
     "pack_size": 1
   },
   {
-    "sku": "coca_sans_sucre_25",
     "stock_sku": "jus_sodas_coca_cola_zero",
     "is_stock_reference": false,
     "label": "Coca Cola sans sucre",
@@ -1331,7 +1356,6 @@
     "pack_size": 1
   },
   {
-    "sku": "jus_divers_et_multifruits_26",
     "stock_sku": "jus_divers",
     "is_stock_reference": true,
     "label": "Jus divers",
@@ -1356,7 +1380,6 @@
     }
   },
   {
-    "sku": "saucisson_ficelle_unite_27",
     "stock_sku": "saucisson_ficelle",
     "is_stock_reference": true,
     "label": "Saucisson ficelle",
@@ -1381,7 +1404,6 @@
     }
   },
   {
-    "sku": "mini_saucissons_sachet_28",
     "stock_sku": "saucissons_mini_sachet",
     "is_stock_reference": false,
     "label": "Mini saucissons sachet",
@@ -1397,7 +1419,6 @@
     "pack_size": 1
   },
   {
-    "sku": "tartinade_29",
     "stock_sku": "tartinade",
     "is_stock_reference": true,
     "label": "Tartinade",
@@ -1422,7 +1443,6 @@
     }
   },
   {
-    "sku": "oasis_30",
     "stock_sku": "jus_sodas_oasis",
     "is_stock_reference": false,
     "label": "Oasis",
@@ -1438,7 +1458,6 @@
     "pack_size": 1
   },
   {
-    "sku": "jus_d_orange_bio_20_cl_brick_31",
     "stock_sku": "jus_sodas_jus_de_orange_bio_20_cl_brique",
     "is_stock_reference": false,
     "label": "Jus d'orange bio",
@@ -1454,7 +1473,6 @@
     "pack_size": 1
   },
   {
-    "sku": "biere_pomme_33",
     "stock_sku": "bi_res_pomme",
     "is_stock_reference": false,
     "label": "Bière Pomme",
@@ -1470,7 +1488,6 @@
     "pack_size": 1
   },
   {
-    "sku": "brique_jus_de_pomme_bio_20cl_34",
     "stock_sku": "jus_pomme_bio_20cl_brique",
     "is_stock_reference": false,
     "label": "Jus de pomme bio 20cL",
@@ -1484,5 +1501,20 @@
     },
     "consumption_per_sale": 1,
     "pack_size": 1
+  },
+  {
+    "stock_sku": "sachet_cacahuetes",
+    "is_stock_reference": false,
+    "label": "Cacahuetes sachets 200g",
+    "stock_label": "Cacahuetes sachets 200g",
+    "enabled": true,
+    "unit": "sachet",
+    "category": "",
+    "sumup_match": {
+      "name": "Cacahuetes sachets 200g",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
   }
-    ]
+]
