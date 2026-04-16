@@ -13,11 +13,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 7,
     "stock_state": {
-      "stock_on_hand": 100,
+      "stock_on_hand": 150,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     },
     "stock_sku": "adhesion_annuelle"
@@ -52,24 +52,32 @@
     "consumption_per_sale": 0.33,
     "supplier_lead_time_days": 6,
     "stock_state": {
-      "stock_on_hand": 7.64,
+      "stock_on_hand": 110.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-04",
-      "stock_history": [
-        {
-          "type": "auto_refresh",
-          "from_date": "2026-03-30",
-          "to_date": "2026-04-04",
-          "consumed_qty": 22.36,
-          "previous_stock_on_hand": 30.0,
-          "new_stock_on_hand": 7.64
-        }
-      ]
+      "last_auto_update": "",
+      "stock_history": []
     }
+  },
+  {
+    "sku": "bieres_pichet",
+    "stock_sku": "bieres_pression",
+    "is_stock_reference": true,
+    "label": "Bières pression 1L",
+    "stock_label": "Bières pression",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Pichet biere 1l"
+    },
+    "pack_size": 30,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4
   },
   {
     "sku": "bieres_saint_patrick_25cl",
@@ -102,23 +110,14 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 18,
+      "stock_on_hand": 23,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-04",
-      "stock_history": [
-        {
-          "type": "auto_refresh",
-          "from_date": "2026-03-30",
-          "to_date": "2026-04-04",
-          "consumed_qty": 19.0,
-          "previous_stock_on_hand": 19.0,
-          "new_stock_on_hand": 0.0
-        }
-      ]
+      "last_auto_update": "",
+      "stock_history": []
     },
     "stock_sku": "chips"
   },
@@ -133,14 +132,14 @@
       "variant": "Jus de pomme verre"
     },
     "pack_size": 1,
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.25,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 18,
+      "stock_on_hand": 13.5,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     },
     "stock_sku": "jus_pomme_verre"
@@ -156,26 +155,17 @@
       "variant": "Blanc"
     },
     "pack_size": 5,
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 2.0,
+      "stock_on_hand": 10.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-04",
-      "stock_history": [
-        {
-          "type": "auto_refresh",
-          "from_date": "2026-03-30",
-          "to_date": "2026-04-04",
-          "consumed_qty": 1.6,
-          "previous_stock_on_hand": 3.6,
-          "new_stock_on_hand": 2.0
-        }
-      ]
+      "last_auto_update": "",
+      "stock_history": []
     },
     "stock_sku": "vin_blanc"
   },
@@ -191,7 +181,7 @@
       "name": "Kir",
       "variant": ""
     },
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4
   },
   {
@@ -205,14 +195,14 @@
       "variant": "Rouge"
     },
     "pack_size": 5,
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 15,
+      "stock_on_hand": 6,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     },
     "stock_sku": "vin_rouge"
@@ -231,11 +221,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 3,
+      "stock_on_hand": 4,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     },
     "stock_sku": "jus_pomme_bio_20cl_brique"
@@ -254,11 +244,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 27,
+      "stock_on_hand": 24,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     },
     "stock_sku": "biscuit_sucre"
@@ -293,11 +283,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 25,
+      "stock_on_hand": 23,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     }
   },
@@ -316,11 +306,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 42,
+      "stock_on_hand": 53,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     }
   },
@@ -329,7 +319,7 @@
     "is_stock_reference": true,
     "label": "Lipton Ice Tea",
     "enabled": true,
-    "unit": "bouteille",
+    "unit": "canette",
     "category": "soft",
     "sumup_match": {
       "name": "Jus & Sodas",
@@ -339,11 +329,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 16,
+      "stock_on_hand": 15,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     }
   },
@@ -362,23 +352,14 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1.0,
+      "stock_on_hand": 2.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05",
-      "stock_history": [
-        {
-          "type": "auto_refresh",
-          "from_date": "2026-03-30",
-          "to_date": "2026-04-05",
-          "consumed_qty": 0.04,
-          "previous_stock_on_hand": 1.5,
-          "new_stock_on_hand": 1.46
-        }
-      ]
+      "last_auto_update": "",
+      "stock_history": []
     }
   },
   {
@@ -396,11 +377,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 14,
+      "stock_on_hand": 4,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     }
   },
@@ -419,11 +400,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 8,
+      "stock_on_hand": 14,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-04-05",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual"
     }
   },
@@ -444,23 +425,14 @@
     "consumption_per_sale": 8,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1968.0,
+      "stock_on_hand": 4500.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-03-30",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-04",
-      "stock_history": [
-        {
-          "type": "auto_refresh",
-          "from_date": "2026-03-30",
-          "to_date": "2026-04-04",
-          "consumed_qty": 32.0,
-          "previous_stock_on_hand": 2000.0,
-          "new_stock_on_hand": 1968.0
-        }
-      ]
+      "last_auto_update": "",
+      "stock_history": []
     }
   },
   {
@@ -504,17 +476,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Olives vertes anchois",
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 95,
+      "stock_on_hand": 78,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -527,7 +499,7 @@
     "enabled": true,
     "unit": "sachet",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Tisane",
       "variant": ""
@@ -540,17 +512,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "bar",
     "sumup_match": {
       "name": "Bières",
       "variant": "Pomme"
     },
     "stock_state": {
-      "stock_on_hand": 29,
+      "stock_on_hand": 24,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -562,17 +534,39 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Jus & Sodas",
       "variant": "Oasis"
     },
     "stock_state": {
-      "stock_on_hand": 22,
+      "stock_on_hand": 14,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    }
+  },
+  {
+    "stock_sku": "jus_sodas_fanta",
+    "is_stock_reference": true,
+    "label": "Jus & Sodas - Fanta",
+    "enabled": true,
+    "unit": "piece",
+    "consumption_per_sale": 1,
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Fanta"
+    },
+    "stock_state": {
+      "stock_on_hand": 12,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -584,17 +578,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Eau plate btl 50 cl",
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 19,
+      "stock_on_hand": 23,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -606,17 +600,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Jus & Sodas",
       "variant": "Jus de orange bio 20 cL brique"
     },
     "stock_state": {
-      "stock_on_hand": 19,
+      "stock_on_hand": 9,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -628,17 +622,17 @@
     "enabled": true,
     "unit": "g",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "boissons_chaudes",
     "sumup_match": {
       "name": "Chocolat chaud",
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 15,
+      "stock_on_hand": 25,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -650,17 +644,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Jus & Sodas",
       "variant": "Coca Cola classique"
     },
     "stock_state": {
-      "stock_on_hand": 14,
+      "stock_on_hand": 27,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -672,17 +666,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Saucissons et saucisses sèches",
       "variant": "Saucissons mini sachet"
     },
     "stock_state": {
-      "stock_on_hand": 14,
+      "stock_on_hand": 9,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -694,17 +688,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Jus & Sodas",
       "variant": "Orangina"
     },
     "stock_state": {
-      "stock_on_hand": 12,
+      "stock_on_hand": 9,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -716,7 +710,7 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Fromage apéritif",
       "variant": ""
@@ -726,7 +720,7 @@
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -738,18 +732,18 @@
     "label": "Cidre - Cidre bouteille",
     "enabled": true,
     "unit": "L",
-    "consumption_per_sale": 1,
-    "category": "a_classer",
+    "consumption_per_sale": 0.75,
+    "category": "bar",
     "sumup_match": {
       "name": "Cidre",
       "variant": "Cidre bouteille"
     },
     "stock_state": {
-      "stock_on_hand": 6,
+      "stock_on_hand": 3.75,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -761,17 +755,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Jus & Sodas",
       "variant": "Coca Cola Zero"
     },
     "stock_state": {
-      "stock_on_hand": 4,
+      "stock_on_hand": 36,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -784,17 +778,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Saucissons et saucisses sèches",
       "variant": "Saucisse"
     },
     "stock_state": {
-      "stock_on_hand": 3,
+      "stock_on_hand": 2,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -806,17 +800,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Pop corn salé",
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 3,
+      "stock_on_hand": 17,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -828,17 +822,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "soft",
     "sumup_match": {
       "name": "Schweppes agrumes",
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 2,
+      "stock_on_hand": 20,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -850,17 +844,17 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Sachet cacahuetes",
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 1,
+      "stock_on_hand": 7,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -872,7 +866,7 @@
     "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
-    "category": "a_classer",
+    "category": "snacking",
     "sumup_match": {
       "name": "Pate en croute",
       "variant": ""
@@ -882,7 +876,7 @@
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-05",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -895,7 +889,7 @@
     "enabled": true,
     "unit": "L",
     "consumption_per_sale": 0.33,
-    "category": "a_classer",
+    "category": "bar",
     "sumup_match": {
       "name": "Bières",
       "variant": "Artisanale 33 cL"
@@ -909,7 +903,7 @@
     "enabled": true,
     "unit": "L",
     "consumption_per_sale": 0.2,
-    "category": "a_classer",
+    "category": "bar",
     "sumup_match": {
       "name": "Cidre",
       "variant": "Cidre verre"
@@ -978,10 +972,10 @@
       "stock_on_hand": 0.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05"
+      "last_auto_update": ""
     }
   },
   {
@@ -1135,13 +1129,13 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1.0,
+      "stock_on_hand": 0.8,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05"
+      "last_auto_update": ""
     }
   },
   {
@@ -1226,10 +1220,10 @@
       "stock_on_hand": 1.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05"
+      "last_auto_update": ""
     }
   },
   {
@@ -1275,7 +1269,18 @@
       "variant": ""
     },
     "consumption_per_sale": 1,
-    "pack_size": 1
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_state": {
+      "stock_on_hand": 24,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
+      "inventory_count_method": "manual",
+      "last_auto_update": ""
+    }
   },
   {
     "sku": "biere_du_commerce_ambree_25_cl_23",
@@ -1344,10 +1349,10 @@
       "stock_on_hand": 0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05"
+      "last_auto_update": ""
     }
   },
   {
@@ -1369,10 +1374,10 @@
       "stock_on_hand": 0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05"
+      "last_auto_update": ""
     }
   },
   {
@@ -1410,10 +1415,10 @@
       "stock_on_hand": 0,
       "stock_reserved": 0,
       "incoming_qty": 0,
-      "incoming_eta": "2026-04-03",
-      "last_inventory_date": "2026-03-30",
+      "incoming_eta": "",
+      "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-04-05"
+      "last_auto_update": ""
     }
   },
   {
