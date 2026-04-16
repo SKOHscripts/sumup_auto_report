@@ -161,6 +161,24 @@ def run_sql(sql):
     return []
 
 
+def get_table_columns(table: str) -> set:
+    _columns_cache: dict[str, set] = {}
+
+    if table in _columns_cache:
+        return _columns_cache[table]
+
+    try:
+        rows = run_sql(f'SELECT * FROM "{table}" LIMIT 1;')
+        cols = set(rows[0].keys()) if rows else set()
+    except Exception as e:
+        log.warning(f"Impossible de lire les colonnes de {table}: {e}")
+        cols = set()
+
+    _columns_cache[table] = cols
+
+    return cols
+
+
 def pick_existing_key(row, candidates):
     for key in candidates:
         if key and key in row:
@@ -270,23 +288,45 @@ def fetch_categories_lookup():
 
 
 def build_members_sql():
+    known_cols = get_table_columns(PAHEKO_USERS_TABLE)
+
+    def safe_expr(field_var, alias):
+        expr = to_clean_str(field_var)
+
+        if not expr:
+            return f'NULL AS "{alias}"'
+        # Si c'est un identifiant simple (pas une expression SQL), vérifie qu'il existe
+        is_simple_ident = not any(ch in expr for ch in [" ", "(", ")", ".", '"', "'", ","])
+
+        if is_simple_ident and known_cols and expr not in known_cols:
+            log.warning(
+                f'Colonne "{expr}" introuvable dans {PAHEKO_USERS_TABLE} '
+                f'(colonnes connues: {sorted(known_cols)}). '
+                f'Remplacez la variable .env correspondante.'
+            )
+
+            return f'NULL AS "{alias}"'
+        qualified = qualify_sql_expr(expr, table_alias="u")
+
+        return f'{qualified} AS "{alias}"'
+
     select_parts = [
         'u.id AS "_user_id"',
-        sql_select_expr(PAHEKO_USER_CATEGORY_FIELD, "_category_id", table_alias="u"),
-        sql_select_expr(PAHEKO_FIELD_BIRTHDATE, "Date de naissance complète", table_alias="u"),
-        sql_select_expr(PAHEKO_FIELD_BIRTHYEAR, "Année de naissance", table_alias="u"),
-        sql_select_expr(PAHEKO_FIELD_NEWSLETTER, "Inscription à la lettre d'information", table_alias="u"),
-        sql_select_expr(PAHEKO_FIELD_SIGNUP_DATE, "Date d'inscription", table_alias="u"),
-        sql_select_expr(PAHEKO_FIELD_POSTAL_CODE, "Code postal", table_alias="u"),
-        sql_select_expr(PAHEKO_FIELD_CITY, "Ville", table_alias="u"),
-        ]
+        safe_expr(PAHEKO_USER_CATEGORY_FIELD, "_category_id"),
+        safe_expr(PAHEKO_FIELD_BIRTHDATE, "Date de naissance complète"),
+        safe_expr(PAHEKO_FIELD_BIRTHYEAR, "Année de naissance"),
+        safe_expr(PAHEKO_FIELD_NEWSLETTER, "Inscription à la lettre d'information"),
+        safe_expr(PAHEKO_FIELD_SIGNUP_DATE, "Date d'inscription"),
+        safe_expr(PAHEKO_FIELD_POSTAL_CODE, "Code postal"),
+        safe_expr(PAHEKO_FIELD_CITY, "Ville"),
+    ]
 
     return f"""
 SELECT
-        {", ".join(select_parts)}
-    FROM {PAHEKO_USERS_TABLE} u
-    LIMIT {PAHEKO_SQL_LIMIT};
-    """.strip()
+    {", ".join(select_parts)}
+FROM {PAHEKO_USERS_TABLE} u
+LIMIT {PAHEKO_SQL_LIMIT};
+""".strip()
 
 
 def fetch_members_rows(category_lookup):
@@ -874,11 +914,12 @@ Corentin via {Path(__file__).name}
         subject=subject,
         body=body,
         attachments=attachments,
+        mailing_list="default",
         logger=log,
         )
 
 
-def run_dashboard(send_mail=True):
+def run_dashboard(send_email: bool = True):
     log.info("Étape 1/5 - Récupération des catégories…")
     category_lookup = fetch_categories_lookup()
 
@@ -898,7 +939,7 @@ def run_dashboard(send_mail=True):
     log.info(f"Dashboard créé : {dashboard_path.name}")
     log.info(f"CSV anonymisé créé : {csv_path.name}")
 
-    if send_mail:
+    if send_email:
         log.info("Étape 5/5 - Envoi par email…")
         send_dashboard_email(stats, dashboard_path, csv_path)
     else:
@@ -915,7 +956,7 @@ def main():
         help="Génère le dashboard et les fichiers sans envoyer d'email",
         )
     args = parser.parse_args()
-    run_dashboard(send_mail=not args.no_mail)
+    run_dashboard(send_email=not args.no_mail)
 
 
 if __name__ == "__main__":
