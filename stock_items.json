@@ -477,7 +477,7 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 78,
+      "stock_on_hand": 76.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -491,9 +491,17 @@
           "consumed_qty": 10.0,
           "previous_stock_on_hand": 95.0,
           "new_stock_on_hand": 85.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-12",
+          "to_date": "2026-04-16",
+          "consumed_qty": 2.0,
+          "previous_stock_on_hand": 78.0,
+          "new_stock_on_hand": 76.0
         }
       ],
-      "last_auto_update": "2026-04-12"
+      "last_auto_update": "2026-04-16"
     }
   },
   {
@@ -522,7 +530,7 @@
       "variant": "Pomme"
     },
     "stock_state": {
-      "stock_on_hand": 24,
+      "stock_on_hand": 22.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -536,9 +544,17 @@
           "consumed_qty": 7.0,
           "previous_stock_on_hand": 29.0,
           "new_stock_on_hand": 22.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-04-12",
+          "to_date": "2026-04-16",
+          "consumed_qty": 2.0,
+          "previous_stock_on_hand": 24.0,
+          "new_stock_on_hand": 22.0
         }
       ],
-      "last_auto_update": "2026-04-12"
+      "last_auto_update": "2026-04-16"
     }
   },
   {
@@ -1298,7 +1314,6 @@
     },
     "consumption_per_sale": 1,
     "pack_size": 1,
-    "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 24,
