@@ -12,26 +12,28 @@ Automatisation via crontab (exemple : chaque lundi à 09:00) :
 0 9 * * 1 /usr/bin/python3 /chemin/vers/sumup_adhesions.py >> /var/log/sumup.log 2>&1
 """
 
-import argparse
-import json
-import logging
-import math
-import os
-import time
-import unicodedata
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-
-import requests
-import fpdf as _fpdf
 from fpdf import FPDF
-
+import fpdf as _fpdf
+import requests
+import re
+from datetime import datetime, timedelta, timezone
+import unicodedata
+import time
+import os
+import math
+import logging
+import json
+import argparse
 from utils.mail_utils import (
     load_project_env,
     setup_memory_log_capture,
     send_email,
     build_log_footer,
     )
+import sys
+from pathlib import Path
+# Garantit que la racine du projet est dans sys.path, quel que soit le répertoire de lancement
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def _check_fpdf_version():

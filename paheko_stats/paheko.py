@@ -914,7 +914,7 @@ Corentin via {Path(__file__).name}
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="all_ca",
+        mailing_list="default",
         logger=log,
         )
 
