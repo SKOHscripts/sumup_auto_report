@@ -153,7 +153,6 @@
       "name": "Vin",
       "variant": "Blanc"
     },
-    "pack_size": 5,
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
@@ -183,6 +182,20 @@
     "supplier_lead_time_days": 4
   },
   {
+    "stock_sku": "vin_blanc",
+    "is_stock_reference": false,
+    "label": "Kir",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Kir",
+      "variant": "Standard"
+    },
+    "consumption_per_sale": 0.15,
+    "supplier_lead_time_days": 4
+  },
+  {
     "is_stock_reference": true,
     "label": "Vin rouge",
     "enabled": true,
@@ -204,6 +217,20 @@
       "inventory_count_method": "manual"
     },
     "stock_sku": "vin_rouge"
+  },
+  {
+    "stock_sku": "vin_rouge",
+    "is_stock_reference": false,
+    "label": "Communard",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Kir",
+      "variant": "Communard"
+    },
+    "consumption_per_sale": 0.15,
+    "supplier_lead_time_days": 4
   },
   {
     "is_stock_reference": true,
@@ -347,7 +374,7 @@
       "variant": "Grenadine"
     },
     "pack_size": 1,
-    "consumption_per_sale": 0.05,
+    "consumption_per_sale": 0.10,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 2.0,
@@ -521,7 +548,7 @@
     "stock_sku": "bi_res_pomme",
     "is_stock_reference": true,
     "label": "Bières - Pomme",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "consumption_per_sale": 1,
     "category": "bar",
@@ -931,7 +958,7 @@
     "stock_sku": "pate_en_croute",
     "is_stock_reference": true,
     "label": "Pate en croute",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "consumption_per_sale": 1,
     "category": "snacking",
@@ -1013,7 +1040,7 @@
       "name": "Vin Blanc",
       "variant": ""
     },
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.15,
     "pack_size": 1
   },
   {
@@ -1051,7 +1078,7 @@
       "name": "Jus & Sodas",
       "variant": "Jus de pomme verre"
     },
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.25,
     "pack_size": 1
   },
   {
@@ -1148,7 +1175,7 @@
       "name": "Jus de pomme, verre",
       "variant": ""
     },
-    "consumption_per_sale": 0.2,
+    "consumption_per_sale": 0.25,
     "pack_size": 1
   },
   {
@@ -1178,7 +1205,7 @@
       "variant": "Citron"
     },
     "pack_size": 1,
-    "consumption_per_sale": 0.05,
+    "consumption_per_sale": 0.10,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 0.8,
@@ -1261,7 +1288,7 @@
       "variant": "Menthe"
     },
     "pack_size": 1,
-    "consumption_per_sale": 0.05,
+    "consumption_per_sale": 0.10,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 0.9,
@@ -1305,7 +1332,7 @@
     "is_stock_reference": false,
     "label": "Bière Pomme",
     "stock_label": "Bières - Pomme",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "category": "bar",
     "sumup_match": {
@@ -1314,16 +1341,7 @@
     },
     "consumption_per_sale": 1,
     "pack_size": 1,
-    "supplier_lead_time_days": 4,
-    "stock_state": {
-      "stock_on_hand": 24,
-      "stock_reserved": 0,
-      "incoming_qty": 0,
-      "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
-      "inventory_count_method": "manual",
-      "last_auto_update": ""
-    }
+    "supplier_lead_time_days": 4
   },
   {
     "stock_sku": "bieres_commerce_ambree_25cl",
@@ -1382,7 +1400,7 @@
       "variant": ""
     },
     "pack_size": 1,
-    "consumption_per_sale": 0.05,
+    "consumption_per_sale": 0.10,
     "supplier_lead_time_days": 4,
     "stock_state": {
       "stock_on_hand": 0,
@@ -1492,7 +1510,7 @@
     "is_stock_reference": false,
     "label": "Bière Pomme",
     "stock_label": "Bières - Pomme",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "category": "bar",
     "sumup_match": {
