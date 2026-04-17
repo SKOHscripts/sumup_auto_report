@@ -39,15 +39,16 @@ import requests
 import fpdf as _fpdf
 from fpdf import FPDF
 
-from mail_utils import (
+from utils.mail_utils import (
     load_project_env,
     setup_memory_log_capture,
     send_email,
     build_log_footer,
     )
 
-
 # ─── Vérification version fpdf2 ───────────────────────────────────────────────
+
+
 def _check_fpdf_version():
     version = getattr(_fpdf, "__version__", "0")
     nums = []

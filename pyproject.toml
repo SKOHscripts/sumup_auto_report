@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sumup-auto-report"
+version = "0.1.0"
+description = "Rapports automatiques SumUp : adhésions, gestion des stocks et membres Paheko"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+authors = [
+  { name = "Corentin", email = "" },
+]
+
+keywords = ["sumup", "report", "paheko", "adhesions", "stocks", "pdf", "cron"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Utilities",
+]
+
+dependencies = [
+  "requests>=2.31",
+  "fpdf2>=2.7,<3",
+  "python-dotenv>=1.0",
+  "matplotlib>=3.7",
+  "numpy>=1.24",
+  "python-dateutil>=2.8",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=4.0",
+  "ruff>=0.4",
+  "mypy>=1.0",
+]
+
+[project.scripts]
+sumup-adhesions  = "sumup_adhesions:main"
+sumup-stocks     = "sumup_stocks:main"
+paheko-dashboard = "paheko:main"
+
+[project.urls]
+Homepage   = "https://github.com/SKOHscripts/sumup_auto_report"
+Repository = "https://github.com/SKOHscripts/sumup_auto_report"
+Issues     = "https://github.com/SKOHscripts/sumup_auto_report/issues"
+
+# ── Hatch build config ──────────────────────────────────────────────────────
+[tool.hatch.build.targets.wheel]
+# Le projet est un flat-layout (tous les .py à la racine)
+# On inclut uniquement les modules Python utiles
+include = [
+  "sumup_adhesions.py",
+  "sumup_stocks.py",
+  "paheko.py",
+  "mail_utils.py",
+  "__init__.py",
+]
+
+# ── Ruff (linter/formatter) ──────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # ligne trop longue — les scripts ont des f-strings longues
+
+# ── Mypy ─────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true  # requests, fpdf2 n'ont pas toujours des stubs complets
+
+# ── Pytest ───────────────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

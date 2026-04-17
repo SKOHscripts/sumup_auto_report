@@ -26,7 +26,7 @@ import requests
 import fpdf as _fpdf
 from fpdf import FPDF
 
-from mail_utils import (
+from utils.mail_utils import (
     load_project_env,
     setup_memory_log_capture,
     send_email,
