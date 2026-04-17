@@ -1672,7 +1672,7 @@ Corentin via sumup_stocks.py
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="default",
+        mailing_list="all_ca",
         logger=log,
         )
 
