@@ -827,7 +827,7 @@ Corentin via {Path(__file__).name}
         subject=subject,
         body=body,
         attachments=[pdf_path],
-        mailing_list="default",
+        mailing_list="finance",
         logger=log,
         )
 
