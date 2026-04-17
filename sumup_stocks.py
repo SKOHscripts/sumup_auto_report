@@ -391,10 +391,8 @@ def load_stock_items(path: Path) -> list:
         item["stock_sku"] = item.get("stock_sku") or item["sku"]
         item["stock_label"] = item.get("stock_label") or item.get("label") or item["stock_sku"]
         item["stock_unit"] = item.get("stock_unit") or item.get("unit") or "piece"
-        item["consumption_per_sale"] = float(item.get(
-            "consumption_per_sale",
-            item.get("pack_size", 1) or 1,
-            ))
+        item["consumption_per_sale"] = float(item.get("consumption_per_sale", item.get("pack_size", 1) or 1,
+                                                      ))
         item["is_stock_reference"] = bool(item.get("is_stock_reference")) or bool(item.get("stock_state"))
         enabled.append(item)
 
@@ -438,20 +436,30 @@ def build_stock_groups(stock_items: list) -> list:
     return groups
 
 
-def aggregate_weekly_stock_usage(stock_items: list, weekly_sales: dict, weeks_range: list) -> dict:
+def aggregate_weekly_stock_usage(stock_items: list, weekly_sales: dict, weeks_range: list) -> tuple:
+    # On retourne maintenant un tuple : (weekly_usage, weekly_sales_count)
     weekly_usage = defaultdict(lambda: defaultdict(float))
+    weekly_sales_count = defaultdict(lambda: defaultdict(int))
+
+    seen_skus = set()
 
     for item in stock_items:
-        stock_sku = item["stock_sku"]
+        stock_sku = item.get("stock_sku")
+
+        if stock_sku in seen_skus:
+            continue
+        seen_skus.add(stock_sku)
+
         factor = float(item.get("consumption_per_sale", 1) or 1)
 
         for week_label in weeks_range:
-            sold_qty = weekly_sales.get(item["stock_sku"], {}).get(week_label, 0)
+            sold_qty = weekly_sales.get(item.get("stock_sku", ""), {}).get(week_label, 0)
 
             if sold_qty:
-                weekly_usage[stock_sku][week_label] += sold_qty * factor
+                weekly_usage[stock_sku][week_label] = sold_qty * factor
+                weekly_sales_count[stock_sku][week_label] = sold_qty
 
-    return weekly_usage
+    return weekly_usage, weekly_sales_count
 
 # ─── 3. RÉCUPÉRATION ET ENRICHISSEMENT DES TRANSACTIONS ──────────────────────
 
@@ -583,16 +591,13 @@ def match_product_to_sku(name: str, variant: str, sku_index: dict) -> tuple:
 
 # ─── 5. AGRÉGATION HEBDOMADAIRE ──────────────────────────────────────────────
 
-def aggregate_weekly_sales(
-        txns: list,
-        sku_index: dict,
-        weeks_range: list,
-        ) -> tuple:
+def aggregate_weekly_sales(txns: list, sku_index: dict, weeks_range: list) -> tuple:
     """
     Retourne :
       - weekly_sales  : dict { sku: { week_label: qty } }
       - unmapped_products : list de (name, variant, qty) non mappés
     """
+    import re
     weekly_sales = defaultdict(lambda: defaultdict(int))
     unmapped = defaultdict(int)  # (name, variant) -> qty totale
     weeks_set = set(weeks_range)
@@ -619,10 +624,13 @@ def aggregate_weekly_sales(
         if not products:
             # Pas de produits détaillés : tenter depuis product_summary
             summary = txn.get("product_summary", "")
-            sku, item = match_product_to_sku(summary, "", sku_index)
 
-            if sku:
-                weekly_sales[sku][week_label] += 1
+            for match in re.finditer(r'(\d+)\s*x\s*(.+?)(?:,|$)', summary):
+                qty_s, name_s = int(match.group(1)), match.group(2).strip()
+                sku, item = match_product_to_sku(name_s, "", sku_index)
+
+                if sku:
+                    weekly_sales[sku][week_label] += qty_s
 
             continue
 
@@ -667,35 +675,42 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
         return {
             "weekly_demand": 0.0,
             "lead_time_weeks": lead_time_weeks,
-            "safety_stock": 0,
-            "reorder_point": 0,
-            "target_stock": 0,
+            "safety_stock": 0.0,
+            "reorder_point": 0.0,
+            "target_stock": 0.0,
             }
 
-    safety_stock = math.ceil(max(weekly_demand, sales_7d))
-    reorder_point = math.ceil((weekly_demand * lead_time_weeks) + safety_stock)
-    target_stock = math.ceil(weekly_demand * max(3, lead_time_weeks + 2))
+    safety_stock = max(weekly_demand, sales_7d)
+    reorder_point = (weekly_demand * lead_time_weeks) + safety_stock
+    target_stock = weekly_demand * max(3, lead_time_weeks + 2)
 
     if target_stock < reorder_point:
         target_stock = reorder_point
 
+    # Arrondi intelligent : entier si >= 1, sinon 2 décimales
+    def smart_round(val):
+        return round(val) if val >= 1 else round(val, 2)
+
     return {
         "weekly_demand": round(weekly_demand, 2),
         "lead_time_weeks": lead_time_weeks,
-        "safety_stock": int(safety_stock),
-        "reorder_point": int(reorder_point),
-        "target_stock": int(target_stock),
+        "safety_stock": smart_round(safety_stock),
+        "reorder_point": smart_round(reorder_point),
+        "target_stock": smart_round(target_stock),
         }
 
 
-def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict, weeks_range: list) -> dict:
+def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict, weekly_sales_count: dict, weeks_range: list) -> dict:
     ref = stock_group["reference_item"]
     items = stock_group["items"]
     state = stock_group["state"]
     stock_sku = stock_group["stock_sku"]
 
     usage_by_week = weekly_usage.get(stock_sku, {})
+    sales_by_week = weekly_sales_count.get(stock_sku, {})
+
     usage_series = [round(float(usage_by_week.get(w, 0)), 2) for w in weeks_range]
+    sales_count_series = [int(sales_by_week.get(w, 0)) for w in weeks_range]
 
     total_used = sum(usage_series)
     n_weeks = len(weeks_range)
@@ -757,7 +772,7 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
         status = "RISQUE RUPTURE"
     elif effective_stock_now <= reorder_point:
         status = "A COMMANDER"
-    elif effective_stock_now <= max(safety_stock, math.ceil(reorder_point * 1.15)):
+    elif effective_stock_now <= max(safety_stock, reorder_point * 1.15):
         status = "SURVEILLANCE"
     else:
         status = "OK"
@@ -808,6 +823,7 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
 
         "sales_series": usage_series,
         "usage_series": usage_series,
+        "sales_count_series": sales_count_series,
         "weeks_range": weeks_range,
         "total_sold": round(total_used, 2),
         "total_used": round(total_used, 2),
@@ -985,26 +1001,30 @@ class StockPDF(FPDF):
         self.set_text_color(*PALETTE["text_dark"])
 
     # ── Tableau des ventes hebdomadaires ────────────────────────────────────
+
     def weekly_table(self, kpi: dict):
         weeks = kpi["weeks_range"]
-        sales = kpi.get("usage_series", kpi["sales_series"])
+        sales = kpi.get("usage_series", [])
+        sales_count = kpi.get("sales_count_series", [])
+
         pw = self._pw()
         n = len(weeks)
 
         if n == 0:
             return
 
-        col_week = pw * 0.30
+        col_week = pw * 0.20
+        col_count = pw * 0.15
         col_qty = pw * 0.20
-        col_avg = pw * 0.25
-        col_var = pw * 0.25
+        col_avg = pw * 0.22
+        col_var = pw * 0.23
         row_h = 6.0
         head_h = 7.0
 
         # Calcul des moyennes glissantes et variations
         rows = []
 
-        for i, (w, s) in enumerate(zip(weeks, sales)):
+        for i, (w, s, sc) in enumerate(zip(weeks, sales, sales_count)):
             last4 = sales[max(0, i - 3):i + 1]
             avg = sum(last4) / len(last4)
 
@@ -1017,7 +1037,7 @@ class StockPDF(FPDF):
                 var_str = "-"
             else:
                 var_str = "0%"
-            rows.append((w, s, avg, var_str))
+            rows.append((w, sc, s, avg, var_str))
 
         # En-tête
         self.set_font("Helvetica", "B", 7.5)
@@ -1029,16 +1049,16 @@ class StockPDF(FPDF):
         self.set_line_width(0.2)
         self.set_draw_color(*PALETTE["divider"])
         self.cell(col_week, head_h, "Semaine", border=0, align="C")
+        self.cell(col_count, head_h, "Nb Ventes", border=0, align="R")
         self.cell(col_qty, head_h, "Conso stock", border=0, align="R")
         self.cell(col_avg, head_h, "Moy. glissante", border=0, align="R")
-        self.cell(col_var, head_h, "Variation", border=0, align="R",
-                  new_x="LMARGIN", new_y="NEXT")
+        self.cell(col_var, head_h, "Variation", border=0, align="R", new_x="LMARGIN", new_y="NEXT")
         y = self.get_y()
         self.line(self.l_margin, y, self.w - self.r_margin, y)
 
         # Lignes
 
-        for i, (w, s, avg, var_str) in enumerate(rows):
+        for i, (w, sc, s, avg, var_str) in enumerate(rows):
             if self.get_y() + row_h > self.h - self.b_margin:
                 self.add_page()
 
@@ -1049,9 +1069,11 @@ class StockPDF(FPDF):
             self.set_text_color(*PALETTE["text_mid"])
             self.cell(col_week, row_h, w, border="B", align="C")
             self.set_text_color(*PALETTE["text_dark"])
+            self.cell(col_count, row_h, str(sc), border="B", align="R")
             self.cell(col_qty, row_h, str(s), border="B", align="R")
             self.set_text_color(*PALETTE["text_mid"])
             self.cell(col_avg, row_h, f"{avg:.1f}", border="B", align="R")
+
             # Couleur variation
             try:
                 var_val = float(var_str.replace("+", "").replace("%", ""))
@@ -1213,7 +1235,7 @@ class StockPDF(FPDF):
         ax.plot(
             trend_dates,
             trend_values,
-            color="#cc4125",
+            color="#DC513C",
             linewidth=2.0,
             linestyle="--",
             marker="o",
@@ -1222,10 +1244,10 @@ class StockPDF(FPDF):
             )
 
         # Seuils
-        ax.axvspan(week_dates[start_idx], week_dates[-1], color="#ddebf7", alpha=0.18, label="Période de tendance")
-        ax.axhspan(0, max(1.0, safety_stock), color="#f4cccc", alpha=0.35, label="Zone basse")
-        ax.axhline(safety_stock, color="#e69138", linestyle=":", linewidth=1.3)
-        ax.axhline(reorder_point, color="#bf9000", linestyle=":", linewidth=1.3)
+        ax.axvspan(week_dates[start_idx], week_dates[-1], color="#C2D5F4", alpha=0.18, label="Période de tendance")
+        ax.axhspan(0, safety_stock, color="#F4C9C2", alpha=0.35)
+        ax.axhline(safety_stock, color="#DF624E", linestyle=":", linewidth=1.3, label="Stock de sécurité")
+        ax.axhline(reorder_point, color="#DCA13C", linestyle=":", linewidth=1.3, label="Point de commande")
 
         plotted_values = (
             [1.0]
@@ -1241,16 +1263,16 @@ class StockPDF(FPDF):
         # Barre verticale exacte au point où la tendance touche 0
 
         if rupture_dt is not None:
-            ax.axvline(rupture_dt, color="#990000", linestyle="--", linewidth=1.2)
+            # ax.axvline(rupture_dt, color="#990000", linestyle="--", linewidth=1.2)
             label_y = ymax * 0.18 if ymax > 0 else 1.0
             ax.annotate(
                 f"Rupture estimee\n{rupture_label}",
                 xy=(rupture_dt, 0.0),
                 xytext=(rupture_dt + timedelta(days=2), label_y),
                 fontsize=8,
-                color="#990000",
-                arrowprops=dict(arrowstyle="->", color="#990000", lw=1),
-                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#990000", alpha=0.9),
+                color="#A13CDC",
+                arrowprops=dict(arrowstyle="->", color="#A13CDC", lw=1),
+                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#A13CDC", alpha=0.9),
                 )
 
         # Etiquettes historique
@@ -1422,22 +1444,22 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         )
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(*PALETTE["text_mid"])
-    pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies : {linked_text}", 220))
+    pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies ({kpi["linked_items_count"]}) : {linked_text}", 220))
     pdf.set_text_color(*PALETTE["text_dark"])
     pdf.ln(1)
 
     pdf.kpi_block([
         # ("Categorie", kpi["category"]),
         # ("Variante SumUp", variant_str),
-        ("Stock SKU", kpi["stock_sku"]),
-        ("Articles relies", kpi["linked_items_count"]),
+        # ("Stock SKU", kpi["stock_sku"]),
+        # ("Articles relies", kpi["linked_items_count"]),
         ("Unite stock", kpi["unit"]),
         (f"Stock disponible [{kpi['unit']}]", kpi["available_stock"]),
         (f"Stock arrivant [{kpi['unit']}]", kpi["incoming_qty"]),
         ("ETA reappro", kpi["incoming_eta"] or "N/A"),
-        (f"Stock securite (auto) [{kpi['unit']}]", kpi["safety_stock"]),
-        (f"Point de commande (auto) [{kpi['unit']}]", kpi["reorder_point"]),
-        (f"Stock cible (auto) [{kpi['unit']}]", kpi["target_stock"]),
+        (f"Stock securite (calculé) [{kpi['unit']}]", kpi["safety_stock"]),
+        (f"Point de commande (calculé) [{kpi['unit']}]", kpi["reorder_point"]),
+        (f"Stock cible (calculé) [{kpi['unit']}]", kpi["target_stock"]),
         ("Dernier inventaire", kpi["last_inventory_date"]),
         ])
 
@@ -1450,9 +1472,9 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     cov = f"{kpi['coverage_weeks']:.1f} sem." if kpi["coverage_weeks"] is not None else "N/A"
     pdf.kpi_block([
         # ("Ventes 7 jours", kpi["sales_7d"]),
-        ("Conso 28 jours", kpi["usage_28d"]),
-        ("Moyenne hebdo conso", kpi["avg_weekly"]),
-        ("Moy. glissante 4 sem.", kpi["avg_rolling4"]),
+        (f"Conso 28 jours [{kpi['unit']}]", kpi["usage_28d"]),
+        (f"Moyenne hebdo conso [{kpi['unit']}]", kpi["avg_weekly"]),
+        (f"Moy. glissante 4 sem. [{kpi['unit']}]", kpi["avg_rolling4"]),
         # ("Projection sem. suiv.", kpi["proj_next_week"]),
         # ("Projection vente 4 sem.", kpi["proj_4_weeks"]),
         ("Couverture estimee", cov),
@@ -1460,7 +1482,7 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
         # ("Variation S vs S-1", var),
         # ("Sem. sans vente", kpi["n_zero_weeks"]),
-        ("Total consomme (periode)", kpi["total_used"]),
+        (f"Total consomme (periode) [{kpi['unit']}]", kpi["total_used"]),
         ])
 
     # ── Tableau hebdomadaire ──
@@ -1629,16 +1651,8 @@ pour la semaine {week_label}.
 RESUME - Semaine {week_label}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Durée d’historique  : {weeks} semaines
-Stock auto aiguë    : {PROJECTION_WEEKS} semaines
 Articles suivis     : {len(all_kpis)}
 Articles en alerte  : {n_alert}
-{order_lines}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-JOURNAL D'EXECUTION - genere le {now_str}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{logs_str}
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Cordialement,
@@ -1649,16 +1663,16 @@ Corentin via sumup_stocks.py
         f"({len(all_kpis)} articles, {n_alert} alerte(s))"
         )
     attachments = [pdf_path]
-    if csv_path and Path(csv_path).exists():
-        attachments.append(csv_path)
-    if hist_path and Path(hist_path).exists():
-        attachments.append(hist_path)
+    # if csv_path and Path(csv_path).exists():
+    #     attachments.append(csv_path)
+    # if hist_path and Path(hist_path).exists():
+    #     attachments.append(hist_path)
 
     send_email(
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="all_ca",
+        mailing_list="default",
         logger=log,
         )
 
@@ -1717,7 +1731,7 @@ def run_stock_report(
 
     log.info("Étape 3/6 - Agregation hebdomadaire…")
     weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
-    weekly_usage = aggregate_weekly_stock_usage(stock_items, weekly_sales, weeks_range)
+    weekly_usage, weekly_sales_count = aggregate_weekly_stock_usage(stock_items, weekly_sales, weeks_range)
     if unmapped:
         log.warning(f"{len(unmapped)} produit(s) SumUp non mappe(s) au catalogue")
 
@@ -1743,7 +1757,7 @@ def run_stock_report(
     log.info("Étape 5/6 - Calcul des indicateurs centralises…")
     all_kpis = []
     for group in stock_groups:
-        kpi = compute_indicators(group, weekly_sales, weekly_usage, weeks_range)
+        kpi = compute_indicators(group, weekly_sales, weekly_usage, weekly_sales_count, weeks_range)
         all_kpis.append(kpi)
         log.info(
             f" {kpi['stock_sku']:30s} | stock={fmt_num(kpi['available_stock'])} "
