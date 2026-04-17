@@ -57,7 +57,7 @@ def _check_fpdf_version():
 _check_fpdf_version()
 
 TRANSACTION_FILTERS = []
-DEFAULT_DAYS = 14
+DEFAULT_DAYS = 7
 
 logging.basicConfig(
     level=logging.INFO,
