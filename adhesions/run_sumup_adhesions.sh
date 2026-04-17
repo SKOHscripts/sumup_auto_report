@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-SCRIPT="/home/skoh/SynologyDrive/Documents/Scripts/sumup/adhesions/sumup_adhesions.py"
 STATE_FILE="/home/skoh/SynologyDrive/Documents/Scripts/sumup/adhesions/.last_sumup_adhesions"
 TODAY=$(date +%F)                                  # ex: 2026-04-17
 TOMORROW=$(date -d tomorrow +%F)
@@ -26,7 +25,7 @@ if [ "$DAYS_SINCE" -ge 7 ] || [ "$IS_LAST_DAY" = "yes" ]; then
     END="$TODAY"
 
     echo "[$(date)] Lancement stats $START → $END"
-    /usr/bin/python3 "$SCRIPT" --start "$START" --end "$END" --no-mail
+    /usr/bin/python3 -m adhesions.sumup_adhesions --start "$START" --end "$END"
 
     # Sauvegarder la date du run
     echo "$TODAY" > "$STATE_FILE"

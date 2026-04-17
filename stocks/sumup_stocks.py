@@ -81,7 +81,7 @@ logging.basicConfig(
     )
 log = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = BASE_DIR / ".env"
 
 load_project_env(
@@ -1673,7 +1673,7 @@ Corentin via sumup_stocks.py
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="all_ca",
+        mailing_list="default",
         logger=log,
         )
 
@@ -1687,7 +1687,7 @@ def run_stock_report(
     items_file: Path = None,
     state_file: Path = None,
 ):
-    items_file = items_file or BASE_DIR / "stock_items.json"
+    items_file = items_file or BASE_DIR / "stocks" / "stock_items.json"
 
     now = datetime.now(timezone.utc)
     end_dt = now

@@ -30,10 +30,7 @@ from utils.mail_utils import (
     send_email,
     build_log_footer,
     )
-import sys
 from pathlib import Path
-# Garantit que la racine du projet est dans sys.path, quel que soit le répertoire de lancement
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def _check_fpdf_version():
@@ -830,7 +827,7 @@ Corentin via {Path(__file__).name}
         subject=subject,
         body=body,
         attachments=[pdf_path],
-        mailing_list="default",
+        mailing_list="finance",
         logger=log,
         )
 
