@@ -1,2 +1,5 @@
 .env
 rapport*
+__pycache__
+*.log
+.last_sumup_adhesions
