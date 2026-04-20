@@ -23,8 +23,8 @@ git pull --rebase -X theirs origin master
 /usr/bin/python3 -m stocks.sumup_stocks
 
 # 4. On commite et on pousse la nouvelle version fraîchement calculée pour ne rien perdre
-if [ -n "$(git status --porcelain stock_items.json)" ]; then
-    git add stock_items.json
+if git diff --name-only HEAD | grep -qE '/stock_items\.json$|^stock_items\.json$'; then
+    git add -A
     git commit -m "auto: recalage du stock au $(date +'%Y-%m-%d %H:%M')"
     git push origin master
 fi
