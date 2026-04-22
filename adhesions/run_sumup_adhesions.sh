@@ -21,7 +21,7 @@ fi
 # Décision de lancement
 if [ "$DAYS_SINCE" -ge 7 ] || [ "$IS_LAST_DAY" = "yes" ]; then
     # Calculer la fenêtre de 7 jours
-    START=$(date -d "$TODAY - 6 days" +%F)
+    START=$(date -d "$LAST_RUN" +%F)
     END="$TODAY"
 
     echo "[$(date)] Lancement stats $START → $END"
