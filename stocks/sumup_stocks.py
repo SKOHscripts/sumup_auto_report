@@ -28,7 +28,6 @@ import json
 import logging
 import os
 import time
-import unicodedata
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone, date
 from pathlib import Path
@@ -45,6 +44,7 @@ from utils.mail_utils import (
     send_email,
     build_log_footer,
     )
+from utils.sumup_shared import remove_accents, normalize, iso_week_label, week_start
 
 # ─── Vérification version fpdf2 ───────────────────────────────────────────────
 
@@ -96,36 +96,6 @@ SUMUP_API_KEY = os.getenv("SUMUP_API_KEY")
 
 # ─── 1. UTILITAIRES ───────────────────────────────────────────────────────────
 
-def remove_accents(text: str) -> str:
-    if not text:
-        return ""
-
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text)
-
-        if unicodedata.category(c) != "Mn"
-        )
-
-
-def normalize(text: str) -> str:
-    return remove_accents((text or "").lower()).strip()
-
-
-def iso_week_label(dt: datetime) -> str:
-    """Retourne le label ISO de la semaine, ex: '2026-W13'."""
-    y, w, _ = dt.isocalendar()
-
-    return f"{y}-W{w:02d}"
-
-
-def week_start(year: int, week: int) -> date:
-    """Retourne le lundi de la semaine ISO donnée."""
-    jan4 = date(year, 1, 4)
-    start_of_week1 = jan4 - timedelta(days=jan4.isoweekday() - 1)
-
-    return start_of_week1 + timedelta(weeks=week - 1)
-
-
 def format_sumup_display(item: dict) -> str:
     sm = item.get("sumup_match", {})
     name = (sm.get("name") or item.get("label") or item.get("stock_sku") or "").strip()
@@ -176,10 +146,6 @@ def prepare_enabled_stock_items(raw_items: list) -> list:
     log.info(f"Catalogue unifie : {len(enabled)}/{len(raw_items)} article(s) actif(s) charge(s)")
 
     return enabled
-
-
-def load_stock_items(path: Path) -> list:
-    return prepare_enabled_stock_items(load_stock_items_raw(path))
 
 
 def save_stock_items(path: Path, raw_items: list):
@@ -1303,7 +1269,7 @@ class StockPDF(FPDF):
                 )
 
             ax.set_title("Evolution du stock et tendance", fontsize=11)
-        ax.set_ylabel(f"Quantite [{kpi.get("unit") or "S.U."}]")
+        ax.set_ylabel(f"Quantite [{kpi.get('unit') or 'S.U.'}]")
 
         ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-W%W"))
@@ -1414,8 +1380,8 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
         # pdf.cell(col_sku, row_h, pdf._safe(kpi["stock_sku"], 20), border="B", align="L")
         pdf.set_text_color(*PALETTE["text_dark"])
         pdf.cell(col_lbl, row_h, pdf._safe(kpi["label"], 70), border="B", align="L")
-        pdf.cell(col_unit, row_h, f"{str(kpi["unit"])}", border="B", align="R")
-        pdf.cell(col_stk, row_h, f"{str(kpi["available_stock"])}", border="B", align="R")
+        pdf.cell(col_unit, row_h, f"{str(kpi['unit'])}", border="B", align="R")
+        pdf.cell(col_stk, row_h, f"{str(kpi['available_stock'])}", border="B", align="R")
         pdf.cell(col_cov, row_h, cov, border="B", align="R")
         pdf.cell(col_cmd, row_h, str(kpi["qty_to_order"]), border="B", align="R")
         pdf.set_font("Helvetica", "B", 7.5)
@@ -1445,7 +1411,7 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         )
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(*PALETTE["text_mid"])
-    pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies ({kpi["linked_items_count"]}) : {linked_text}", 220))
+    pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies ({kpi['linked_items_count']}) : {linked_text}", 220))
     pdf.set_text_color(*PALETTE["text_dark"])
     pdf.ln(1)
 
