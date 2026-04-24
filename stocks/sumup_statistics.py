@@ -499,13 +499,20 @@ class StatsPDF(FPDF):
         self.set_auto_page_break(True, 14)
         self.set_margins(12, 10, 12)
 
+    def _safe(self, text: str, max_len: int = 999) -> str:
+        t = str(text or "-")
+        for src, dst in [("€", "EUR"), ("—", "-"), ("–", "-"), ("'", "'"), (" ", " ")]:
+            t = t.replace(src, dst)
+        t = t.encode("latin-1", errors="replace").decode("latin-1")
+        return (t[: max_len - 3] + "...") if len(t) > max_len else t
+
     def header(self):
         self.set_font("Helvetica", "B", 14)
         self.set_text_color(*PALETTE["text"])
-        self.cell(0, 8, self.title[:90], new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 8, self._safe(self.title, 90), new_x="LMARGIN", new_y="NEXT")
         self.set_font("Helvetica", "", 8)
         self.set_text_color(*PALETTE["muted"])
-        self.cell(0, 5, f"Généré le {datetime.now().strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 5, f"Genere le {datetime.now().strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(*PALETTE["divider"])
         self.line(self.l_margin, self.get_y() + 1, self.w - self.r_margin, self.get_y() + 1)
         self.ln(4)
@@ -523,7 +530,7 @@ class StatsPDF(FPDF):
         self.set_x(self.l_margin + 4)
         self.set_font("Helvetica", "B", 10)
         self.set_text_color(*PALETTE["accent"])
-        self.cell(0, 6, title, new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 6, self._safe(title), new_x="LMARGIN", new_y="NEXT")
         self.set_text_color(*PALETTE["text"])
         self.ln(1)
 
@@ -537,17 +544,17 @@ class StatsPDF(FPDF):
                 self.rect(self.l_margin, self.get_y(), left + right, 6.2, style="F")
             self.set_font("Helvetica", "", 8)
             self.set_text_color(*PALETTE["muted"])
-            self.cell(left, 6.2, k[:40], border="B")
+            self.cell(left, 6.2, self._safe(k, 40), border="B")
             self.set_font("Helvetica", "B", 8)
             self.set_text_color(*PALETTE["text"])
-            self.cell(right, 6.2, v[:80], border="B", new_x="LMARGIN", new_y="NEXT")
+            self.cell(right, 6.2, self._safe(v, 80), border="B", new_x="LMARGIN", new_y="NEXT")
 
     def simple_table(self, headers: List[str], rows: List[List[str]], widths: List[float]):
         self.set_font("Helvetica", "B", 7.8)
         self.set_text_color(*PALETTE["muted"])
 
         for h, w in zip(headers, widths):
-            self.cell(w, 6.5, h[:30], border="B", align="L")
+            self.cell(w, 6.5, self._safe(h, 30), border="B", align="L")
         self.ln()
 
         for i, row in enumerate(rows):
@@ -557,7 +564,7 @@ class StatsPDF(FPDF):
                 self.set_text_color(*PALETTE["muted"])
 
                 for h, w in zip(headers, widths):
-                    self.cell(w, 6.5, h[:30], border="B", align="L")
+                    self.cell(w, 6.5, self._safe(h, 30), border="B", align="L")
                 self.ln()
 
             if i % 2 == 0:
@@ -567,7 +574,7 @@ class StatsPDF(FPDF):
             self.set_text_color(*PALETTE["text"])
 
             for cell, w in zip(row, widths):
-                self.cell(w, 6.2, str(cell)[:34], border="B", align="L")
+                self.cell(w, 6.2, self._safe(str(cell), 34), border="B", align="L")
             self.ln()
 
     def add_chart(self, img_path: Optional[Path], h: float = 62):
