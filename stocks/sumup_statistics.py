@@ -11,8 +11,8 @@ Usage:
 import argparse
 import json
 import logging
+import os
 import time
-import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone, date
@@ -29,6 +29,7 @@ from utils.mail_utils import (
     send_email,
     build_log_footer,
     )
+from utils.sumup_shared import remove_accents, normalize, iso_week_label, week_start, safe_float, parse_dt
 
 logging.basicConfig(
     level=logging.INFO,
@@ -71,48 +72,8 @@ load_project_env(
     logger=log,
     )
 
-
-def remove_accents(text: str) -> str:
-    if not text:
-        return ""
-
-    return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
-
-
-def normalize(text: str) -> str:
-    return remove_accents(text or "").strip().lower()
-
-
-def iso_week_label(dt: datetime) -> str:
-    y, w, _ = dt.isocalendar()
-
-    return f"{y}-W{w:02d}"
-
-
-def week_start(year: int, week: int) -> date:
-    jan4 = date(year, 1, 4)
-    start = jan4 - timedelta(days=jan4.isoweekday() - 1)
-
-    return start + timedelta(weeks=week - 1)
-
-
-def safe_float(value: Any, default: float = 0.0) -> float:
-    try:
-        if value in (None, ""):
-            return default
-
-        return float(value)
-    except Exception:
-        return default
-
-
-def parse_dt(value: str) -> Optional[datetime]:
-    if not value:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except Exception:
-        return None
+_log_buffer, _log_handler = setup_memory_log_capture()
+SUMUP_API_KEY = os.getenv("SUMUP_API_KEY")
 
 
 @dataclass
@@ -709,6 +670,100 @@ class ReportBuilder:
         return pdf_path
 
 
+def send_statistics_email(weeks: int, pdf_path: Path, metrics: Dict[str, Any]) -> None:
+    n_weeks = len(metrics["weeks"])
+    period_start = metrics["weeks"][0] if metrics["weeks"] else "N/A"
+    period_end = metrics["weeks"][-1] if metrics["weeks"] else "N/A"
+
+    total_qty = metrics["total_qty"]
+    total_revenue = metrics["total_revenue"]
+
+    payment_counts = metrics["payment_counts"]
+    total_payments = sum(payment_counts.values()) or 1
+    cash_ratio = payment_counts.get("cash", 0) / total_payments * 100
+    cb_ratio = payment_counts.get("cb", 0) / total_payments * 100
+    mapped_ratio = metrics["mapped_rows"] / (metrics["total_rows"] or 1) * 100
+    n_unmapped = len(metrics["unmapped"])
+
+    top5_qty = metrics["top_articles"][:5]
+    top5_qty_str = "\n".join(
+        f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty']} vendus, {a['revenue']:.2f} EUR"
+        for i, a in enumerate(top5_qty)
+    )
+
+    top5_rev = metrics["top_articles_revenue"][:5]
+    top5_rev_str = "\n".join(
+        f"  {i + 1}. {a['label']} ({a['category']}) : {a['revenue']:.2f} EUR ({a['qty']} vendus)"
+        for i, a in enumerate(top5_rev)
+    )
+
+    least5 = metrics["least_articles"][:5]
+    least5_str = "\n".join(
+        f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty']} vendus"
+        for i, a in enumerate(least5)
+    )
+
+    cats = sorted(metrics["by_category"].items(), key=lambda kv: -kv[1]["revenue"])
+    cats_str = "\n".join(
+        f"  - {cat:20s} : {int(v['qty']):5d} ventes, {v['revenue']:8.2f} EUR"
+        for cat, v in cats
+    )
+
+    logs_str = build_log_footer(_log_buffer)
+    now_str = datetime.now().strftime("%d/%m/%Y a %H:%M")
+
+    subject = (
+        f"Rapport Statistiques SumUp - {period_start} a {period_end} "
+        f"({total_qty} ventes, {total_revenue:.0f} EUR)"
+    )
+
+    body = f"""\
+Bonjour,
+
+Veuillez trouver en piece jointe le rapport de statistiques des ventes SumUp.
+
+======================================================
+RESUME -- {period_start} a {period_end} ({n_weeks} semaines)
+======================================================
+Quantite totale vendue  : {total_qty}
+CA estime total         : {total_revenue:.2f} EUR
+Ratio cash / CB         : {cash_ratio:.0f}% / {cb_ratio:.0f}%
+Montant cash estime     : {metrics['payment_amounts'].get('cash', 0.0):.2f} EUR
+Montant CB estime       : {metrics['payment_amounts'].get('cb', 0.0):.2f} EUR
+Taux de mapping         : {mapped_ratio:.0f}%
+Produits non mappes     : {n_unmapped}
+======================================================
+
+TOP 5 ARTICLES - QUANTITE VENDUE :
+{top5_qty_str}
+
+TOP 5 ARTICLES - CA ESTIME :
+{top5_rev_str}
+
+ARTICLES LES MOINS VENDUS (5 derniers) :
+{least5_str}
+
+VENTES PAR CATEGORIE :
+{cats_str}
+
+======================================================
+Genere le {now_str}
+Cordialement,
+Corentin via sumup_statistics.py
+
+--- Logs ---
+{logs_str}
+"""
+
+    send_email(
+        subject=subject,
+        body=body,
+        attachments=[str(pdf_path)],
+        mailing_list="default",
+        logger=log,
+    )
+
+
 def run_report(
     weeks: int,
     items_file: Path,
@@ -716,6 +771,7 @@ def run_report(
     mock_file: Optional[str] = None,
     api_key: Optional[str] = None,
     enrich: bool = True,
+    send_mail: bool = True,
 ) -> Path:
 
     now = datetime.now(timezone.utc)
@@ -723,41 +779,81 @@ def run_report(
 
     items_file = items_file or BASE_DIR / "stocks" / "stock_items.json"
 
+    log.info(f"== Rapport Statistiques SumUp == {weeks} semaines")
+
+    log.info("Etape 1/4 - Chargement du catalogue...")
     catalog = Catalog.from_path(items_file)
-    client = SumUpClient(api_key=api_key)
-    txns = client.fetch_transactions(start_dt.strftime("%Y-%m-%dT%H:%M:%SZ"), now.strftime("%Y-%m-%dT%H:%M:%SZ"), mock_file=mock_file)
+    log.info(f"Catalogue charge : {len(catalog.items)} article(s) actif(s)")
+
+    log.info("Etape 2/4 - Recuperation des transactions...")
+    client = SumUpClient(api_key=api_key or SUMUP_API_KEY)
+    txns = client.fetch_transactions(
+        start_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        mock_file=mock_file,
+    )
+    log.info(f"Transactions recuperees : {len(txns)}")
     txns = client.enrich_transactions(txns, enrich=enrich)
+
+    log.info("Etape 3/4 - Analyse et calcul des metriques...")
     analyzer = TransactionAnalyzer(catalog)
     rows = analyzer.normalize_transactions(txns)
     metrics = analyzer.compute_metrics(rows)
+    log.info(
+        f"Analyse : {metrics['total_qty']} unites vendues, "
+        f"CA estime {metrics['total_revenue']:.2f} EUR, "
+        f"mapping {metrics['mapped_rows']}/{metrics['total_rows']} lignes"
+    )
+    if metrics["unmapped"]:
+        log.warning(f"{len(metrics['unmapped'])} produit(s) non mappes au catalogue")
+
+    log.info("Etape 4/4 - Generation du PDF...")
     title = f"Rapport statistiques ventes - {weeks} semaines"
     ReportBuilder(pdf_path.parent).generate_pdf(metrics, pdf_path, title)
+    log.info(f"PDF genere -> {pdf_path}")
 
+    if send_mail:
+        send_statistics_email(weeks, pdf_path, metrics)
+    else:
+        log.info("Envoi email ignore (--no-mail).")
+
+    log.info("== Termine ==")
     return pdf_path
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Module de statistiques SumUp avec PDF synthétique")
-    p.add_argument("--weeks", type=int, default=DEFAULT_WEEKS, help="Nombre de semaines analysées")
-    p.add_argument("--items", required=True, help="Chemin vers le catalogue JSON")
-    p.add_argument("--pdf", default="rapport_statistiques_sumup.pdf", help="Chemin du PDF de sortie")
+    p = argparse.ArgumentParser(
+        description="Rapport de statistiques des ventes SumUp avec PDF synthetique",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    p.add_argument("--weeks", type=int, default=DEFAULT_WEEKS, help=f"Nombre de semaines analysees (defaut : {DEFAULT_WEEKS})")
+    p.add_argument("--items", default=None, help="Chemin vers le catalogue JSON (defaut : stocks/stock_items.json)")
+    p.add_argument("--pdf", default=None, help="Chemin du PDF de sortie (defaut : rapport_statistiques_sumup_YYYY_WNN.pdf)")
     p.add_argument("--mock", default=None, help="Fichier JSON de transactions mock")
-    p.add_argument("--api-key", default=None, help="Clé API SumUp ; sinon variable d'environnement SUMUP_API_KEY")
-    p.add_argument("--no-enrich", action="store_true", help="Désactive l'enrichissement transaction par transaction")
-
+    p.add_argument("--api-key", default=None, help="Cle API SumUp ; sinon variable d'environnement SUMUP_API_KEY")
+    p.add_argument("--no-enrich", action="store_true", help="Desactive l'enrichissement transaction par transaction")
+    p.add_argument("--no-mail", action="store_true", help="Genere le PDF sans envoyer l'email")
     return p
 
 
 def main():
     args = build_arg_parser().parse_args()
-    api_key = args.api_key or __import__("os").getenv("SUMUP_API_KEY")
+    api_key = args.api_key or SUMUP_API_KEY
+
+    now = datetime.now(timezone.utc)
+    week_label = iso_week_label(now).replace("-", "_")
+    default_pdf = BASE_DIR / f"rapport_statistiques_sumup_{week_label}.pdf"
+    items_file = Path(args.items) if args.items else BASE_DIR / "stocks" / "stock_items.json"
+
     run_report(
         weeks=args.weeks,
-        items_file=Path(args.items),
-        pdf_path=Path(args.pdf),
+        items_file=items_file,
+        pdf_path=Path(args.pdf) if args.pdf else default_pdf,
         mock_file=args.mock,
         api_key=api_key,
         enrich=not args.no_enrich,
+        send_mail=not args.no_mail,
     )
 
 
