@@ -15,7 +15,7 @@ import os
 import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -608,7 +608,7 @@ class ReportBuilder:
         pdf.kv_table([
             ("Semaines analysées", str(len(metrics["weeks"]))),
             ("Quantité totale vendue", str(metrics["total_qty"])),
-            ("CA estimé total", f"{metrics['total_revenue']:.2f} €"),
+            ("CA estimé total", f"{metrics['total_revenue']:.2f} EUR"),
             ("Taux de mapping catalogue", f"{mapped_ratio:.0f} %"),
             ("Ratio cash", f"{cash_ratio:.0f} %"),
             ("Ratio CB", f"{cb_ratio:.0f} %"),
@@ -616,7 +616,7 @@ class ReportBuilder:
 
         pdf.section("Top articles vendus")
         top_qty_rows = [
-            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} €"]
+            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} EUR"]
 
             for a in metrics["top_articles"][:10]
         ]
@@ -624,7 +624,7 @@ class ReportBuilder:
 
         pdf.section("Articles les plus rentables")
         top_rev_rows = [
-            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} €"]
+            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} EUR"]
 
             for a in metrics["top_articles_revenue"][:10]
         ]
@@ -632,7 +632,7 @@ class ReportBuilder:
 
         pdf.section("Articles les moins vendus")
         low_rows = [
-            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} €"]
+            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} EUR"]
 
             for a in metrics["least_articles"][:10]
         ]
@@ -644,7 +644,7 @@ class ReportBuilder:
 
         pdf.section("CA estimé par catégorie")
         cat_rows = [
-            [cat, str(int(vals["qty"])), f"{vals['revenue']:.2f} €"]
+            [cat, str(int(vals["qty"])), f"{vals['revenue']:.2f} EUR"]
 
             for cat, vals in sorted(metrics["by_category"].items(), key=lambda kv: (-kv[1]["revenue"], kv[0]))
         ]
@@ -655,8 +655,8 @@ class ReportBuilder:
         pdf.kv_table([
             ("Ventes cash", str(payment_counts.get("cash", 0))),
             ("Ventes CB", str(payment_counts.get("cb", 0))),
-            ("Montant cash estimé", f"{metrics['payment_amounts'].get('cash', 0.0):.2f} €"),
-            ("Montant CB estimé", f"{metrics['payment_amounts'].get('cb', 0.0):.2f} €"),
+            ("Montant cash estimé", f"{metrics['payment_amounts'].get('cash', 0.0):.2f} EUR"),
+            ("Montant CB estimé", f"{metrics['payment_amounts'].get('cb', 0.0):.2f} EUR"),
         ])
         pdf.add_chart(payment_chart, h=62)
 
@@ -688,24 +688,28 @@ def send_statistics_email(weeks: int, pdf_path: Path, metrics: Dict[str, Any]) -
     top5_qty = metrics["top_articles"][:5]
     top5_qty_str = "\n".join(
         f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty']} vendus, {a['revenue']:.2f} EUR"
+
         for i, a in enumerate(top5_qty)
     )
 
     top5_rev = metrics["top_articles_revenue"][:5]
     top5_rev_str = "\n".join(
         f"  {i + 1}. {a['label']} ({a['category']}) : {a['revenue']:.2f} EUR ({a['qty']} vendus)"
+
         for i, a in enumerate(top5_rev)
     )
 
     least5 = metrics["least_articles"][:5]
     least5_str = "\n".join(
         f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty']} vendus"
+
         for i, a in enumerate(least5)
     )
 
     cats = sorted(metrics["by_category"].items(), key=lambda kv: -kv[1]["revenue"])
     cats_str = "\n".join(
         f"  - {cat:20s} : {int(v['qty']):5d} ventes, {v['revenue']:8.2f} EUR"
+
         for cat, v in cats
     )
 
