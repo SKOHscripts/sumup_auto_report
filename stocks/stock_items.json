@@ -129,11 +129,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 3.0,
+      "stock_on_hand": 22,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "last_auto_update": "2026-04-19",
       "stock_history": [
@@ -196,11 +196,11 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 9.7,
+      "stock_on_hand": 5,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "last_auto_update": "2026-04-19",
       "stock_history": [
@@ -218,6 +218,20 @@
   },
   {
     "is_stock_reference": true,
+    "label": "Rose Pot",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Rose Pot"
+    },
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_sku": "vin_rose"
+  },
+  {
+    "is_stock_reference": true,
     "label": "Vin blanc",
     "enabled": true,
     "unit": "L",
@@ -229,7 +243,7 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 6.7,
+      "stock_on_hand": 5,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -262,6 +276,20 @@
     },
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4
+  },
+  {
+    "is_stock_reference": true,
+    "label": "Blanc Pot",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Blanc Pot"
+    },
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_sku": "vin_blanc"
   },
   {
     "stock_sku": "vin_blanc",
@@ -327,6 +355,20 @@
   },
   {
     "is_stock_reference": true,
+    "label": "Rouge Pot",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Vin",
+      "variant": "Rouge Pot"
+    },
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_sku": "vin_rouge"
+  },
+  {
+    "is_stock_reference": true,
     "label": "Jus de pomme bio 20 cL brique",
     "enabled": true,
     "unit": "brique",
@@ -339,11 +381,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 4,
+      "stock_on_hand": 22,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual"
     },
     "stock_sku": "jus_pomme_bio_20cl_brique"
@@ -539,11 +581,11 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 2.0,
+      "stock_on_hand": 4.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "last_auto_update": "2026-04-19",
       "stock_history": [
@@ -849,11 +891,11 @@
       "variant": "Jus de orange bio 20 cL brique"
     },
     "stock_state": {
-      "stock_on_hand": 8.0,
+      "stock_on_hand": 9.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "stock_history": [
         {
@@ -917,7 +959,7 @@
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "stock_history": []
     }
@@ -935,11 +977,11 @@
       "variant": "Saucissons mini sachet"
     },
     "stock_state": {
-      "stock_on_hand": 5.0,
+      "stock_on_hand": 14.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "stock_history": [
         {
@@ -1065,7 +1107,7 @@
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-04-23",
       "inventory_count_method": "manual",
       "stock_history": [
         {
