@@ -118,25 +118,21 @@ class Catalog:
         for raw in raw_items:
             if not raw.get("enabled", True):
                 continue
-            sm = raw.get("sumupmatch", {}) or {}
-            price = raw.get("saleprice")
-
-            if price is None:
-                price = raw.get("sale_price")
-
-            if price is None:
-                price = raw.get("sellingprice")
+            sm = raw.get("sumup_match", {}) or {}
+            price = raw.get("sale_price") or raw.get("saleprice") or raw.get("sellingprice")
             items.append(
                 CatalogItem(
-                    stocksku=raw.get("stocksku") or raw.get("sku") or "",
-                    label=raw.get("stocklabel") or raw.get("label") or raw.get("stocksku") or "",
+                    stocksku=raw.get("stock_sku") or raw.get("sku") or "",
+                    label=raw.get("stock_label") or raw.get("label") or raw.get("stock_sku") or "",
                     category=raw.get("category") or "autres",
-                    unit=raw.get("stockunit") or raw.get("unit") or "piece",
+                    unit=raw.get("stock_unit") or raw.get("unit") or "piece",
                     enabled=bool(raw.get("enabled", True)),
-                    is_reference=bool(raw.get("isstockreference") or raw.get("stockstate")),
+                    is_reference=bool(raw.get("is_stock_reference") or raw.get("stock_state")),
                     sumup_name=sm.get("name") or raw.get("label") or "",
                     sumup_variant=sm.get("variant") or "",
-                    consumption_per_sale=safe_float(raw.get("consumptionpersale", raw.get("packsize", 1)), 1.0),
+                    consumption_per_sale=safe_float(
+                        raw.get("consumption_per_sale", raw.get("pack_size", 1)), 1.0
+                    ),
                     sale_price=safe_float(price, 0.0) if price not in (None, "") else None,
                     raw=raw,
                 )
@@ -481,13 +477,14 @@ class ChartFactory:
 
         if not values:
             return None
-        plt.figure(figsize=(5.2, 5.2), dpi=160)
-        plt.pie(values, labels=labels, autopct="%1.0f%%", startangle=90, colors=colors, textprops={"fontsize": 9})
-        plt.title("Ratio ventes cash / CB")
-        plt.tight_layout()
+        fig, ax = plt.subplots(figsize=(5.5, 5.5), dpi=160)
+        ax.pie(values, labels=labels, autopct="%1.0f%%", startangle=90, colors=colors,
+               textprops={"fontsize": 10}, pctdistance=0.75, labeldistance=1.15)
+        ax.set_title("Ratio ventes cash / CB", pad=12)
+        fig.tight_layout(pad=1.5)
         path = self.output_dir / "payment_ratio.png"
-        plt.savefig(path, bbox_inches="tight")
-        plt.close()
+        fig.savefig(path, bbox_inches="tight")
+        plt.close(fig)
 
         return path
 
@@ -577,7 +574,7 @@ class StatsPDF(FPDF):
                 self.cell(w, 6.2, self._safe(str(cell), 34), border="B", align="L")
             self.ln()
 
-    def add_chart(self, img_path: Optional[Path], h: float = 62):
+    def add_chart(self, img_path: Optional[Path], h: float = 62, w: Optional[float] = None):
         if not img_path or not img_path.exists():
             self.set_font("Helvetica", "I", 8)
             self.set_text_color(*PALETTE["muted"])
@@ -588,7 +585,10 @@ class StatsPDF(FPDF):
 
         if self.get_y() + h > self.h - self.b_margin:
             self.add_page()
-        self.image(str(img_path), x=self.l_margin, y=self.get_y(), w=self.w - self.l_margin - self.r_margin, h=h)
+        page_w = self.w - self.l_margin - self.r_margin
+        chart_w = w if w is not None else page_w
+        x = self.l_margin + (page_w - chart_w) / 2
+        self.image(str(img_path), x=x, y=self.get_y(), w=chart_w, h=h)
         self.ln(h + 2)
 
 
@@ -665,7 +665,7 @@ class ReportBuilder:
             ("Montant cash estimé", f"{metrics['payment_amounts'].get('cash', 0.0):.2f} EUR"),
             ("Montant CB estimé", f"{metrics['payment_amounts'].get('cb', 0.0):.2f} EUR"),
         ])
-        pdf.add_chart(payment_chart, h=62)
+        pdf.add_chart(payment_chart, h=74, w=74)
 
         if metrics["unmapped"]:
             pdf.section("Produits non mappés")
