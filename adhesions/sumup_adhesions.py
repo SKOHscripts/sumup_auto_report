@@ -12,6 +12,11 @@ Automatisation via crontab (exemple : chaque lundi à 09:00) :
 0 9 * * 1 /usr/bin/python3 /chemin/vers/sumup_adhesions.py >> /var/log/sumup.log 2>&1
 """
 
+import sys
+from pathlib import Path
+# Permet l'exécution directe `python adhesions/sumup_adhesions.py` en plus de `python -m`
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from fpdf import FPDF
 import fpdf as _fpdf
 import requests
@@ -30,7 +35,6 @@ from utils.mail_utils import (
     send_email,
     build_log_footer,
     )
-from pathlib import Path
 
 
 def _check_fpdf_version():

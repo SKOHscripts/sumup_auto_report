@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+import sys
+from pathlib import Path
+# Permet l'exécution directe `python paheko_stats/paheko.py` en plus de `python -m`
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from utils.mail_utils import (
     load_project_env,
     setup_memory_log_capture,
@@ -18,7 +23,6 @@ import os
 import statistics
 from collections import Counter
 from datetime import datetime
-from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
