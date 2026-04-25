@@ -27,10 +27,15 @@ import csv
 import json
 import logging
 import os
+import sys
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone, date
 from pathlib import Path
+
+# Permet l'exécution directe `python stocks/sumup_stocks.py` en plus de `python -m`
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import matplotlib.pyplot as plt
 import math
 
