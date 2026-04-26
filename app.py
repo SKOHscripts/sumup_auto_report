@@ -88,6 +88,9 @@ for sid in SCRIPTS:
 def build_env(email_overrides=None):
     env = dict(os.environ)
 
+    # Garantit que run.sh utilise le même Python que Streamlit (venv inclus)
+    env["PYTHON"] = sys.executable
+
     # Passe tous les secrets au sous-processus (top-level + sections TOML imbriquées)
     for key, val in st.secrets.items():
         if isinstance(val, (str, int, float)):
