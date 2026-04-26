@@ -1,10 +1,20 @@
-# requirements.txt — SumUp Adhésions Report
+# requirements.txt — SumUp Auto Report
 
-# Appels HTTP vers l'API SumUp
+# Interface web
+streamlit>=1.35
+
+# Appels HTTP vers l'API SumUp et Paheko
 requests>=2.31
 
 # Génération de PDF
 fpdf2>=2.7,<3
 
-# Chargement du fichier .env
+# Graphiques (paheko, statistiques)
+matplotlib>=3.8
+numpy>=1.26
+
+# Parsing de dates
+python-dateutil>=2.9
+
+# Chargement du fichier .env (mode cron)
 python-dotenv>=1.0

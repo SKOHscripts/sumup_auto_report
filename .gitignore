@@ -1,5 +1,8 @@
 .env
+.streamlit/secrets.toml
 rapport*
-__pycache__
+__pycache__/
 *.log
+*.pdf
+*.png
 .last_sumup_adhesions

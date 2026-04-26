@@ -18,16 +18,14 @@ def load_project_env(env_file=None, required_vars=None, logger=None):
     else:
         env_file = Path(env_file)
 
-    if not env_file.exists():
-        raise RuntimeError(f".env introuvable : {env_file}")
-
-    load_dotenv(dotenv_path=env_file, override=True)
-    logger.info(f".env chargé depuis : {env_file.name}")
+    if env_file.exists():
+        load_dotenv(dotenv_path=env_file, override=False)
+        logger.info(f".env chargé depuis : {env_file.name}")
 
     missing = [var for var in (required_vars or []) if not os.getenv(var)]
 
     if missing:
-        raise RuntimeError(f"Variables manquantes dans .env : {', '.join(missing)}")
+        raise RuntimeError(f"Variables manquantes : {', '.join(missing)}")
 
     return env_file
 
