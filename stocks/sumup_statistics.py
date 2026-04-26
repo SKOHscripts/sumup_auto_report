@@ -498,9 +498,11 @@ class StatsPDF(FPDF):
 
     def _safe(self, text: str, max_len: int = 999) -> str:
         t = str(text or "-")
+
         for src, dst in [("€", "EUR"), ("—", "-"), ("–", "-"), ("'", "'"), (" ", " ")]:
             t = t.replace(src, dst)
         t = t.encode("latin-1", errors="replace").decode("latin-1")
+
         return (t[: max_len - 3] + "...") if len(t) > max_len else t
 
     def header(self):
@@ -854,7 +856,7 @@ def main():
 
     now = datetime.now(timezone.utc)
     week_label = iso_week_label(now).replace("-", "_")
-    default_pdf = BASE_DIR / f"rapport_statistiques_sumup_{week_label}.pdf"
+    default_pdf = BASE_DIR / "stocks" / f"rapport_statistiques_sumup_{week_label}.pdf"
     items_file = Path(args.items) if args.items else BASE_DIR / "stocks" / "stock_items.json"
 
     run_report(
