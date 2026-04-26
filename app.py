@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+from datetime import date, timedelta
 from pathlib import Path
 
 import streamlit as st
@@ -23,7 +24,7 @@ if not st.session_state["authenticated"]:
             st.error("Mot de passe incorrect.")
     st.stop()
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+# ── configuration des scripts ─────────────────────────────────────────────────
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -32,24 +33,47 @@ SCRIPTS = {
     "stocks": {
         "title": "Rapport Stocks",
         "caption": "Inventaire hebdomadaire et alertes de réapprovisionnement",
-        "path": "stocks/sumup_stocks.py",
+        "description": (
+            "Ce script récupère les transactions SumUp des dernières semaines, "
+            "déduit les quantités vendues de chaque article, et génère un rapport PDF "
+            "avec l'état des stocks, les seuils de réapprovisionnement et les alertes. "
+            "**Il met aussi à jour le fichier `stock_items.json` et pousse les changements "
+            "sur le dépôt git automatiquement.**"
+        ),
+        "use_run_sh": True,
         "email_env_var": "EMAIL_TO_SUMUP_ALL_CA",
     },
     "adhesions": {
         "title": "Rapport Adhésions",
         "caption": "Transactions d'adhésion et dons SumUp",
+        "description": (
+            "Extrait les transactions SumUp contenant des mots-clés définis (ex: « adhésion », « don ») "
+            "sur une période donnée, et génère un PDF récapitulatif groupé par moyen de paiement "
+            "(espèces, carte Visa, Mastercard…) avec totaux par section."
+        ),
         "path": "adhesions/sumup_adhesions.py",
         "email_env_var": "EMAIL_TO_SUMUP_FINANCE",
     },
     "paheko": {
         "title": "Tableau de bord Paheko",
         "caption": "Statistiques et démographie des membres",
+        "description": (
+            "Se connecte à l'API Paheko pour récupérer les données des membres actifs "
+            "et génère un tableau de bord visuel : répartition par catégorie, pyramide des âges, "
+            "abonnements newsletter, villes représentées, et évolution des inscriptions dans le temps."
+        ),
         "path": "paheko_stats/paheko.py",
         "email_env_var": "EMAIL_TO_SUMUP_ALL_CA",
     },
     "stats": {
         "title": "Statistiques SumUp",
         "caption": "Analyse des ventes et performance produits",
+        "description": (
+            "Analyse les transactions SumUp sur une période configurable pour produire un rapport "
+            "sur le chiffre d'affaires par produit et par catégorie, la répartition des moyens de paiement, "
+            "et l'évolution hebdomadaire des ventes. Identifie aussi les produits sans correspondance "
+            "dans le catalogue (anomalies de données)."
+        ),
         "path": "stocks/sumup_statistics.py",
         "email_env_var": "EMAIL_TO",
     },
@@ -82,7 +106,6 @@ def build_env(email_overrides=None):
     if "EMAIL_PASSWORD" in st.secrets:
         env.setdefault("SMTP_PASS", str(st.secrets["EMAIL_PASSWORD"]))
 
-    # Surcharge des destinataires saisie par l'utilisateur dans l'UI
     if email_overrides:
         env.update(email_overrides)
 
@@ -94,13 +117,18 @@ def _default_recipients(env_var):
     return st.secrets.get(env_var, "")
 
 
-def run_script(sid, script_path, email_env_var=None, email_override=None):
+def build_cmd(cfg, extra_args):
+    """Construit la commande à exécuter selon le type de script."""
+    if cfg.get("use_run_sh"):
+        return ["./run.sh", "stocks"] + extra_args
+    module = Path(cfg["path"]).with_suffix("").as_posix().replace("/", ".")
+    return [sys.executable, "-m", module] + extra_args
+
+
+def run_script(sid, cmd, email_env_var=None, email_override=None):
     st.session_state[f"logs_{sid}"] = []
     st.session_state[f"rc_{sid}"] = None
     st.session_state[f"running_{sid}"] = True
-
-    module = Path(script_path).with_suffix("").as_posix().replace("/", ".")
-    cmd = [sys.executable, "-m", module]
 
     overrides = {}
     if email_env_var and email_override and email_override.strip():
@@ -133,13 +161,168 @@ def run_script(sid, script_path, email_env_var=None, email_override=None):
 # ── main UI ───────────────────────────────────────────────────────────────────
 
 st.title("SumUp Reports")
+st.caption(
+    "Lancez les rapports manuellement. Chaque script génère un PDF (ou PNG) "
+    "et l'envoie par email aux destinataires configurés, sauf si l'option « sans email » est cochée."
+)
 
 for i, (sid, cfg) in enumerate(SCRIPTS.items()):
     st.subheader(cfg["title"])
     st.caption(cfg["caption"])
 
+    with st.expander("À propos de ce rapport", expanded=False):
+        st.markdown(cfg["description"])
+
     is_running = st.session_state[f"running_{sid}"]
     email_env_var = cfg.get("email_env_var")
+    extra_args = []
+
+    # ── options spécifiques à chaque script ───────────────────────────────────
+
+    if sid == "stocks":
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            weeks = st.number_input(
+                "Semaines d'historique",
+                min_value=1, max_value=52, value=4,
+                key=f"weeks_{sid}",
+                disabled=is_running,
+                help=(
+                    "Nombre de semaines de transactions récupérées depuis l'API SumUp "
+                    "pour calculer la consommation de chaque article."
+                ),
+            )
+        with col2:
+            mock_file = st.text_input(
+                "Fichier mock (optionnel)",
+                value="",
+                key=f"mock_{sid}",
+                disabled=is_running,
+                placeholder="ex : stocks/mock_transactions.json",
+                help=(
+                    "Chemin vers un fichier JSON local de transactions. "
+                    "Si renseigné, l'API SumUp n'est pas appelée — utile pour les tests."
+                ),
+            )
+        no_mail = st.checkbox(
+            "Ne pas envoyer l'email (générer le PDF uniquement)",
+            value=False,
+            key=f"no_mail_{sid}",
+            disabled=is_running,
+        )
+        extra_args += ["--weeks", str(int(weeks))]
+        if no_mail:
+            extra_args.append("--no-mail")
+        if mock_file.strip():
+            extra_args += ["--mock", mock_file.strip()]
+
+    elif sid == "adhesions":
+        today = date.today()
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input(
+                "Date de début",
+                value=today - timedelta(days=14),
+                key=f"start_{sid}",
+                disabled=is_running,
+                help="Premier jour de la période à analyser (inclus).",
+            )
+        with col2:
+            end_date = st.date_input(
+                "Date de fin",
+                value=today,
+                key=f"end_{sid}",
+                disabled=is_running,
+                help="Dernier jour de la période à analyser (inclus).",
+            )
+        filtres = st.text_input(
+            "Mots-clés de filtre (optionnel)",
+            value="",
+            key=f"filtres_{sid}",
+            disabled=is_running,
+            placeholder="ex : Adhesion Don",
+            help=(
+                "Mots-clés recherchés dans le libellé des transactions, séparés par des espaces. "
+                "Laisser vide = filtres par défaut du script (ex : « adhesion »). "
+                "Entrer un espace = inclure toutes les transactions sans filtre."
+            ),
+        )
+        no_mail = st.checkbox(
+            "Ne pas envoyer l'email (générer le PDF uniquement)",
+            value=False,
+            key=f"no_mail_{sid}",
+            disabled=is_running,
+        )
+        extra_args += ["--start", str(start_date), "--end", str(end_date)]
+        if no_mail:
+            extra_args.append("--no-mail")
+        tokens = filtres.split()
+        if tokens:
+            extra_args += ["--filtres"] + tokens
+        elif filtres.strip() == "" and filtres != "":
+            # espace seul → --filtres sans valeur (toutes transactions)
+            extra_args.append("--filtres")
+
+    elif sid == "paheko":
+        no_mail = st.checkbox(
+            "Ne pas envoyer l'email (générer le dashboard uniquement)",
+            value=False,
+            key=f"no_mail_{sid}",
+            disabled=is_running,
+        )
+        if no_mail:
+            extra_args.append("--no-mail")
+
+    elif sid == "stats":
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            weeks = st.number_input(
+                "Semaines d'historique",
+                min_value=1, max_value=52, value=8,
+                key=f"weeks_{sid}",
+                disabled=is_running,
+                help="Nombre de semaines de transactions à analyser.",
+            )
+        with col2:
+            mock_file = st.text_input(
+                "Fichier mock (optionnel)",
+                value="",
+                key=f"mock_{sid}",
+                disabled=is_running,
+                placeholder="ex : stocks/mock_transactions.json",
+                help=(
+                    "Chemin vers un fichier JSON local de transactions. "
+                    "Si renseigné, l'API SumUp n'est pas appelée."
+                ),
+            )
+        col3, col4 = st.columns(2)
+        with col3:
+            no_mail = st.checkbox(
+                "Ne pas envoyer l'email",
+                value=False,
+                key=f"no_mail_{sid}",
+                disabled=is_running,
+            )
+        with col4:
+            no_enrich = st.checkbox(
+                "Désactiver l'enrichissement",
+                value=False,
+                key=f"no_enrich_{sid}",
+                disabled=is_running,
+                help=(
+                    "Désactive les appels API supplémentaires par transaction "
+                    "(plus rapide, mais moins de détails dans le rapport)."
+                ),
+            )
+        extra_args += ["--weeks", str(int(weeks))]
+        if no_mail:
+            extra_args.append("--no-mail")
+        if no_enrich:
+            extra_args.append("--no-enrich")
+        if mock_file.strip():
+            extra_args += ["--mock", mock_file.strip()]
+
+    # ── destinataires + bouton de lancement ───────────────────────────────────
 
     email_input = st.text_input(
         "Destinataires (séparés par des virgules)",
@@ -150,7 +333,8 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
     )
 
     if st.button("Lancer", key=f"btn_{sid}", disabled=is_running):
-        run_script(sid, cfg["path"], email_env_var=email_env_var, email_override=email_input)
+        cmd = build_cmd(cfg, extra_args)
+        run_script(sid, cmd, email_env_var=email_env_var, email_override=email_input)
 
     logs = st.session_state[f"logs_{sid}"]
     rc = st.session_state[f"rc_{sid}"]
@@ -160,7 +344,10 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
 
     if rc is not None:
         if rc == 0:
-            st.success("Email envoyé.")
+            if st.session_state.get(f"no_mail_{sid}", False):
+                st.success("Rapport généré avec succès (sans envoi email).")
+            else:
+                st.success("Rapport généré et email envoyé.")
         else:
             st.error("Erreur — voir les logs ci-dessus.")
 
