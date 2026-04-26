@@ -34,13 +34,12 @@ SCRIPTS = {
         "title": "Rapport Stocks",
         "caption": "Inventaire hebdomadaire et alertes de réapprovisionnement",
         "description": (
-            "Ce script récupère les transactions SumUp des dernières semaines, "
+            "Récupère les transactions SumUp des dernières semaines, "
             "déduit les quantités vendues de chaque article, et génère un rapport PDF "
             "avec l'état des stocks, les seuils de réapprovisionnement et les alertes. "
-            "**Il met aussi à jour le fichier `stock_items.json` et pousse les changements "
-            "sur le dépôt git automatiquement.**"
+            "Met aussi à jour le fichier `stock_items.json` (la mise à jour git doit être faite manuellement ou via crontab)."
         ),
-        "use_run_sh": True,
+        "path": "stocks/sumup_stocks.py",
         "email_env_var": "EMAIL_TO_SUMUP_ALL_CA",
     },
     "adhesions": {
@@ -121,9 +120,6 @@ def _default_recipients(env_var):
 
 
 def build_cmd(cfg, extra_args):
-    """Construit la commande à exécuter selon le type de script."""
-    if cfg.get("use_run_sh"):
-        return ["./run.sh", "stocks"] + extra_args
     module = Path(cfg["path"]).with_suffix("").as_posix().replace("/", ".")
     return [sys.executable, "-m", module] + extra_args
 
