@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+from pathlib import Path
 
 import streamlit as st
 
@@ -98,7 +99,8 @@ def run_script(sid, script_path, email_env_var=None, email_override=None):
     st.session_state[f"rc_{sid}"] = None
     st.session_state[f"running_{sid}"] = True
 
-    cmd = [sys.executable, os.path.join(BASE_DIR, script_path)]
+    module = Path(script_path).with_suffix("").as_posix().replace("/", ".")
+    cmd = [sys.executable, "-m", module]
 
     overrides = {}
     if email_env_var and email_override and email_override.strip():
