@@ -22,6 +22,18 @@ Fichiers générés :
   - rapport_stocks_history_YYYY-WNN.csv
 """
 
+from utils.sumup_shared import remove_accents, normalize, iso_week_label, week_start
+from utils.mail_utils import (
+    load_project_env,
+    setup_memory_log_capture,
+    send_email,
+    build_log_footer,
+    )
+from fpdf import FPDF
+import fpdf as _fpdf
+import requests
+import math
+import matplotlib.pyplot as plt
 import argparse
 import csv
 import json
@@ -36,20 +48,6 @@ from pathlib import Path
 # Permet l'exécution directe `python stocks/sumup_stocks.py` en plus de `python -m`
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import matplotlib.pyplot as plt
-import math
-
-import requests
-import fpdf as _fpdf
-from fpdf import FPDF
-
-from utils.mail_utils import (
-    load_project_env,
-    setup_memory_log_capture,
-    send_email,
-    build_log_footer,
-    )
-from utils.sumup_shared import remove_accents, normalize, iso_week_label, week_start
 
 # ─── Vérification version fpdf2 ───────────────────────────────────────────────
 
@@ -1644,7 +1642,7 @@ Corentin via sumup_stocks.py
         subject=subject,
         body=body,
         attachments=attachments,
-        mailing_list="all_ca",
+        mailing_list="default",
         logger=log,
         )
 
