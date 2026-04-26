@@ -1,0 +1,577 @@
+2026-04-04 22:25:01 [INFO] .env chargé depuis : .env
+2026-04-04 22:25:01 [INFO] ══ Rapport Stocks SumUp ══ 8 semaines | Semaine courante : 2026-W14
+2026-04-04 22:25:01 [INFO] Étape 1/5 - Chargement du catalogue unifie…
+2026-04-04 22:25:01 [INFO] Catalogue unifie : 8/21 article(s) actif(s) charge(s)
+2026-04-04 22:25:01 [INFO] Étape 2/5 - Recuperation des transactions…
+2026-04-04 22:25:01 [INFO] Total brut récupéré : 879 transaction(s)
+2026-04-04 22:25:01 [INFO] Enrichissement de 879 transaction(s)…
+2026-04-04 22:26:27 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-04 22:29:47 [WARNING] ↳ 9666293051 : réponse 404
+2026-04-04 22:29:55 [WARNING] ↳ 9638240635 : réponse 404
+2026-04-04 22:30:01 [INFO] .env chargé depuis : .env
+2026-04-04 22:30:01 [INFO] ══ Rapport Stocks SumUp ══ 8 semaines | Semaine courante : 2026-W14
+2026-04-04 22:30:01 [INFO] Étape 1/5 - Chargement du catalogue unifie…
+2026-04-04 22:30:01 [INFO] Catalogue unifie : 8/21 article(s) actif(s) charge(s)
+2026-04-04 22:30:01 [INFO] Étape 2/5 - Recuperation des transactions…
+2026-04-04 22:30:01 [INFO] Total brut récupéré : 879 transaction(s)
+2026-04-04 22:30:01 [INFO] Enrichissement de 879 transaction(s)…
+2026-04-04 22:30:03 [WARNING] ↳ 9637514035 : réponse 404
+2026-04-04 22:30:04 [WARNING] ↳ 9637508546 : réponse 404
+2026-04-04 22:30:08 [WARNING] ↳ 9637437817 : réponse 404
+2026-04-04 22:30:39 [INFO] Enrichissement terminé : 879 transaction(s)
+2026-04-04 22:30:39 [INFO] Étape 3/5 - Agregation hebdomadaire…
+2026-04-04 22:30:39 [WARNING] 64 produit(s) SumUp non mappe(s) au catalogue
+2026-04-04 22:30:39 [INFO] Étape 4/5 - Calcul des indicateurs centralises…
+2026-04-04 22:30:39 [INFO]  bieres_pression                | stock= 30.00 | vendu=120.98 | statut=A COMMANDER
+2026-04-04 22:30:39 [INFO]  chips                          | stock= 19.00 | vendu=129.00 | statut=A COMMANDER
+2026-04-04 22:30:39 [INFO]  vin_blanc                      | stock=  3.60 | vendu= 28.80 | statut=A COMMANDER
+2026-04-04 22:30:39 [INFO]  cafe_espresso                  | stock=2000.00 | vendu=2232.00 | statut=OK
+2026-04-04 22:30:39 [INFO] Étape 5/5 - Generation des fichiers…
+2026-04-04 22:30:40 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.pdf
+2026-04-04 22:30:40 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.csv
+2026-04-04 22:30:40 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W14.csv
+2026-04-04 22:30:41 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-04 22:30:41 [INFO] ══ Termine ══
+2026-04-04 22:31:19 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-04 22:32:20 [WARNING] ↳ Échec enrichissement 0eb38862-f95e-44bc-b7db-1e4d3631dc9d : HTTPSConnectionPool(host='api.sumup.com', port=443): Read timed out. (read timeout=10)
+2026-04-04 22:34:45 [WARNING] ↳ 9666293051 : réponse 404
+2026-04-04 22:34:54 [WARNING] ↳ 9638240635 : réponse 404
+2026-04-04 22:35:03 [WARNING] ↳ 9637514035 : réponse 404
+2026-04-04 22:35:03 [WARNING] ↳ 9637508546 : réponse 404
+2026-04-04 22:35:07 [WARNING] ↳ 9637437817 : réponse 404
+2026-04-04 22:35:47 [INFO] Enrichissement terminé : 879 transaction(s)
+2026-04-04 22:35:47 [INFO] Étape 3/5 - Agregation hebdomadaire…
+2026-04-04 22:35:47 [WARNING] 64 produit(s) SumUp non mappe(s) au catalogue
+2026-04-04 22:35:47 [INFO] Étape 4/5 - Calcul des indicateurs centralises…
+2026-04-04 22:35:47 [INFO]  bieres_pression                | stock= 15.00 | vendu=120.65 | statut=RISQUE RUPTURE
+2026-04-04 22:35:47 [INFO]  chips                          | stock= 19.00 | vendu=129.00 | statut=A COMMANDER
+2026-04-04 22:35:47 [INFO]  vin_blanc                      | stock=  3.60 | vendu= 28.80 | statut=A COMMANDER
+2026-04-04 22:35:47 [INFO]  cafe_espresso                  | stock=2000.00 | vendu=2232.00 | statut=OK
+2026-04-04 22:35:47 [INFO] Étape 5/5 - Generation des fichiers…
+2026-04-04 22:35:48 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.pdf
+2026-04-04 22:35:48 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.csv
+2026-04-04 22:35:48 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W14.csv
+2026-04-04 22:35:49 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-04 22:35:49 [INFO] ══ Termine ══
+2026-04-04 23:54:53 [INFO] .env chargé depuis : .env
+2026-04-04 23:54:53 [INFO] ══ Rapport Stocks SumUp ══ 8 semaines | Semaine courante : 2026-W14
+2026-04-04 23:54:53 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-04 23:54:53 [INFO] Catalogue unifie : 8/21 article(s) actif(s) charge(s)
+2026-04-04 23:54:53 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-02-07..2026-04-04 | fenetre fetch=2026-02-07..2026-04-04)
+2026-04-04 23:54:55 [INFO] Total brut récupéré : 879 transaction(s)
+2026-04-04 23:54:55 [INFO] Enrichissement de 879 transaction(s)…
+2026-04-04 23:56:20 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-04 23:59:50 [WARNING] ↳ 9666293051 : réponse 404
+2026-04-04 23:59:58 [WARNING] ↳ 9638240635 : réponse 404
+2026-04-05 00:00:07 [WARNING] ↳ 9637514035 : réponse 404
+2026-04-05 00:00:07 [WARNING] ↳ 9637508546 : réponse 404
+2026-04-05 00:00:16 [WARNING] ↳ 9637437817 : réponse 404
+2026-04-05 00:00:48 [INFO] Enrichissement terminé : 879 transaction(s)
+2026-04-05 00:00:48 [INFO] Étape 3/6 - Agregation hebdomadaire…
+2026-04-05 00:00:48 [WARNING] 64 produit(s) SumUp non mappe(s) au catalogue
+2026-04-05 00:00:48 [INFO] Étape 4/6 - Mise a jour automatique des stocks…
+2026-04-05 00:00:48 [INFO] Aucune mise a jour automatique du stock necessaire.
+2026-04-05 00:00:48 [INFO] Étape 5/6 - Calcul des indicateurs centralises…
+2026-04-05 00:00:48 [INFO]  bieres_pression                | stock=  7.64 | vendu=120.98 | statut=RISQUE RUPTURE
+2026-04-05 00:00:48 [INFO]  chips                          | stock=  0.00 | vendu=129.00 | statut=RISQUE RUPTURE
+2026-04-05 00:00:48 [INFO]  vin_blanc                      | stock=  2.00 | vendu= 28.80 | statut=RISQUE RUPTURE
+2026-04-05 00:00:48 [INFO]  cafe_espresso                  | stock=1968.00 | vendu=2232.00 | statut=OK
+2026-04-05 00:00:48 [INFO] Étape 6/6 - Generation des fichiers…
+2026-04-05 00:00:49 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.pdf
+2026-04-05 00:00:49 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.csv
+2026-04-05 00:00:49 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W14.csv
+2026-04-05 00:00:50 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-05 00:00:50 [INFO] ══ Termine ══
+2026-04-05 00:55:52 [INFO] .env chargé depuis : .env
+2026-04-05 00:55:52 [INFO] ══ Rapport Stocks SumUp ══ 8 semaines | Semaine courante : 2026-W14
+2026-04-05 00:55:52 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-05 00:55:52 [INFO] Catalogue unifie : 38/41 article(s) actif(s) charge(s)
+2026-04-05 00:55:52 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-02-07..2026-04-04 | fenetre fetch=2026-02-07..2026-04-04)
+2026-04-05 00:55:53 [INFO] Total brut récupéré : 879 transaction(s)
+2026-04-05 00:55:53 [INFO] Enrichissement de 879 transaction(s)…
+2026-04-05 00:57:17 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-05 01:00:48 [WARNING] ↳ 9666293051 : réponse 404
+2026-04-05 01:00:56 [WARNING] ↳ 9638240635 : réponse 404
+2026-04-05 01:01:05 [WARNING] ↳ 9637514035 : réponse 404
+2026-04-05 01:01:05 [WARNING] ↳ 9637508546 : réponse 404
+2026-04-05 01:01:09 [WARNING] ↳ 9637437817 : réponse 404
+2026-04-05 01:01:49 [INFO] Enrichissement terminé : 879 transaction(s)
+2026-04-05 01:01:49 [INFO] Étape 3/6 - Agregation hebdomadaire…
+2026-04-05 01:01:49 [WARNING] 35 produit(s) SumUp non mappe(s) au catalogue
+2026-04-05 01:01:49 [INFO] Étape 4/6 - Mise a jour automatique des stocks…
+2026-04-05 01:01:49 [INFO] Maj auto stock sirop_grenadine: 1.50 -> 1.46 (conso 0.04 depuis 2026-03-30)
+2026-04-05 01:01:49 [INFO] Catalogue mis a jour : /home/skoh/SynologyDrive/Documents/Scripts/sumup/stock_items.json
+2026-04-05 01:01:49 [INFO] Catalogue unifie : 38/41 article(s) actif(s) charge(s)
+2026-04-05 01:01:49 [INFO] Étape 5/6 - Calcul des indicateurs centralises…
+2026-04-05 01:01:49 [INFO]  bieres_pression                | stock=  7.64 | vendu=120.98 | statut=RISQUE RUPTURE
+2026-04-05 01:01:49 [INFO]  chips                          | stock=  0.00 | vendu=129.00 | statut=RISQUE RUPTURE
+2026-04-05 01:01:49 [INFO]  vin_blanc                      | stock=  2.00 | vendu= 28.80 | statut=RISQUE RUPTURE
+2026-04-05 01:01:49 [INFO]  vin_rouge                      | stock= 15.00 | vendu=  6.20 | statut=OK
+2026-04-05 01:01:49 [INFO]  jus_pomme_bio_20cl_brique      | stock=  3.00 | vendu= 37.00 | statut=RISQUE RUPTURE
+2026-04-05 01:01:49 [INFO]  biscuit_sucre                  | stock= 27.00 | vendu= 39.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  saucissons_mini_sachet         | stock=  8.00 | vendu= 39.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  eau_gazeuse                    | stock= 25.00 | vendu= 24.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  the                            | stock= 42.00 | vendu= 34.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  lipton_ice_tea                 | stock= 16.00 | vendu= 17.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  sirop_grenadine                | stock=  1.46 | vendu=  0.27 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  bieres_commerce_blonde_25cl    | stock= 14.00 | vendu= 20.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  bieres_commerce_ambree_25cl    | stock=  8.00 | vendu= 21.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  cafe_espresso                  | stock=1968.00 | vendu=2232.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  olives_vertes_anchois          | stock= 95.00 | vendu=  8.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  tisane                         | stock= 54.00 | vendu= 10.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  bi_res_pomme                   | stock= 29.00 | vendu= 12.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  jus_sodas_oasis                | stock= 22.00 | vendu= 17.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  eau_plate_btl_50_cl            | stock= 19.00 | vendu=  5.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  jus_sodas_jus_de_orange_bio_20_cl_brique | stock= 19.00 | vendu=  9.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  chocolat_chaud                 | stock= 15.00 | vendu= 28.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  jus_sodas_coca_cola_classique  | stock= 14.00 | vendu= 10.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  saucissons_et_saucisses_s_ches_saucissons_mini_sachet | stock= 14.00 | vendu= 22.00 | statut=SURVEILLANCE
+2026-04-05 01:01:49 [INFO]  jus_sodas_orangina             | stock= 12.00 | vendu=  6.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  fromage_ap_ritif               | stock=  7.00 | vendu= 19.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  cidre_cidre_bouteille          | stock=  6.00 | vendu=  0.00 | statut=OK
+2026-04-05 01:01:49 [INFO]  jus_sodas_coca_cola_zero       | stock=  4.00 | vendu=  8.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  saucissons_et_saucisses_s_ches_saucisse | stock=  3.00 | vendu=  6.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  pop_corn_sal                   | stock=  3.00 | vendu=  3.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  schweppes_agrumes              | stock=  2.00 | vendu=  4.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  sachet_cacahuetes              | stock=  1.00 | vendu=  5.00 | statut=RISQUE RUPTURE
+2026-04-05 01:01:49 [INFO]  pate_en_croute                 | stock=  1.00 | vendu=  1.00 | statut=A COMMANDER
+2026-04-05 01:01:49 [INFO]  bi_res_artisanale_33_cl        | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 01:01:49 [INFO]  cidre_cidre_verre              | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 01:01:49 [INFO] Étape 6/6 - Generation des fichiers…
+2026-04-05 01:01:58 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.pdf
+2026-04-05 01:01:58 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.csv
+2026-04-05 01:01:58 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W14.csv
+2026-04-05 01:02:01 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-05 01:02:01 [INFO] ══ Termine ══
+2026-04-05 05:38:47 [INFO] .env chargé depuis : .env
+2026-04-05 05:38:47 [INFO] ══ Rapport Stocks SumUp ══ 8 semaines | Semaine courante : 2026-W14
+2026-04-05 05:38:47 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-05 05:38:47 [INFO] Catalogue unifie : 72/75 article(s) actif(s) charge(s)
+2026-04-05 05:38:47 [WARNING] saucissons_mini_sachet: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:38:47 [WARNING] the: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:38:47 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-02-08..2026-04-05 | fenetre fetch=2026-02-08..2026-04-05)
+2026-04-05 05:38:49 [INFO] Total brut récupéré : 879 transaction(s)
+2026-04-05 05:38:49 [INFO] Enrichissement de 879 transaction(s)…
+2026-04-05 05:40:17 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-05 05:43:50 [WARNING] ↳ 9666293051 : réponse 404
+2026-04-05 05:43:58 [WARNING] ↳ 9638240635 : réponse 404
+2026-04-05 05:44:08 [WARNING] ↳ 9637514035 : réponse 404
+2026-04-05 05:44:08 [WARNING] ↳ 9637508546 : réponse 404
+2026-04-05 05:44:17 [WARNING] ↳ 9637437817 : réponse 404
+2026-04-05 05:44:54 [INFO] Enrichissement terminé : 879 transaction(s)
+2026-04-05 05:44:54 [INFO] Étape 3/6 - Agregation hebdomadaire…
+2026-04-05 05:44:54 [WARNING] 5 produit(s) SumUp non mappe(s) au catalogue
+2026-04-05 05:44:54 [INFO] Étape 4/6 - Mise a jour automatique des stocks…
+2026-04-05 05:44:54 [INFO] Maj auto stock saucissons_mini_sachet: 8.00 -> 2.00 (conso 6.00 depuis 2026-03-30)
+2026-04-05 05:44:54 [INFO] Maj auto stock sirop_grenadine: 1.50 -> 1.46 (conso 0.04 depuis 2026-03-30)
+2026-04-05 05:44:54 [INFO] Catalogue mis a jour : /home/skoh/SynologyDrive/Documents/Scripts/sumup/stock_items.json
+2026-04-05 05:44:54 [INFO] Catalogue unifie : 72/75 article(s) actif(s) charge(s)
+2026-04-05 05:44:54 [WARNING] saucissons_mini_sachet: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:44:54 [WARNING] the: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:44:54 [INFO] Étape 5/6 - Calcul des indicateurs centralises…
+2026-04-05 05:44:54 [INFO]  bieres_pression                | stock=  7.64 | vendu=145.73 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  chips                          | stock=  0.00 | vendu=129.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  vin_blanc                      | stock=  2.00 | vendu= 40.20 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  vin_rouge                      | stock= 15.00 | vendu=  9.40 | statut=OK
+2026-04-05 05:44:54 [INFO]  jus_pomme_bio_20cl_brique      | stock=  3.00 | vendu= 48.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  biscuit_sucre                  | stock= 27.00 | vendu= 39.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  saucissons_mini_sachet         | stock=  2.00 | vendu= 63.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  eau_gazeuse                    | stock= 25.00 | vendu= 24.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  the                            | stock= 42.00 | vendu= 44.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  lipton_ice_tea                 | stock= 16.00 | vendu= 21.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  sirop_grenadine                | stock=  1.46 | vendu=  0.27 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  bieres_commerce_blonde_25cl    | stock= 14.00 | vendu= 28.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  bieres_commerce_ambree_25cl    | stock=  8.00 | vendu= 23.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  cafe_espresso                  | stock=1968.00 | vendu=2232.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  olives_vertes_anchois          | stock= 95.00 | vendu= 48.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  bi_res_pomme                   | stock= 29.00 | vendu= 16.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  jus_sodas_oasis                | stock= 22.00 | vendu= 18.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  eau_plate_btl_50_cl            | stock= 19.00 | vendu=  5.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  jus_sodas_jus_de_orange_bio_20_cl_brique | stock= 19.00 | vendu= 10.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  chocolat_chaud                 | stock= 15.00 | vendu= 28.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  jus_sodas_coca_cola_classique  | stock= 14.00 | vendu= 12.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  jus_sodas_orangina             | stock= 12.00 | vendu= 11.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  fromage_ap_ritif               | stock=  7.00 | vendu= 19.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  cidre_cidre_bouteille          | stock=  6.00 | vendu=  0.00 | statut=OK
+2026-04-05 05:44:54 [INFO]  jus_sodas_coca_cola_zero       | stock=  4.00 | vendu= 10.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  saucissons_et_saucisses_s_ches_saucisse | stock=  3.00 | vendu= 12.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  pop_corn_sal                   | stock=  3.00 | vendu=  3.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  schweppes_agrumes              | stock=  2.00 | vendu=  4.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  sachet_cacahuetes              | stock=  1.00 | vendu=  5.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  pate_en_croute                 | stock=  1.00 | vendu=  1.00 | statut=A COMMANDER
+2026-04-05 05:44:54 [INFO]  bi_res_artisanale_33_cl        | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:44:54 [INFO]  cidre_cidre_verre              | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:44:54 [INFO]  adhesion_annuelle              | stock=  0.00 | vendu= 27.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  bugnes                         | stock=  0.00 | vendu= 46.00 | statut=N/A
+2026-04-05 05:44:54 [INFO]  jus_pomme_verre                | stock=  0.00 | vendu= 11.80 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  don                            | stock=  0.00 | vendu= 25.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  sirop_citron                   | stock=  0.00 | vendu=  8.00 | statut=RISQUE RUPTURE
+2026-04-05 05:44:54 [INFO]  sirop_menthe                   | stock=  0.00 | vendu=  4.00 | statut=N/A
+2026-04-05 05:44:54 [INFO]  jus_divers                     | stock=  0.00 | vendu=  2.00 | statut=N/A
+2026-04-05 05:44:54 [INFO]  saucisson_ficelle              | stock=  0.00 | vendu=  2.00 | statut=N/A
+2026-04-05 05:44:54 [INFO]  tartinade                      | stock=  0.00 | vendu=  1.00 | statut=N/A
+2026-04-05 05:44:54 [INFO] Étape 6/6 - Generation des fichiers…
+2026-04-05 05:45:03 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.pdf
+2026-04-05 05:45:03 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.csv
+2026-04-05 05:45:03 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W14.csv
+2026-04-05 05:45:06 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-05 05:45:06 [INFO] ══ Termine ══
+/usr/bin/python3: can't open file '/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py --weeks 4': [Errno 2] No such file or directory
+/usr/bin/python3: can't open file '/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py --weeks 4': [Errno 2] No such file or directory
+/usr/bin/python3: can't open file '/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py --weeks 4': [Errno 2] No such file or directory
+2026-04-05 05:51:36 [INFO] .env chargé depuis : .env
+2026-04-05 05:51:36 [INFO] ══ Rapport Stocks SumUp ══ 8 semaines | Semaine courante : 2026-W14
+2026-04-05 05:51:36 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-05 05:51:36 [INFO] Catalogue unifie : 72/75 article(s) actif(s) charge(s)
+2026-04-05 05:51:36 [WARNING] saucissons_mini_sachet: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:51:36 [WARNING] the: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:51:36 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-02-08..2026-04-05 | fenetre fetch=2026-02-08..2026-04-05)
+2026-04-05 05:51:37 [INFO] Total brut récupéré : 879 transaction(s)
+2026-04-05 05:51:37 [INFO] Enrichissement de 879 transaction(s)…
+Traceback (most recent call last):
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1809, in <module>
+    main()
+    ~~~~^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1799, in main
+    run_stock_report(
+    ~~~~~~~~~~~~~~~~^
+        weeks=args.weeks,
+        ^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        state_file=Path(args.state) if args.state else None,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+        ^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1713, in run_stock_report
+    all_txns = enrich_transactions(all_txns, headers_api)
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 511, in enrich_transactions
+    resp = requests.get(
+        "https://api.sumup.com/v0.1/me/transactions",
+    ...<2 lines>...
+        timeout=10,
+        )
+  File "/home/skoh/.local/lib/python3.14/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+  File "/home/skoh/.local/lib/python3.14/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/.local/lib/python3.14/site-packages/requests/sessions.py", line 592, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/skoh/.local/lib/python3.14/site-packages/requests/sessions.py", line 706, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/skoh/.local/lib/python3.14/site-packages/requests/adapters.py", line 645, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "/home/skoh/.local/lib/python3.14/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "/home/skoh/.local/lib/python3.14/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+  File "/home/skoh/.local/lib/python3.14/site-packages/urllib3/connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+  File "/usr/lib/python3.14/http/client.py", line 1450, in getresponse
+    response.begin()
+    ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/http/client.py", line 297, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/socket.py", line 725, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+  File "/usr/lib/python3.14/ssl.py", line 1304, in recv_into
+    return self.read(nbytes, buffer)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/ssl.py", line 1138, in read
+    return self._sslobj.read(len, buffer)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+KeyboardInterrupt
+2026-04-05 05:53:51 [INFO] .env chargé depuis : .env
+2026-04-05 05:53:51 [INFO] ══ Rapport Stocks SumUp ══ 4 semaines | Semaine courante : 2026-W14
+2026-04-05 05:53:51 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-05 05:53:51 [INFO] Catalogue unifie : 72/75 article(s) actif(s) charge(s)
+2026-04-05 05:53:51 [WARNING] saucissons_mini_sachet: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:53:51 [WARNING] the: plusieurs lignes portent stock_state ; la premiere sera utilisee.
+2026-04-05 05:53:51 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-03-08..2026-04-05 | fenetre fetch=2026-03-08..2026-04-05)
+2026-04-05 05:53:52 [INFO] Total brut récupéré : 447 transaction(s)
+2026-04-05 05:53:52 [INFO] Enrichissement de 447 transaction(s)…
+2026-04-05 05:55:17 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-05 05:56:40 [INFO] Enrichissement terminé : 447 transaction(s)
+2026-04-05 05:56:40 [INFO] Étape 3/6 - Agregation hebdomadaire…
+2026-04-05 05:56:40 [WARNING] 2 produit(s) SumUp non mappe(s) au catalogue
+2026-04-05 05:56:40 [INFO] Étape 4/6 - Mise a jour automatique des stocks…
+2026-04-05 05:56:40 [INFO] Aucune mise a jour automatique du stock necessaire.
+2026-04-05 05:56:40 [INFO] Étape 5/6 - Calcul des indicateurs centralises…
+2026-04-05 05:56:40 [INFO]  bieres_pression                | stock=  7.64 | vendu= 90.62 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  chips                          | stock=  0.00 | vendu= 86.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  vin_blanc                      | stock=  2.00 | vendu= 15.60 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  vin_rouge                      | stock= 15.00 | vendu=  5.80 | statut=OK
+2026-04-05 05:56:40 [INFO]  jus_pomme_bio_20cl_brique      | stock=  3.00 | vendu= 27.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  biscuit_sucre                  | stock= 27.00 | vendu= 13.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  saucissons_mini_sachet         | stock=  2.00 | vendu= 38.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  eau_gazeuse                    | stock= 25.00 | vendu= 16.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  the                            | stock= 42.00 | vendu= 15.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  lipton_ice_tea                 | stock= 16.00 | vendu= 14.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  sirop_grenadine                | stock=  1.46 | vendu=  0.24 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  bieres_commerce_blonde_25cl    | stock= 14.00 | vendu= 10.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  bieres_commerce_ambree_25cl    | stock=  8.00 | vendu= 17.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  cafe_espresso                  | stock=1968.00 | vendu=1056.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  olives_vertes_anchois          | stock= 95.00 | vendu= 14.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  bi_res_pomme                   | stock= 29.00 | vendu=  5.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  jus_sodas_oasis                | stock= 22.00 | vendu=  6.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  eau_plate_btl_50_cl            | stock= 19.00 | vendu=  3.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  jus_sodas_jus_de_orange_bio_20_cl_brique | stock= 19.00 | vendu=  5.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  chocolat_chaud                 | stock= 15.00 | vendu=  6.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  jus_sodas_coca_cola_classique  | stock= 14.00 | vendu=  8.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  jus_sodas_orangina             | stock= 12.00 | vendu=  5.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  fromage_ap_ritif               | stock=  7.00 | vendu= 15.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  cidre_cidre_bouteille          | stock=  6.00 | vendu=  0.00 | statut=OK
+2026-04-05 05:56:40 [INFO]  jus_sodas_coca_cola_zero       | stock=  4.00 | vendu=  6.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  saucissons_et_saucisses_s_ches_saucisse | stock=  3.00 | vendu= 12.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  pop_corn_sal                   | stock=  3.00 | vendu=  3.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  schweppes_agrumes              | stock=  2.00 | vendu=  4.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  sachet_cacahuetes              | stock=  1.00 | vendu=  5.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  pate_en_croute                 | stock=  1.00 | vendu=  1.00 | statut=A COMMANDER
+2026-04-05 05:56:40 [INFO]  bi_res_artisanale_33_cl        | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:56:40 [INFO]  cidre_cidre_verre              | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:56:40 [INFO]  adhesion_annuelle              | stock=  0.00 | vendu= 15.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  bugnes                         | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:56:40 [INFO]  jus_pomme_verre                | stock=  0.00 | vendu=  7.80 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  don                            | stock=  0.00 | vendu=  1.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  sirop_citron                   | stock=  0.00 | vendu=  8.00 | statut=RISQUE RUPTURE
+2026-04-05 05:56:40 [INFO]  sirop_menthe                   | stock=  0.00 | vendu=  3.00 | statut=N/A
+2026-04-05 05:56:40 [INFO]  jus_divers                     | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:56:40 [INFO]  saucisson_ficelle              | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:56:40 [INFO]  tartinade                      | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-05 05:56:40 [INFO] Étape 6/6 - Generation des fichiers…
+2026-04-05 05:56:48 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.pdf
+2026-04-05 05:56:48 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W14.csv
+2026-04-05 05:56:48 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W14.csv
+2026-04-05 05:56:50 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-05 05:56:50 [INFO] ══ Termine ══
+2026-04-05 14:00:02 [INFO] .env chargé depuis : .env
+2026-04-05 14:00:02 [INFO] ══ Rapport Stocks SumUp ══ 4 semaines | Semaine courante : 2026-W14
+2026-04-05 14:00:02 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-05 14:00:02 [INFO] Catalogue unifie : 71/74 article(s) actif(s) charge(s)
+2026-04-05 14:00:02 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-03-08..2026-04-05 | fenetre fetch=2026-03-08..2026-04-05)
+2026-04-05 14:00:03 [INFO] Total brut récupéré : 424 transaction(s)
+2026-04-05 14:00:03 [INFO] Enrichissement de 424 transaction(s)…
+2026-04-05 14:01:42 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-05 14:02:47 [INFO] Enrichissement terminé : 424 transaction(s)
+2026-04-05 14:02:47 [INFO] Étape 3/6 - Agregation hebdomadaire…
+Traceback (most recent call last):
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1809, in <module>
+    main()
+    ~~~~^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1799, in main
+    run_stock_report(
+    ~~~~~~~~~~~~~~~~^
+        weeks=args.weeks,
+        ^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        state_file=Path(args.state) if args.state else None,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+        ^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1716, in run_stock_report
+    weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
+                             ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 639, in aggregate_weekly_sales
+    sku, item = match_product_to_sku(name, variant, sku_index)
+                ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 566, in match_product_to_sku
+    return sku_index[key]["sku"], sku_index[key]
+           ~~~~~~~~~~~~~~^^^^^^^
+KeyError: 'sku'
+2026-04-12 14:00:02 [INFO] .env chargé depuis : .env
+2026-04-12 14:00:02 [INFO] ══ Rapport Stocks SumUp ══ 4 semaines | Semaine courante : 2026-W15
+2026-04-12 14:00:02 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-12 14:00:02 [INFO] Catalogue unifie : 71/74 article(s) actif(s) charge(s)
+2026-04-12 14:00:02 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-03-15..2026-04-12 | fenetre fetch=2026-03-15..2026-04-12)
+2026-04-12 14:00:03 [INFO] Total brut récupéré : 377 transaction(s)
+2026-04-12 14:00:03 [INFO] Enrichissement de 377 transaction(s)…
+2026-04-12 14:01:46 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-12 14:02:17 [INFO] Enrichissement terminé : 377 transaction(s)
+2026-04-12 14:02:17 [INFO] Étape 3/6 - Agregation hebdomadaire…
+Traceback (most recent call last):
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1809, in <module>
+    main()
+    ~~~~^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1799, in main
+    run_stock_report(
+    ~~~~~~~~~~~~~~~~^
+        weeks=args.weeks,
+        ^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        state_file=Path(args.state) if args.state else None,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+        ^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1716, in run_stock_report
+    weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
+                             ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 639, in aggregate_weekly_sales
+    sku, item = match_product_to_sku(name, variant, sku_index)
+                ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 566, in match_product_to_sku
+    return sku_index[key]["sku"], sku_index[key]
+           ~~~~~~~~~~~~~~^^^^^^^
+KeyError: 'sku'
+2026-04-12 19:38:21 [INFO] .env chargé depuis : .env
+2026-04-12 19:38:21 [INFO] ══ Rapport Stocks SumUp ══ 4 semaines | Semaine courante : 2026-W15
+2026-04-12 19:38:21 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-12 19:38:21 [INFO] Catalogue unifie : 71/74 article(s) actif(s) charge(s)
+2026-04-12 19:38:21 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-03-15..2026-04-12 | fenetre fetch=2026-03-15..2026-04-12)
+2026-04-12 19:38:22 [INFO] Total brut récupéré : 377 transaction(s)
+2026-04-12 19:38:22 [INFO] Enrichissement de 377 transaction(s)…
+2026-04-12 19:40:10 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-12 19:40:42 [INFO] Enrichissement terminé : 377 transaction(s)
+2026-04-12 19:40:42 [INFO] Étape 3/6 - Agregation hebdomadaire…
+Traceback (most recent call last):
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1809, in <module>
+    main()
+    ~~~~^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1799, in main
+    run_stock_report(
+    ~~~~~~~~~~~~~~~~^
+        weeks=args.weeks,
+        ^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        state_file=Path(args.state) if args.state else None,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+        ^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 1716, in run_stock_report
+    weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
+                             ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 639, in aggregate_weekly_sales
+    sku, item = match_product_to_sku(name, variant, sku_index)
+                ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/skoh/SynologyDrive/Documents/Scripts/sumup/sumup_stocks.py", line 572, in match_product_to_sku
+    return sku_index[key_no_variant]["sku"], sku_index[key_no_variant]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+KeyError: 'sku'
+2026-04-12 20:07:03 [INFO] .env chargé depuis : .env
+2026-04-12 20:07:03 [INFO] ══ Rapport Stocks SumUp ══ 4 semaines | Semaine courante : 2026-W15
+2026-04-12 20:07:03 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-12 20:07:03 [INFO] Catalogue unifie : 72/75 article(s) actif(s) charge(s)
+2026-04-12 20:07:03 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-03-15..2026-04-12 | fenetre fetch=2026-03-15..2026-04-12)
+2026-04-12 20:07:04 [INFO] Total brut récupéré : 377 transaction(s)
+2026-04-12 20:07:04 [INFO] Enrichissement de 377 transaction(s)…
+2026-04-12 20:08:43 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-12 20:09:13 [INFO] Enrichissement terminé : 377 transaction(s)
+2026-04-12 20:09:13 [INFO] Étape 3/6 - Agregation hebdomadaire…
+2026-04-12 20:09:13 [WARNING] 2 produit(s) SumUp non mappe(s) au catalogue
+2026-04-12 20:09:13 [INFO] Étape 4/6 - Mise a jour automatique des stocks…
+2026-04-12 20:09:13 [INFO] Aucune mise a jour automatique du stock necessaire.
+2026-04-12 20:09:13 [INFO] Étape 5/6 - Calcul des indicateurs centralises…
+2026-04-12 20:09:13 [INFO]  adhesion_annuelle              | stock= 81.00 | vendu=306.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  bieres_pression                | stock=  0.00 | vendu=305.04 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  chips                          | stock= 15.00 | vendu= 63.00 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  jus_pomme_verre                | stock= 17.80 | vendu= 13.80 | statut=OK
+2026-04-12 20:09:13 [INFO]  vin_blanc                      | stock=  0.00 | vendu= 43.80 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  vin_rouge                      | stock= 14.80 | vendu=  9.20 | statut=OK
+2026-04-12 20:09:13 [INFO]  jus_pomme_bio_20cl_brique      | stock=  1.00 | vendu= 81.00 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  biscuit_sucre                  | stock= 27.00 | vendu=  7.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  saucissons_mini_sachet         | stock= 11.00 | vendu= 81.00 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  eau_gazeuse                    | stock= 23.00 | vendu= 14.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  the                            | stock= 42.00 | vendu= 26.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  lipton_ice_tea                 | stock= 13.00 | vendu= 24.00 | statut=SURVEILLANCE
+2026-04-12 20:09:13 [INFO]  sirop_grenadine                | stock=  1.00 | vendu=  0.30 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  bieres_commerce_blonde_25cl    | stock= 13.00 | vendu= 16.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  bieres_commerce_ambree_25cl    | stock=  5.00 | vendu= 34.00 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  cafe_espresso                  | stock=1848.00 | vendu=2752.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  olives_vertes_anchois          | stock= 85.00 | vendu= 40.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  bi_res_pomme                   | stock= 22.00 | vendu= 45.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  jus_sodas_oasis                | stock= 22.00 | vendu=  6.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  eau_plate_btl_50_cl            | stock= 19.00 | vendu=  3.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  jus_sodas_jus_de_orange_bio_20_cl_brique | stock= 19.00 | vendu= 12.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  chocolat_chaud                 | stock= 15.00 | vendu=  1.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  jus_sodas_coca_cola_classique  | stock= 14.00 | vendu= 12.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  jus_sodas_orangina             | stock= 12.00 | vendu=  4.00 | statut=OK
+2026-04-12 20:09:13 [INFO]  fromage_ap_ritif               | stock=  6.00 | vendu= 13.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  cidre                          | stock=  6.00 | vendu=  2.40 | statut=OK
+2026-04-12 20:09:13 [INFO]  jus_sodas_coca_cola_zero       | stock=  4.00 | vendu= 10.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  saucisse                       | stock=  3.00 | vendu= 24.00 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  pop_corn_sal                   | stock=  2.00 | vendu=  5.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  schweppes_agrumes              | stock=  2.00 | vendu=  4.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  sachet_cacahuetes              | stock=  0.00 | vendu= 18.00 | statut=RISQUE RUPTURE
+2026-04-12 20:09:13 [INFO]  pate_en_croute                 | stock=  1.00 | vendu=  1.00 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  bugnes                         | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:09:13 [INFO]  sirop_citron                   | stock=  1.00 | vendu=  0.15 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  sirop_menthe                   | stock=  0.90 | vendu=  0.10 | statut=A COMMANDER
+2026-04-12 20:09:13 [INFO]  jus_divers                     | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:09:13 [INFO]  saucisson_ficelle              | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:09:13 [INFO]  tartinade                      | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:09:13 [INFO] Étape 6/6 - Generation des fichiers…
+2026-04-12 20:09:21 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W15.pdf
+2026-04-12 20:09:21 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W15.csv
+2026-04-12 20:09:21 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W15.csv
+2026-04-12 20:09:23 [INFO] Email envoyé à : corentin.michel@mailo.com
+2026-04-12 20:09:23 [INFO] ══ Termine ══
+2026-04-12 20:41:16 [INFO] .env chargé depuis : .env
+2026-04-12 20:41:16 [INFO] ══ Rapport Stocks SumUp ══ 4 semaines | Semaine courante : 2026-W15
+2026-04-12 20:41:16 [INFO] Étape 1/6 - Chargement du catalogue unifie…
+2026-04-12 20:41:16 [INFO] Catalogue unifie : 72/75 article(s) actif(s) charge(s)
+2026-04-12 20:41:16 [INFO] Étape 2/6 - Recuperation des transactions… (fenetre analyse=2026-03-15..2026-04-12 | fenetre fetch=2026-03-15..2026-04-12)
+2026-04-12 20:41:17 [INFO] Total brut récupéré : 377 transaction(s)
+2026-04-12 20:41:17 [INFO] Enrichissement de 377 transaction(s)…
+2026-04-12 20:43:00 [WARNING] ↳ 9844454263 : réponse 404
+2026-04-12 20:43:32 [INFO] Enrichissement terminé : 377 transaction(s)
+2026-04-12 20:43:32 [INFO] Étape 3/6 - Agregation hebdomadaire…
+2026-04-12 20:43:32 [WARNING] 2 produit(s) SumUp non mappe(s) au catalogue
+2026-04-12 20:43:32 [INFO] Étape 4/6 - Mise a jour automatique des stocks…
+2026-04-12 20:43:32 [INFO] Aucune mise a jour automatique du stock necessaire.
+2026-04-12 20:43:32 [INFO] Étape 5/6 - Calcul des indicateurs centralises…
+2026-04-12 20:43:32 [INFO]  adhesion_annuelle              | stock= 81.00 | vendu=306.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  bieres_pression                | stock=  0.00 | vendu=305.04 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  chips                          | stock= 15.00 | vendu= 63.00 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  jus_pomme_verre                | stock= 17.80 | vendu= 13.80 | statut=OK
+2026-04-12 20:43:32 [INFO]  vin_blanc                      | stock=  0.00 | vendu= 43.80 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  vin_rouge                      | stock= 14.80 | vendu=  9.20 | statut=OK
+2026-04-12 20:43:32 [INFO]  jus_pomme_bio_20cl_brique      | stock=  1.00 | vendu= 81.00 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  biscuit_sucre                  | stock= 27.00 | vendu=  7.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  saucissons_mini_sachet         | stock= 11.00 | vendu= 81.00 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  eau_gazeuse                    | stock= 23.00 | vendu= 14.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  the                            | stock= 42.00 | vendu= 26.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  lipton_ice_tea                 | stock= 13.00 | vendu= 24.00 | statut=SURVEILLANCE
+2026-04-12 20:43:32 [INFO]  sirop_grenadine                | stock=  1.00 | vendu=  0.30 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  bieres_commerce_blonde_25cl    | stock= 13.00 | vendu= 16.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  bieres_commerce_ambree_25cl    | stock=  5.00 | vendu= 34.00 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  cafe_espresso                  | stock=1848.00 | vendu=2752.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  olives_vertes_anchois          | stock= 85.00 | vendu= 40.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  bi_res_pomme                   | stock= 22.00 | vendu= 45.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  jus_sodas_oasis                | stock= 22.00 | vendu=  6.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  eau_plate_btl_50_cl            | stock= 19.00 | vendu=  3.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  jus_sodas_jus_de_orange_bio_20_cl_brique | stock= 19.00 | vendu= 12.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  chocolat_chaud                 | stock= 15.00 | vendu=  1.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  jus_sodas_coca_cola_classique  | stock= 14.00 | vendu= 12.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  jus_sodas_orangina             | stock= 12.00 | vendu=  4.00 | statut=OK
+2026-04-12 20:43:32 [INFO]  fromage_ap_ritif               | stock=  6.00 | vendu= 13.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  cidre                          | stock=  6.00 | vendu=  2.40 | statut=OK
+2026-04-12 20:43:32 [INFO]  jus_sodas_coca_cola_zero       | stock=  4.00 | vendu= 10.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  saucisse                       | stock=  3.00 | vendu= 24.00 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  pop_corn_sal                   | stock=  2.00 | vendu=  5.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  schweppes_agrumes              | stock=  2.00 | vendu=  4.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  sachet_cacahuetes              | stock=  0.00 | vendu= 18.00 | statut=RISQUE RUPTURE
+2026-04-12 20:43:32 [INFO]  pate_en_croute                 | stock=  1.00 | vendu=  1.00 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  bugnes                         | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:43:32 [INFO]  sirop_citron                   | stock=  1.00 | vendu=  0.15 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  sirop_menthe                   | stock=  0.90 | vendu=  0.10 | statut=A COMMANDER
+2026-04-12 20:43:32 [INFO]  jus_divers                     | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:43:32 [INFO]  saucisson_ficelle              | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:43:32 [INFO]  tartinade                      | stock=  0.00 | vendu=  0.00 | statut=N/A
+2026-04-12 20:43:32 [INFO] Étape 6/6 - Generation des fichiers…
+2026-04-12 20:43:40 [INFO] PDF généré -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W15.pdf
+2026-04-12 20:43:40 [INFO] CSV synthèse -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_2026_W15.csv
+2026-04-12 20:43:40 [INFO] CSV historique -> /home/skoh/SynologyDrive/Documents/Scripts/sumup/rapport_stocks_history_2026_W15.csv
+2026-04-12 20:43:51 [INFO] Email envoyé à : corinne.pelayo@gmail.com, bnakadjian@gmail.com, eutexie@msn.com, delcerro@cegetel.net, myriam.celeriermangin@gmail.com, colettecomi@gmail.com, rogerdum@free.fr, sergeobozian@orange.fr, beatrice-rodriguez@hotmail.fr, florent.bidal@hotmail.fr, leolyon@orange.fr, nina.vossier@gmail.com, corentin.michel@mailo.com
+2026-04-12 20:43:51 [INFO] ══ Termine ══
