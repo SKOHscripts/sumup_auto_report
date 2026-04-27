@@ -122,6 +122,37 @@ def _default_recipients(env_var):
     return st.secrets.get(env_var, "")
 
 
+def _sanitize_mock_file(raw_value):
+    """Valide un chemin de fichier mock utilisateur et retourne une valeur sûre."""
+    value = (raw_value or "").strip()
+    if not value:
+        return ""
+    p = Path(value)
+    if p.is_absolute():
+        raise ValueError("Le fichier mock doit être un chemin relatif.")
+    if ".." in p.parts:
+        raise ValueError("Le fichier mock ne doit pas contenir de '..'.")
+    if p.suffix.lower() != ".json":
+        raise ValueError("Le fichier mock doit être un fichier .json.")
+    allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-/")
+    if any(ch not in allowed_chars for ch in value):
+        raise ValueError("Le fichier mock contient des caractères non autorisés.")
+    return value
+
+
+def _sanitize_filter_tokens(raw_value):
+    """Valide les mots-clés de filtre saisis par l'utilisateur."""
+    value = raw_value or ""
+    tokens = value.split()
+    allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
+    for tok in tokens:
+        if len(tok) > 50:
+            raise ValueError("Un mot-clé de filtre est trop long.")
+        if any(ch not in allowed_chars for ch in tok):
+            raise ValueError("Les mots-clés contiennent des caractères non autorisés.")
+    return tokens
+
+
 def build_cmd(script_cfg, cmd_args):
     """Retourne la commande Python pour exécuter un script comme module."""
     module = Path(script_cfg["path"]).with_suffix("").as_posix().replace("/", ".")
@@ -217,8 +248,12 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         extra_args += ["--weeks", str(int(weeks))]
         if no_mail:
             extra_args.append("--no-mail")
-        if mock_file.strip():
-            extra_args += ["--mock", mock_file.strip()]
+        try:
+            safe_mock_file = _sanitize_mock_file(mock_file)
+            if safe_mock_file:
+                extra_args += ["--mock", safe_mock_file]
+        except ValueError as exc:
+            st.error(str(exc))
 
     elif sid == "adhesions":
         today = date.today()
@@ -259,12 +294,15 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         extra_args += ["--start", str(start_date), "--end", str(end_date)]
         if no_mail:
             extra_args.append("--no-mail")
-        tokens = filtres.split()
-        if tokens:
-            extra_args += ["--filtres"] + tokens
-        elif filtres.strip() == "" and filtres != "":
-            # espace seul → --filtres sans valeur (toutes transactions)
-            extra_args.append("--filtres")
+        try:
+            tokens = _sanitize_filter_tokens(filtres)
+            if tokens:
+                extra_args += ["--filtres"] + tokens
+            elif filtres.strip() == "" and filtres != "":
+                # espace seul → --filtres sans valeur (toutes transactions)
+                extra_args.append("--filtres")
+        except ValueError as exc:
+            st.error(str(exc))
 
     elif sid == "paheko":
         no_mail = st.checkbox(
@@ -326,6 +364,13 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
             extra_args += ["--mock", mock_file.strip()]
 
     # ── destinataires + bouton de lancement ───────────────────────────────────
+
+        try:
+            safe_mock_file = _sanitize_mock_file(mock_file)
+            if safe_mock_file:
+                extra_args += ["--mock", safe_mock_file]
+        except ValueError as exc:
+            st.error(str(exc))
 
     email_input = st.text_input(
         "Destinataires (séparés par des virgules)",
