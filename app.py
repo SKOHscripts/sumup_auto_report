@@ -235,15 +235,14 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
                 help="Dernier jour de la période à analyser (inclus).",
             )
         filtres = st.text_input(
-            "Mots-clés de filtre (optionnel)",
-            value="",
+            "Mots-clés de filtre",
+            value="adhesion",
             key=f"filtres_{sid}",
             disabled=is_running,
             placeholder="ex : Adhesion Don",
             help=(
                 "Mots-clés recherchés dans le libellé des transactions, séparés par des espaces. "
-                "Laisser vide = filtres par défaut du script (ex : « adhesion »). "
-                "Entrer un espace = inclure toutes les transactions sans filtre."
+                "Vider le champ = inclure toutes les transactions sans filtre."
             ),
         )
         no_mail = st.checkbox(
