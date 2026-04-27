@@ -318,9 +318,9 @@ def build_members_sql():
 
         if is_simple_ident and known_cols and expr not in known_cols:
             log.warning(
-                'Colonne "%s" introuvable dans %s (colonnes connues: %s). '
-                'Remplacez la variable .env correspondante.',
-                expr, PAHEKO_USERS_TABLE, sorted(known_cols),
+                'Colonne configurée introuvable dans %s pour le champ "%s". '
+                "Vérifiez la variable .env correspondante.",
+                PAHEKO_USERS_TABLE, alias,
             )
 
             return f'NULL AS "{alias}"'
