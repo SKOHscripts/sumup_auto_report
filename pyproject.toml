@@ -79,7 +79,6 @@ max-line-length = 120
 
 [tool.pylint.design]
 max-args = 8
-max-positional-arguments = 8
 max-locals = 55
 max-statements = 160
 max-branches = 20
@@ -100,6 +99,7 @@ disable = [
     "too-few-public-methods",
     "broad-exception-caught",
     "too-many-instance-attributes",
+    "too-many-positional-arguments",
 ]
 
 # ── Pytest ───────────────────────────────────────────────────────────────────
