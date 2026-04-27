@@ -1,3 +1,4 @@
+"""Package utilitaires : envoi d'emails et fonctions partagées."""
 from utils.mail_utils import (
     load_project_env,
     setup_memory_log_capture,

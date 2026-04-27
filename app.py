@@ -1,3 +1,4 @@
+"""Interface Streamlit pour lancer les rapports SumUp et Paheko manuellement."""
 import os
 import sys
 import subprocess
@@ -37,7 +38,8 @@ SCRIPTS = {
             "Récupère les transactions SumUp des dernières semaines, "
             "déduit les quantités vendues de chaque article, et génère un rapport PDF "
             "avec l'état des stocks, les seuils de réapprovisionnement et les alertes. "
-            "Met aussi à jour le fichier `stock_items.json` (la mise à jour git doit être faite manuellement ou via crontab)."
+            "Met aussi à jour le fichier `stock_items.json` "
+            "(la mise à jour git doit être faite manuellement ou via crontab)."
         ),
         "path": "stocks/sumup_stocks.py",
         "email_env_var": "EMAIL_TO_SUMUP_ALL_CA",
@@ -85,6 +87,7 @@ for sid in SCRIPTS:
 
 
 def build_env(email_overrides=None):
+    """Construit l'environnement du sous-processus depuis os.environ et st.secrets."""
     env = dict(os.environ)
 
     # Garantit que run.sh utilise le même Python que Streamlit (venv inclus)
@@ -119,42 +122,44 @@ def _default_recipients(env_var):
     return st.secrets.get(env_var, "")
 
 
-def build_cmd(cfg, extra_args):
-    module = Path(cfg["path"]).with_suffix("").as_posix().replace("/", ".")
-    return [sys.executable, "-m", module] + extra_args
+def build_cmd(script_cfg, cmd_args):
+    """Retourne la commande Python pour exécuter un script comme module."""
+    module = Path(script_cfg["path"]).with_suffix("").as_posix().replace("/", ".")
+    return [sys.executable, "-m", module] + cmd_args
 
 
-def run_script(sid, cmd, email_env_var=None, email_override=None):
-    st.session_state[f"logs_{sid}"] = []
-    st.session_state[f"rc_{sid}"] = None
-    st.session_state[f"running_{sid}"] = True
+def run_script(script_id, script_cmd, mail_env_var=None, email_override=None):
+    """Lance un script en sous-processus et affiche sa sortie en temps réel."""
+    st.session_state[f"logs_{script_id}"] = []
+    st.session_state[f"rc_{script_id}"] = None
+    st.session_state[f"running_{script_id}"] = True
 
     overrides = {}
-    if email_env_var and email_override and email_override.strip():
-        overrides[email_env_var] = email_override.strip()
+    if mail_env_var and email_override and email_override.strip():
+        overrides[mail_env_var] = email_override.strip()
 
     env = build_env(email_overrides=overrides)
     log_area = st.empty()
     log_lines = []
 
     with st.spinner("Script en cours..."):
-        process = subprocess.Popen(
-            cmd,
+        with subprocess.Popen(
+            script_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             env=env,
             cwd=BASE_DIR,
-        )
-        for line in process.stdout:
-            log_lines.append(line)
-            log_area.code("".join(log_lines))
-        process.wait()
+        ) as process:
+            for line in process.stdout:
+                log_lines.append(line)
+                log_area.code("".join(log_lines))
+            process.wait()
 
     log_area.code("".join(log_lines))
-    st.session_state[f"logs_{sid}"] = log_lines
-    st.session_state[f"rc_{sid}"] = process.returncode
-    st.session_state[f"running_{sid}"] = False
+    st.session_state[f"logs_{script_id}"] = log_lines
+    st.session_state[f"rc_{script_id}"] = process.returncode
+    st.session_state[f"running_{script_id}"] = False
 
 
 # ── main UI ───────────────────────────────────────────────────────────────────
@@ -332,7 +337,7 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
 
     if st.button("Lancer", key=f"btn_{sid}", disabled=is_running):
         cmd = build_cmd(cfg, extra_args)
-        run_script(sid, cmd, email_env_var=email_env_var, email_override=email_input)
+        run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input)
 
     logs = st.session_state[f"logs_{sid}"]
     rc = st.session_state[f"rc_{sid}"]

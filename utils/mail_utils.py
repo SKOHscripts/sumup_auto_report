@@ -1,4 +1,4 @@
-# mail_utils.py
+"""Utilitaires d'envoi d'email via SMTP/TLS avec pièces jointes."""
 import io
 import os
 import ssl
@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 
 def load_project_env(env_file=None, required_vars=None, logger=None):
+    """Charge le fichier .env et vérifie que les variables requises sont définies."""
     logger = logger or logging.getLogger(__name__)
 
     if env_file is None:
@@ -20,7 +21,7 @@ def load_project_env(env_file=None, required_vars=None, logger=None):
 
     if env_file.exists():
         load_dotenv(dotenv_path=env_file, override=False)
-        logger.info(f".env chargé depuis : {env_file.name}")
+        logger.info(".env chargé depuis : %s", env_file.name)
 
     missing = [var for var in (required_vars or []) if not os.getenv(var)]
 
@@ -31,6 +32,7 @@ def load_project_env(env_file=None, required_vars=None, logger=None):
 
 
 def setup_memory_log_capture(datefmt="%Y-%m-%d %H:%M:%S"):
+    """Configure un handler logging en mémoire et retourne (buffer, handler)."""
     buffer = io.StringIO()
     handler = logging.StreamHandler(buffer)
     handler.setFormatter(logging.Formatter(
@@ -43,12 +45,14 @@ def setup_memory_log_capture(datefmt="%Y-%m-%d %H:%M:%S"):
 
 
 def _parse_email_list(value):
+    """Retourne une liste d'emails depuis une chaîne séparée par des virgules."""
     return [e.strip() for e in (value or "").split(",") if e.strip()]
 
 
 def get_email_settings():
+    """Lit et retourne la configuration SMTP depuis les variables d'environnement."""
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
     smtp_user = os.getenv("SMTP_USER")
     smtp_pass = os.getenv("SMTP_PASS")
     email_from = os.getenv("EMAIL_FROM", smtp_user)
@@ -72,6 +76,7 @@ def get_email_settings():
 
 
 def resolve_recipients(mailing_list=None, to_list=None, settings=None):
+    """Résout la liste de destinataires depuis une liste directe ou un alias."""
     settings = settings or get_email_settings()
 
     if to_list:
@@ -100,6 +105,7 @@ def send_email(
     from_addr=None,
     logger=None,
         ):
+    """Envoie un email via SMTP/TLS avec pièces jointes optionnelles."""
     logger = logger or logging.getLogger(__name__)
     settings = get_email_settings()
 
@@ -130,7 +136,7 @@ def send_email(
         path = Path(attachment)
 
         if not path.exists():
-            logger.warning(f"Pièce jointe introuvable, ignorée : {path}")
+            logger.warning("Pièce jointe introuvable, ignorée : %s", path)
 
             continue
 
@@ -165,12 +171,13 @@ def send_email(
         srv.login(settings["SMTP_USER"], settings["SMTP_PASS"])
         srv.send_message(em)
 
-    logger.info(f"Email envoyé à : {', '.join(recipients)}")
+    logger.info("Email envoyé à : %s", ", ".join(recipients))
 
     return True
 
 
 def build_log_footer(log_buffer):
+    """Retourne le contenu du buffer de logs sous forme de chaîne."""
     if not log_buffer:
         return ""
 

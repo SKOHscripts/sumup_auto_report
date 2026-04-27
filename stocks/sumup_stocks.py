@@ -24,9 +24,12 @@ Fichiers générés :
 
 import argparse
 import csv
+import io
 import json
 import logging
+import math
 import os
+import re
 import sys
 import time
 from collections import defaultdict
@@ -36,8 +39,8 @@ from pathlib import Path
 # Permet l'exécution directe `python stocks/sumup_stocks.py` en plus de `python -m`
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import math
 
 import requests
 import fpdf as _fpdf
@@ -47,14 +50,14 @@ from utils.mail_utils import (
     load_project_env,
     setup_memory_log_capture,
     send_email,
-    build_log_footer,
     )
-from utils.sumup_shared import remove_accents, normalize, iso_week_label, week_start
+from utils.sumup_shared import normalize, iso_week_label, week_start
 
 # ─── Vérification version fpdf2 ───────────────────────────────────────────────
 
 
 def _check_fpdf_version():
+    """Vérifie que fpdf2 >= 2.5.2 est installé, sinon lève RuntimeError."""
     version = getattr(_fpdf, "__version__", "0")
     nums = []
 
@@ -102,6 +105,7 @@ SUMUP_API_KEY = os.getenv("SUMUP_API_KEY")
 # ─── 1. UTILITAIRES ───────────────────────────────────────────────────────────
 
 def format_sumup_display(item: dict) -> str:
+    """Retourne la chaîne d'affichage SumUp « Nom (Variante) » ou « Nom »."""
     sm = item.get("sumup_match", {})
     name = (sm.get("name") or item.get("label") or item.get("stock_sku") or "").strip()
     variant = (sm.get("variant") or "").strip()
@@ -110,6 +114,7 @@ def format_sumup_display(item: dict) -> str:
 
 
 def fmt_num(value, decimals=2, width=6):
+    """Formate un nombre en chaîne fixe ou retourne 'N/A' si None."""
     if value is None:
         return "N/A"
 
@@ -117,6 +122,7 @@ def fmt_num(value, decimals=2, width=6):
 
 
 def load_stock_items_raw(path: Path) -> list:
+    """Charge et retourne la liste brute JSON depuis stock_items.json."""
     if not path.exists():
         raise FileNotFoundError(f"stock_items.json introuvable : {path}")
 
@@ -130,6 +136,7 @@ def load_stock_items_raw(path: Path) -> list:
 
 
 def prepare_enabled_stock_items(raw_items: list) -> list:
+    """Filtre les articles actifs et normalise leurs champs depuis la liste brute."""
     enabled = []
 
     for raw in raw_items:
@@ -148,12 +155,13 @@ def prepare_enabled_stock_items(raw_items: list) -> list:
 
         enabled.append(item)
 
-    log.info(f"Catalogue unifie : {len(enabled)}/{len(raw_items)} article(s) actif(s) charge(s)")
+    log.info("Catalogue unifie : %s/%s article(s) actif(s) charge(s)", len(enabled), len(raw_items))
 
     return enabled
 
 
 def save_stock_items(path: Path, raw_items: list):
+    """Sauvegarde la liste brute dans stock_items.json via fichier temporaire."""
     tmp_path = Path(str(path) + ".tmp")
     with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(raw_items, f, ensure_ascii=False, indent=2)
@@ -162,6 +170,7 @@ def save_stock_items(path: Path, raw_items: list):
 
 
 def get_refresh_start_dt(stock_groups: list, fallback_start_dt: datetime) -> datetime:
+    """Retourne la date de début la plus ancienne entre les ancres et le fallback."""
     anchor_dates = []
 
     for group in stock_groups:
@@ -182,7 +191,7 @@ def get_refresh_start_dt(stock_groups: list, fallback_start_dt: datetime) -> dat
     if not anchor_dates:
         return fallback_start_dt
 
-    return min(fallback_start_dt, min(anchor_dates))
+    return min(fallback_start_dt, *anchor_dates)
 
 
 def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dict, as_of: date) -> dict:
@@ -225,7 +234,7 @@ def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dic
                 if anchor and txn_date > anchor:
                     usage = float(item.get("consumption_per_sale", 1) or 1)
                     usage_by_stock_sku[stock_sku] += usage
-                    log.warning(f"Fallback product_summary utilisé pour {stock_sku} (quantité 1 déduite).")
+                    log.warning("Fallback product_summary utilise pour %s (quantite 1 deduite).", stock_sku)
 
             continue
 
@@ -258,7 +267,7 @@ def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dic
     return usage_by_stock_sku
 
 
-def refresh_stock_state_in_items(stock_items, stock_groups, txns, sku_index, as_of=None):
+def refresh_stock_state_in_items(_stock_items, stock_groups, txns, sku_index, as_of=None):
     """
     Met à jour l'état du stock dans le catalogue unifié de manière optimisée.
     Complexité : O(G + T)
@@ -336,9 +345,8 @@ def refresh_stock_state_in_items(stock_items, stock_groups, txns, sku_index, as_
         changed = True
 
         log.info(
-            f"Maj auto stock {stock_sku}: "
-            f"{current_stock:.2f} -> {new_stock:.2f} "
-            f"(conso {usage:.2f} depuis {anchor_date.isoformat()})"
+            "Maj auto stock %s: %.2f -> %.2f (conso %.2f depuis %s)",
+            stock_sku, current_stock, new_stock, usage, anchor_date.isoformat(),
         )
 
     return changed
@@ -347,6 +355,7 @@ def refresh_stock_state_in_items(stock_items, stock_groups, txns, sku_index, as_
 
 
 def load_stock_items(path: Path) -> list:
+    """Charge et normalise les articles actifs depuis stock_items.json."""
     if not path.exists():
         raise FileNotFoundError(f"stock_items.json introuvable : {path}")
 
@@ -368,18 +377,20 @@ def load_stock_items(path: Path) -> list:
         item["is_stock_reference"] = bool(item.get("is_stock_reference")) or bool(item.get("stock_state"))
         enabled.append(item)
 
-    log.info(f"Catalogue unifie : {len(enabled)}/{len(items)} article(s) actif(s) charge(s)")
+    log.info("Catalogue unifie : %s/%s article(s) actif(s) charge(s)", len(enabled), len(items))
 
     return enabled
 
 
-def load_stock_state(path: Path) -> dict:
+def load_stock_state(_path: Path) -> dict:
+    """Avertit que le fichier stock_state.json séparé n'est plus utilisé."""
     log.warning("stock_state.json separe n'est plus utilise : l'etat est lu dans stock_items.json.")
 
     return {}
 
 
 def build_stock_groups(stock_items: list) -> list:
+    """Groupe les articles par stock_sku et désigne l'article de référence de chaque groupe."""
     grouped = defaultdict(list)
 
     for item in stock_items:
@@ -391,7 +402,7 @@ def build_stock_groups(stock_items: list) -> list:
         refs_with_state = [i for i in items if i.get("stock_state")]
 
         if len(refs_with_state) > 1:
-            log.warning(f"{stock_sku}: plusieurs lignes portent stock_state ; la premiere sera utilisee.")
+            log.warning("%s: plusieurs lignes portent stock_state ; la premiere sera utilisee.", stock_sku)
 
         reference = refs_with_state[0] if refs_with_state else None
 
@@ -409,7 +420,7 @@ def build_stock_groups(stock_items: list) -> list:
 
 
 def aggregate_weekly_stock_usage(stock_items: list, weekly_sales: dict, weeks_range: list) -> tuple:
-    # On retourne maintenant un tuple : (weekly_usage, weekly_sales_count)
+    """Calcule la consommation et le nombre de ventes hebdomadaires par stock_sku."""
     weekly_usage = defaultdict(lambda: defaultdict(float))
     weekly_sales_count = defaultdict(lambda: defaultdict(int))
 
@@ -437,8 +448,9 @@ def aggregate_weekly_stock_usage(stock_items: list, weekly_sales: dict, weeks_ra
 
 
 def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
+    """Récupère les transactions SumUp sur la période ou depuis un fichier mock."""
     if mock_file:
-        log.info(f" [MOCK] Lecture depuis '{mock_file}'")
+        log.info(" [MOCK] Lecture depuis '%s'", mock_file)
         with open(mock_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -471,13 +483,14 @@ def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
         items = data.get("items", data.get("transactions", []))
     else:
         items = []
-    log.info(f"Total brut récupéré : {len(items)} transaction(s)")
+    log.info("Total brut recupere : %s transaction(s)", len(items))
 
     return items
 
 
 def enrich_transactions(txns: list, headers: dict) -> list:
-    log.info(f"Enrichissement de {len(txns)} transaction(s)…")
+    """Enrichit chaque transaction avec le détail via GET /v0.1/me/transactions?id=."""
+    log.info("Enrichissement de %s transaction(s)...", len(txns))
     enriched = []
 
     for t in txns:
@@ -501,12 +514,12 @@ def enrich_transactions(txns: list, headers: dict) -> list:
                 if isinstance(detail, dict):
                     t = {**t, **{k: v for k, v in detail.items() if v is not None}}
             else:
-                log.warning(f"↳ {txn_id} : réponse {resp.status_code}")
+                log.warning("reponse %s pour %s", resp.status_code, txn_id)
         except Exception as e:
-            log.warning(f"↳ Échec enrichissement {txn_id} : {e}")
+            log.warning("Echec enrichissement %s : %s", txn_id, e)
         enriched.append(t)
         time.sleep(0.1)
-    log.info(f"Enrichissement terminé : {len(enriched)} transaction(s)")
+    log.info("Enrichissement termine : %s transaction(s)", len(enriched))
 
     return enriched
 
@@ -569,7 +582,6 @@ def aggregate_weekly_sales(txns: list, sku_index: dict, weeks_range: list) -> tu
       - weekly_sales  : dict { sku: { week_label: qty } }
       - unmapped_products : list de (name, variant, qty) non mappés
     """
-    import re
     weekly_sales = defaultdict(lambda: defaultdict(int))
     unmapped = defaultdict(int)  # (name, variant) -> qty totale
     weeks_set = set(weeks_range)
@@ -599,7 +611,7 @@ def aggregate_weekly_sales(txns: list, sku_index: dict, weeks_range: list) -> tu
 
             for match in re.finditer(r'(\d+)\s*x\s*(.+?)(?:,|$)', summary):
                 qty_s, name_s = int(match.group(1)), match.group(2).strip()
-                sku, item = match_product_to_sku(name_s, "", sku_index)
+                sku, _item = match_product_to_sku(name_s, "", sku_index)
 
                 if sku:
                     weekly_sales[sku][week_label] += qty_s
@@ -616,10 +628,9 @@ def aggregate_weekly_sales(txns: list, sku_index: dict, weeks_range: list) -> tu
             except Exception:
                 qty = 1
 
-            sku, item = match_product_to_sku(name, variant, sku_index)
+            sku, _item = match_product_to_sku(name, variant, sku_index)
 
             if sku:
-                pack = item.get("pack_size", 1) or 1
                 weekly_sales[sku][week_label] += qty
             else:
                 unmapped[(name, variant)] += qty
@@ -639,6 +650,7 @@ STATUS_ORDER = ["RISQUE RUPTURE", "A COMMANDER", "SURVEILLANCE", "OK", "N/A"]
 
 
 def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float) -> dict:
+    """Calcule les seuils dynamiques (stock de sécurité, point de commande, cible)."""
     weekly_demand = max(float(avg_rolling4 or 0), 0.0)
     lead_time_days = int(item.get("supplier_lead_time_days", 7) or 7)
     lead_time_weeks = max(1, math.ceil(lead_time_days / 7))
@@ -656,11 +668,11 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
     reorder_point = (weekly_demand * lead_time_weeks) + safety_stock
     target_stock = weekly_demand * max(3, lead_time_weeks + 2)
 
-    if target_stock < reorder_point:
-        target_stock = reorder_point
+    target_stock = max(target_stock, reorder_point)
 
     # Arrondi intelligent : entier si >= 1, sinon 2 décimales
     def smart_round(val):
+        """Arrondit à l'entier si >= 1, sinon à 2 décimales."""
         return round(val) if val >= 1 else round(val, 2)
 
     return {
@@ -672,7 +684,11 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
         }
 
 
-def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict, weekly_sales_count: dict, weeks_range: list) -> dict:
+def compute_indicators(
+    stock_group: dict, weekly_sales: dict, weekly_usage: dict,
+    weekly_sales_count: dict, weeks_range: list,
+) -> dict:
+    """Calcule tous les indicateurs de stock (consommation, statut, projections) pour un groupe."""
     ref = stock_group["reference_item"]
     items = stock_group["items"]
     state = stock_group["state"]
@@ -736,10 +752,8 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
 
     qty_to_order = max(0.0, float(target_stock) - effective_stock_now)
 
-    if avg_rolling4 <= 0 and effective_stock_now <= 0:
-        status = "N/A"
-    elif avg_rolling4 > 0 and effective_stock_now <= 0:
-        status = "RISQUE RUPTURE"
+    if effective_stock_now <= 0:
+        status = "RISQUE RUPTURE" if avg_rolling4 > 0 else "N/A"
     elif avg_rolling4 > 0 and coverage_weeks is not None and coverage_weeks < lead_time_weeks:
         status = "RISQUE RUPTURE"
     elif effective_stock_now <= reorder_point:
@@ -770,7 +784,6 @@ def compute_indicators(stock_group: dict, weekly_sales: dict, weekly_usage: dict
             })
 
     return {
-        "stock_sku": stock_sku,
         "stock_sku": stock_sku,
         "label": ref.get("stock_label") or ref.get("label", stock_sku),
         "category": ref.get("category", ""),
@@ -843,16 +856,21 @@ PALETTE = {
 
 
 class StockPDF(FPDF):
+    """PDF du rapport de stocks : pages synthèse, articles et qualité données."""
+
     def __init__(self, week_label: str):
+        """Initialise le PDF en portrait A4 avec la semaine de référence."""
         super().__init__(orientation="P", unit="mm", format="A4")
         self.week_label = week_label
         self.set_margins(14, 8, 14)
         self.set_auto_page_break(True, margin=16)
 
-    def _pw(self) -> float:
+    def usable_width(self) -> float:
+        """Retourne la largeur utilisable de la page (hors marges)."""
         return self.w - self.l_margin - self.r_margin
 
-    def _safe(self, text, max_len=999) -> str:
+    def safe_str(self, text, max_len=999) -> str:
+        """Nettoie le texte pour l'encodage latin-1 et tronque si nécessaire."""
         t = str(text or "-")
         replacements = {
             "€": "EUR",
@@ -870,12 +888,14 @@ class StockPDF(FPDF):
 
         return (t[:max_len - 3] + "...") if len(t) > max_len else t
 
-    def _status_color(self, status: str) -> tuple:
+    def status_color_for(self, status: str) -> tuple:
+        """Retourne la couleur RGB associée au statut de stock."""
         return PALETTE.get(status, PALETTE["N/A"])
 
     def header(self):
+        """Affiche la barre de titre et les informations d'en-tête."""
         self.set_font("Helvetica", "", 8)
-        pw = self._pw()
+        pw = self.usable_width()
         self.set_fill_color(*PALETTE["accent"])
         self.set_draw_color(*PALETTE["accent"])
         self.cell(0, 3, "", fill=True, border=0, new_x="LMARGIN", new_y="NEXT")
@@ -896,6 +916,7 @@ class StockPDF(FPDF):
         self.ln(4)
 
     def footer(self):
+        """Affiche le pied de page avec le numéro de page centré."""
         self.set_y(-13)
         self.set_draw_color(*PALETTE["divider"])
         self.set_line_width(0.2)
@@ -906,6 +927,7 @@ class StockPDF(FPDF):
 
     # ── Titre de section ────────────────────────────────────────────────────
     def section_title(self, title: str, color: tuple = None):
+        """Insère un titre de section avec barre colorée et séparateur."""
         color = color or PALETTE["accent"]
         self.ln(2)
         self.set_fill_color(*color)
@@ -915,9 +937,9 @@ class StockPDF(FPDF):
         self.set_font("Helvetica", "B", 10)
         self.set_text_color(*color)
         self.cell(
-            self._pw() - 5,
+            self.usable_width() - 5,
             7,
-            self._safe(title.upper()),
+            self.safe_str(title.upper()),
             border=0,
             new_x="LMARGIN",
             new_y="NEXT",
@@ -934,7 +956,7 @@ class StockPDF(FPDF):
         """
         kpis : liste de (label, value) affichée sur 2 colonnes.
         """
-        pw = self._pw()
+        pw = self.usable_width()
         col_w = pw / 2
 
         for i, (label, value) in enumerate(kpis):
@@ -944,10 +966,10 @@ class StockPDF(FPDF):
             self.set_xy(x_offset, self.get_y())
             self.set_font("Helvetica", "", 8)
             self.set_text_color(*PALETTE["text_mid"])
-            self.cell(col_w * 0.55, 6, self._safe(label), border=0, align="L")
+            self.cell(col_w * 0.55, 6, self.safe_str(label), border=0, align="L")
             self.set_font("Helvetica", "B", 8)
             self.set_text_color(*PALETTE["text_dark"])
-            self.cell(col_w * 0.45, 6, self._safe(str(value)), border=0,
+            self.cell(col_w * 0.45, 6, self.safe_str(str(value)), border=0,
                       align="L", new_x="RIGHT" if i % 2 == 0 else "LMARGIN",
                       new_y="TOP" if i % 2 == 0 else "NEXT")
 
@@ -957,14 +979,15 @@ class StockPDF(FPDF):
 
     # ── Badge statut ────────────────────────────────────────────────────────
     def status_badge(self, status: str):
-        color = self._status_color(status)
+        """Affiche un badge coloré avec le statut de l'article."""
+        color = self.status_color_for(status)
         bg = PALETTE["status_bg"].get(status, (240, 240, 240))
         self.set_fill_color(*bg)
         self.set_draw_color(*color)
         self.set_line_width(0.4)
         self.set_font("Helvetica", "B", 9)
         self.set_text_color(*color)
-        w = min(60, self._pw())
+        w = min(60, self.usable_width())
         self.cell(w, 8, f"  {status}  ", border=1, fill=True,
                   align="C", new_x="LMARGIN", new_y="NEXT")
         self.ln(2)
@@ -975,11 +998,12 @@ class StockPDF(FPDF):
     # ── Tableau des ventes hebdomadaires ────────────────────────────────────
 
     def weekly_table(self, kpi: dict):
+        """Affiche le tableau des ventes hebdomadaires avec moyennes glissantes et variations."""
         weeks = kpi["weeks_range"]
         sales = kpi.get("usage_series", [])
         sales_count = kpi.get("sales_count_series", [])
 
-        pw = self._pw()
+        pw = self.usable_width()
         n = len(weeks)
 
         if n == 0:
@@ -1064,12 +1088,7 @@ class StockPDF(FPDF):
         self.ln(3)
 
     def weekly_graph(self, kpi: dict):
-        import io
-        import math
-        import matplotlib.pyplot as plt
-        import matplotlib.dates as mdates
-        from datetime import datetime, timedelta
-
+        """Génère et insère le graphique d'évolution du stock pour un article."""
         weeks = kpi["weeks_range"]
         sales = kpi["sales_series"]
 
@@ -1078,7 +1097,7 @@ class StockPDF(FPDF):
             self.set_text_color(*PALETTE["text_mid"])
             self.cell(
                 0, 6,
-                self._safe("Aucune donnée hebdomadaire disponible."),
+                self.safe_str("Aucune donnée hebdomadaire disponible."),
                 new_x="LMARGIN", new_y="NEXT"
                 )
             self.set_text_color(*PALETTE["text_dark"])
@@ -1116,7 +1135,7 @@ class StockPDF(FPDF):
             self.set_text_color(*PALETTE["text_mid"])
             self.cell(
                 0, 6,
-                self._safe("Impossible de construire l'axe temporel."),
+                self.safe_str("Impossible de construire l'axe temporel."),
                 new_x="LMARGIN", new_y="NEXT"
                 )
             self.set_text_color(*PALETTE["text_dark"])
@@ -1124,6 +1143,7 @@ class StockPDF(FPDF):
             return
 
         def fmt_qty(v: float) -> str:
+            """Formate une quantité : entier si valeur ronde, sinon 2 décimales."""
             if abs(v - round(v)) < 1e-9:
                 return str(int(round(v)))
 
@@ -1243,8 +1263,8 @@ class StockPDF(FPDF):
                 xytext=(rupture_dt + timedelta(days=2), label_y),
                 fontsize=8,
                 color="#A13CDC",
-                arrowprops=dict(arrowstyle="->", color="#A13CDC", lw=1),
-                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#A13CDC", alpha=0.9),
+                arrowprops={"arrowstyle": "->", "color": "#A13CDC", "lw": 1},
+                bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#A13CDC", "alpha": 0.9},
                 )
 
         # Etiquettes historique
@@ -1287,7 +1307,9 @@ class StockPDF(FPDF):
         ax.set_ylim(0, ymax * 1.20)
 
         xmin = week_dates[0] - timedelta(days=2)
-        xmax_candidates = [future_dates[-1] + timedelta(days=4) if future_dates else trend_start_dt + timedelta(weeks=4)]
+        xmax_candidates = [
+            future_dates[-1] + timedelta(days=4) if future_dates else trend_start_dt + timedelta(weeks=4)
+        ]
 
         if rupture_dt is not None:
             xmax_candidates.append(rupture_dt + timedelta(days=4))
@@ -1301,7 +1323,7 @@ class StockPDF(FPDF):
         plt.close(fig)
         buf.seek(0)
 
-        chart_w = self._pw()
+        chart_w = self.usable_width()
         chart_h = 72
         y0 = self.get_y()
 
@@ -1315,9 +1337,10 @@ class StockPDF(FPDF):
 # ─── Page 1 : Synthèse globale ────────────────────────────────────────────────
 
 
-def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_range: list):
+def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, _weeks_range: list):
+    """Génère la page de synthèse globale avec KPIs et tableau de statuts."""
     pdf.add_page()
-    pw = pdf._pw()
+    pw = pdf.usable_width()
 
     # KPIs globaux
     n_total = len(all_kpis)
@@ -1377,14 +1400,14 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
             pdf.rect(pdf.l_margin, pdf.get_y(), pw, row_h, style="F")
 
         status = kpi["status"]
-        status_color = pdf._status_color(status)
+        status_color = pdf.status_color_for(status)
         cov = f"{kpi['coverage_weeks']:.1f} sem." if kpi['coverage_weeks'] is not None else "N/A"
 
         pdf.set_font("Helvetica", "", 6.5)
         pdf.set_text_color(*PALETTE["text_mid"])
-        # pdf.cell(col_sku, row_h, pdf._safe(kpi["stock_sku"], 20), border="B", align="L")
+        # pdf.cell(col_sku, row_h, pdf.safe_str(kpi["stock_sku"], 20), border="B", align="L")
         pdf.set_text_color(*PALETTE["text_dark"])
-        pdf.cell(col_lbl, row_h, pdf._safe(kpi["label"], 70), border="B", align="L")
+        pdf.cell(col_lbl, row_h, pdf.safe_str(kpi["label"], 70), border="B", align="L")
         pdf.cell(col_unit, row_h, f"{str(kpi['unit'])}", border="B", align="R")
         pdf.cell(col_stk, row_h, f"{str(kpi['available_stock'])}", border="B", align="R")
         pdf.cell(col_cov, row_h, cov, border="B", align="R")
@@ -1402,10 +1425,8 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, weeks_ra
 
 
 def render_article_page(pdf: StockPDF, kpi: dict):
+    """Génère la page détaillée d'un article (KPIs, graphique, tableau hebdomadaire)."""
     pdf.add_page()
-
-    sm = kpi["sumup_match"]
-    variant_str = sm.get("variant") or "(sans variante)"
 
     pdf.section_title(f"Stock : {kpi['label']}")
 
@@ -1416,7 +1437,7 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         )
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(*PALETTE["text_mid"])
-    pdf.multi_cell(0, 5, pdf._safe(f"Articles SumUp relies ({kpi['linked_items_count']}) : {linked_text}", 220))
+    pdf.multi_cell(0, 5, pdf.safe_str(f"Articles SumUp relies ({kpi['linked_items_count']}) : {linked_text}", 220))
     pdf.set_text_color(*PALETTE["text_dark"])
     pdf.ln(1)
 
@@ -1466,10 +1487,11 @@ def render_article_page(pdf: StockPDF, kpi: dict):
 # ─── Dernière page : qualité des données ─────────────────────────────────────
 
 def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
+    """Génère la page de qualité des données (produits non mappés, dates d'inventaire)."""
     pdf.add_page()
     pdf.section_title("Qualite des donnees", PALETTE["text_mid"])
 
-    pw = pdf._pw()
+    pw = pdf.usable_width()
 
     # Articles non mappés
     pdf.set_font("Helvetica", "B", 8)
@@ -1498,9 +1520,9 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
                 pdf.rect(pdf.l_margin, pdf.get_y(), pw, 5.5, style="F")
             pdf.set_font("Helvetica", "", 7.5)
             pdf.set_text_color(*PALETTE["text_dark"])
-            pdf.cell(col_name, 5.5, pdf._safe(u["name"], 40), border="B", align="L")
+            pdf.cell(col_name, 5.5, pdf.safe_str(u["name"], 40), border="B", align="L")
             pdf.set_text_color(*PALETTE["text_mid"])
-            pdf.cell(col_var, 5.5, pdf._safe(u["variant"], 30), border="B", align="L")
+            pdf.cell(col_var, 5.5, pdf.safe_str(u["variant"], 30), border="B", align="L")
             pdf.cell(col_qty, 5.5, str(u["total_qty"]), border="B", align="R",
                      new_x="LMARGIN", new_y="NEXT")
 
@@ -1526,7 +1548,7 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
     for kpi in all_kpis:
         pdf.set_font("Helvetica", "", 7.5)
         pdf.set_text_color(*PALETTE["text_mid"])
-        pdf.cell(pw * 0.55, 5.5, pdf._safe(kpi["label"], 40), border=0, align="L")
+        pdf.cell(pw * 0.55, 5.5, pdf.safe_str(kpi["label"], 40), border=0, align="L")
         pdf.set_text_color(*PALETTE["text_dark"])
         pdf.cell(pw * 0.30, 5.5, str(kpi["last_inventory_date"]), border=0, align="L")
         pdf.cell(pw * 0.15, 5.5, kpi["inventory_method"], border=0, align="L",
@@ -1539,6 +1561,7 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
 
 def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: list,
                  path: str) -> str:
+    """Génère le PDF complet (synthèse + pages articles + qualité) et le sauvegarde."""
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
 
@@ -1546,7 +1569,7 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
         render_article_page(pdf, kpi)
     render_data_quality_page(pdf, unmapped, all_kpis)
     pdf.output(path)
-    log.info(f"PDF généré -> {path}")
+    log.info("PDF genere -> %s", path)
 
     return path
 
@@ -1554,6 +1577,7 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
 # ─── 8. EXPORTS CSV ───────────────────────────────────────────────────────────
 
 def export_csv_summary(all_kpis: list, path: str):
+    """Exporte le CSV de synthèse des indicateurs par article."""
     fields = [
         "stock_sku", "label", "category", "unit",
         "available_stock", "incoming_qty", "incoming_eta",
@@ -1569,10 +1593,11 @@ def export_csv_summary(all_kpis: list, path: str):
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(all_kpis)
-    log.info(f"CSV synthèse -> {path}")
+    log.info("CSV synthese -> %s", path)
 
 
 def export_csv_history(all_kpis: list, path: str):
+    """Exporte le CSV historique des consommations hebdomadaires par article."""
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["stock_sku", "label", "week", "qty_used", "unit"])
@@ -1581,7 +1606,7 @@ def export_csv_history(all_kpis: list, path: str):
             for w, s in zip(kpi["weeks_range"], kpi.get("usage_series", kpi["sales_series"])):
                 writer.writerow([kpi["stock_sku"], kpi["label"], w, s, kpi["unit"]])
 
-    log.info(f"CSV historique -> {path}")
+    log.info("CSV historique -> %s", path)
 
 
 # ─── 9. ENVOI EMAIL ───────────────────────────────────────────────────────────
@@ -1589,11 +1614,12 @@ def export_csv_history(all_kpis: list, path: str):
 def send_stock_email(
     weeks: str,
     pdf_path: str,
-    csv_path: str,
-    hist_path: str,
+    _csv_path: str,
+    _hist_path: str,
     week_label: str,
     all_kpis: list,
         ):
+    """Compose et envoie l'email de rapport stocks avec le PDF en pièce jointe."""
     n_alert = sum(1 for k in all_kpis if k["status"] in ("SURVEILLANCE", "A COMMANDER", "RISQUE RUPTURE"))
     to_order = [k for k in all_kpis if k["status"] in ("A COMMANDER", "RISQUE RUPTURE")]
 
@@ -1609,9 +1635,6 @@ def send_stock_email(
                 )
     else:
         order_lines = "\nAucun article a commander cette semaine.\n"
-
-    logs_str = build_log_footer(_log_buffer)
-    now_str = datetime.now().strftime("%d/%m/%Y a %H:%M")
 
     body = f"""\
 Bonjour,
@@ -1658,6 +1681,7 @@ def run_stock_report(
     items_file: Path = None,
     state_file: Path = None,
 ):
+    """Exécute le pipeline complet : chargement, API, agrégation, PDF, CSV, email."""
     items_file = items_file or BASE_DIR / "stocks" / "stock_items.json"
 
     now = datetime.now(timezone.utc)
@@ -1676,7 +1700,7 @@ def run_stock_report(
     weeks_range = sorted(set(weeks_range))
 
     current_week = iso_week_label(now)
-    log.info(f"══ Rapport Stocks SumUp ══ {weeks} semaines | Semaine courante : {current_week}")
+    log.info("== Rapport Stocks SumUp == %s semaines | Semaine courante : %s", weeks, current_week)
 
     log.info("Étape 1/6 - Chargement du catalogue unifie…")
     raw_items = load_stock_items_raw(items_file)
@@ -1692,9 +1716,10 @@ def run_stock_report(
     fetch_end = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     log.info(
-        f"Étape 2/6 - Recuperation des transactions… "
-        f"(fenetre analyse={analysis_start_dt.date()}..{end_dt.date()} | "
-        f"fenetre fetch={fetch_start_dt.date()}..{end_dt.date()})"
+        "Etape 2/6 - Recuperation des transactions... "
+        "(fenetre analyse=%s..%s | fenetre fetch=%s..%s)",
+        analysis_start_dt.date(), end_dt.date(),
+        fetch_start_dt.date(), end_dt.date(),
     )
     headers_api = {"Authorization": f"Bearer {SUMUP_API_KEY}"}
     all_txns = fetch_transactions(fetch_start, fetch_end, mock_file=mock_file)
@@ -1705,11 +1730,11 @@ def run_stock_report(
     weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
     weekly_usage, weekly_sales_count = aggregate_weekly_stock_usage(stock_items, weekly_sales, weeks_range)
     if unmapped:
-        log.warning(f"{len(unmapped)} produit(s) SumUp non mappe(s) au catalogue")
+        log.warning("%s produit(s) SumUp non mappe(s) au catalogue", len(unmapped))
 
     log.info("Étape 4/6 - Mise a jour automatique des stocks…")
     stocks_updated = refresh_stock_state_in_items(
-        stock_items=stock_items,  # Gardé si conservé dans la signature locale, sinon à enlever
+        stock_items,
         stock_groups=stock_groups,
         txns=all_txns,
         sku_index=sku_index,
@@ -1718,7 +1743,7 @@ def run_stock_report(
 
     if stocks_updated:
         save_stock_items(items_file, raw_items)
-        log.info(f"Catalogue mis a jour : {items_file}")
+        log.info("Catalogue mis a jour : %s", items_file)
 
         stock_items = prepare_enabled_stock_items(raw_items)
         stock_groups = build_stock_groups(stock_items)
@@ -1732,8 +1757,9 @@ def run_stock_report(
         kpi = compute_indicators(group, weekly_sales, weekly_usage, weekly_sales_count, weeks_range)
         all_kpis.append(kpi)
         log.info(
-            f" {kpi['stock_sku']:30s} | stock={fmt_num(kpi['available_stock'])} "
-            f"| vendu={fmt_num(kpi['total_sold'])} | statut={kpi['status']}"
+            " %-30s | stock=%s | vendu=%s | statut=%s",
+            kpi['stock_sku'], fmt_num(kpi['available_stock']),
+            fmt_num(kpi['total_sold']), kpi['status'],
         )
 
     log.info("Étape 6/6 - Generation des fichiers…")
@@ -1758,6 +1784,7 @@ def run_stock_report(
 # ─── 11. CLI ──────────────────────────────────────────────────────────────────
 
 def main():
+    """Point d'entrée CLI : parse les arguments et lance run_stock_report."""
     parser = argparse.ArgumentParser(
         description="Rapport hebdomadaire de gestion des stocks SumUp",
         formatter_class=argparse.RawDescriptionHelpFormatter,
