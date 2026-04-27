@@ -234,6 +234,46 @@ def count_adhesions_in_group(txns: list, filters: list = None) -> int:
     return sum(count_adhesions_in_txn(txn, filters=filters) for txn in txns)
 
 
+def get_filtered_amount(txn: dict, filters: list = None) -> float:
+    """Retourne le montant total des articles correspondant aux filtres actifs.
+
+    Parcourt txn['products'] et additionne total_price (ou price × qty) pour
+    chaque ligne dont le libellé correspond aux filtres. Si aucune ligne ne
+    correspond ou si les données de prix sont absentes, repli sur le montant
+    total de la transaction.
+    """
+    products = txn.get("products") or []
+    total = 0.0
+    found_match = False
+
+    if isinstance(products, list) and products:
+        for p in products:
+            if not isinstance(p, dict):
+                continue
+
+            name = (p.get("name") or "").strip()
+            variant = (p.get("description") or "").strip()
+            label = f"{name} ({variant})" if variant else name
+
+            if not _matches_adhesion_label(label, filters):
+                continue
+
+            found_match = True
+            raw_total = p.get("total_price")
+
+            if raw_total is not None:
+                total += float(raw_total)
+            else:
+                price = float(p.get("price") or 0)
+                qty = int(p.get("quantity") or 1)
+                total += price * qty
+
+        if found_match:
+            return total
+
+    return float(txn.get("amount", 0) or 0)
+
+
 def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
     """GET /v0.1/transactions  - ou lecture depuis un fichier mock."""
 
@@ -559,7 +599,7 @@ class AdhesionPDF(FPDF):
 
         return n_lines * ROW_H
 
-    def transaction_row(self, txn: dict, even: bool):
+    def transaction_row(self, txn: dict, even: bool, filters: list = None):
         raw = txn.get("timestamp", txn.get("transaction_date", ""))
         try:
             dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
@@ -568,7 +608,7 @@ class AdhesionPDF(FPDF):
             date_str = raw[:16] if raw else "-"
 
         desc = self._safe(_get_description(txn), max_len=120)
-        amount = float(txn.get("amount", 0) or 0)
+        amount = get_filtered_amount(txn, filters)
         currency = self._safe(txn.get("currency", "EUR"), 6)
 
         card = txn.get("card") or {}
@@ -654,7 +694,7 @@ class AdhesionPDF(FPDF):
 
     # ── Sous-total de section ─────────────────────────────────────────────────
     def section_total(self, txns: list, cat: str, filters: list = None):
-        total_amount = sum(float(t.get("amount", 0) or 0) for t in txns)
+        total_amount = sum(get_filtered_amount(t, filters) for t in txns)
         total_count = count_adhesions_in_group(txns, filters=filters)
         count_label = format_count_label(total_count, filters=filters, default_label="adhésion")
         color = PALETTE[cat]
@@ -713,12 +753,12 @@ def generate_pdf(groups: dict, start: str, end: str, path: str, filters: list = 
         pdf.table_header()
 
         for i, txn in enumerate(txns):
-            pdf.transaction_row(txn, even=(i % 2 == 0))
+            pdf.transaction_row(txn, even=(i % 2 == 0), filters=filters)
 
         pdf.section_total(txns, cat, filters=filters)
 
         grand_count += count_adhesions_in_group(txns, filters=filters)
-        grand_total += sum(float(t.get("amount", 0) or 0) for t in txns)
+        grand_total += sum(get_filtered_amount(t, filters) for t in txns)
 
     # ── Total général ─────────────────────────────────────────────────────────
     pdf.ln(2)
@@ -782,7 +822,7 @@ def send_report_email(pdf_path: str, start: str, end: str,
         if not txns:
             continue
 
-        total_amount = sum(float(t.get("amount", 0) or 0) for t in txns)
+        total_amount = sum(get_filtered_amount(t, filters) for t in txns)
         total_count = count_adhesions_in_group(txns, filters=filters)
         count_label = format_count_label(total_count, filters=filters, default_label="adhésion")
 
