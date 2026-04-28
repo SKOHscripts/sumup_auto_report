@@ -159,7 +159,7 @@ def build_cmd(script_cfg, cmd_args):
     return [sys.executable, "-m", module] + cmd_args
 
 
-def run_script(script_id, script_cmd, mail_env_var=None, email_override=None):
+def run_script(script_id, script_cmd, mail_env_var=None, email_override=None, extra_env=None):
     """Lance un script en sous-processus et affiche sa sortie en temps réel."""
     st.session_state[f"logs_{script_id}"] = []
     st.session_state[f"rc_{script_id}"] = None
@@ -168,6 +168,8 @@ def run_script(script_id, script_cmd, mail_env_var=None, email_override=None):
     overrides = {}
     if mail_env_var and email_override and email_override.strip():
         overrides[mail_env_var] = email_override.strip()
+    if extra_env:
+        overrides.update(extra_env)
 
     env = build_env(email_overrides=overrides)
     log_area = st.empty()
@@ -211,6 +213,7 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
     is_running = st.session_state[f"running_{sid}"]
     email_env_var = cfg.get("email_env_var")
     extra_args = []
+    extra_env_overrides = {}
 
     # ── options spécifiques à chaque script ───────────────────────────────────
 
@@ -251,7 +254,7 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         try:
             safe_mock_file = _sanitize_mock_file(mock_file)
             if safe_mock_file:
-                extra_args += ["--mock", safe_mock_file]
+                extra_env_overrides["SUMUP_MOCK_FILE"] = safe_mock_file
         except ValueError as exc:
             st.error(str(exc))
 
@@ -297,10 +300,10 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         try:
             tokens = _sanitize_filter_tokens(filtres)
             if tokens:
-                extra_args += ["--filtres"] + tokens
+                extra_env_overrides["SUMUP_FILTRES"] = " ".join(tokens)
             elif filtres.strip() == "" and filtres != "":
-                # espace seul → --filtres sans valeur (toutes transactions)
-                extra_args.append("--filtres")
+                # espace seul → toutes les transactions
+                extra_env_overrides["SUMUP_FILTRES"] = ""
         except ValueError as exc:
             st.error(str(exc))
 
@@ -363,7 +366,7 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         try:
             safe_mock_file = _sanitize_mock_file(mock_file)
             if safe_mock_file:
-                extra_args += ["--mock", safe_mock_file]
+                extra_env_overrides["SUMUP_MOCK_FILE"] = safe_mock_file
         except ValueError as exc:
             st.error(str(exc))
 
@@ -377,7 +380,8 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
 
     if st.button("Lancer", key=f"btn_{sid}", disabled=is_running):
         cmd = build_cmd(cfg, extra_args)
-        run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input)
+        run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input,
+                   extra_env=extra_env_overrides)
 
     logs = st.session_state[f"logs_{sid}"]
     rc = st.session_state[f"rc_{sid}"]

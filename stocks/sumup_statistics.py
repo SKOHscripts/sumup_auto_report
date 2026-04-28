@@ -914,7 +914,7 @@ def main():
         weeks=args.weeks,
         items_file=items_file,
         pdf_path=Path(args.pdf) if args.pdf else default_pdf,
-        mock_file=args.mock,
+        mock_file=args.mock or os.getenv("SUMUP_MOCK_FILE") or None,
         api_key=api_key,
         enrich=not args.no_enrich,
         send_mail=not args.no_mail,

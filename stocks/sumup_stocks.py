@@ -1815,7 +1815,7 @@ def main():
     run_stock_report(
         weeks=args.weeks,
         send_mail=not args.no_mail,
-        mock_file=args.mock,
+        mock_file=args.mock or os.getenv("SUMUP_MOCK_FILE") or None,
         items_file=Path(args.items) if args.items else None,
         state_file=Path(args.state) if args.state else None,
         )

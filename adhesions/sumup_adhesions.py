@@ -976,6 +976,10 @@ def main():
         )
     args = parser.parse_args()
 
+    if args.filtres is None and "SUMUP_FILTRES" in os.environ:
+        env_filtres = os.environ["SUMUP_FILTRES"]
+        args.filtres = env_filtres.split() if env_filtres.strip() else []
+
     def fmt_start(d: str) -> str:
         return f"{d}T00:00:00Z" if d else None
 
