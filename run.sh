@@ -28,11 +28,15 @@ Modules :
   stocks     Rapport hebdomadaire des stocks (git pull/push automatique)
   adhesions  Rapport des adhésions (garde-fou 7 jours entre les runs)
   paheko     Tableau de bord Paheko
+  purchases  Intègre les achats depuis Google Drive dans stock_items.json
 
 Les options supplémentaires sont transmises au script Python.
   $0 stocks --no-mail
   $0 adhesions --start 2026-01-01 --end 2026-03-31
   $0 paheko
+  $0 purchases
+  $0 purchases --dry-run
+  $0 purchases --local /chemin/vers/ACHATS_suivi_stock.xlsx
 EOF
     exit 1
 }
@@ -93,6 +97,21 @@ case "$MODULE" in
 
     paheko)
         "$PYTHON" -m paheko_stats.paheko "$@"
+        ;;
+
+    purchases)
+        # Pull avec priorité au remote en cas de conflit
+        git pull --rebase -X theirs origin master
+
+        # Intégration des achats
+        "$PYTHON" -m stocks.update_stock_from_purchases "$@"
+
+        # Commit + push si stock_items.json a été modifié
+        if [ -n "$(git status --porcelain stocks/stock_items.json)" ]; then
+            git add stocks/stock_items.json
+            git commit -m "auto: integration achats au $(date +'%Y-%m-%d %H:%M')"
+            git push origin master
+        fi
         ;;
 
     *)

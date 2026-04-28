@@ -18,3 +18,10 @@ python-dateutil>=2.9
 
 # Chargement du fichier .env (mode cron)
 python-dotenv>=1.0
+
+# Lecture des fichiers Excel (achats)
+openpyxl>=3.1
+
+# Intégration Google Drive (téléchargement du fichier d'achats)
+google-api-python-client>=2.100
+google-auth>=2.20
