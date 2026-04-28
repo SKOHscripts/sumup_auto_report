@@ -29,7 +29,7 @@ from utils.mail_utils import (
     send_email,
     build_log_footer,
     )
-from utils.sumup_shared import remove_accents, normalize, iso_week_label, week_start, safe_float, parse_dt
+from utils.sumup_shared import normalize, iso_week_label, safe_float, parse_dt
 
 logging.basicConfig(
     level=logging.INFO,
@@ -78,6 +78,7 @@ SUMUP_API_KEY = os.getenv("SUMUP_API_KEY")
 
 @dataclass
 class CatalogItem:
+    """Article du catalogue SumUp avec ses propriétés de stock et de mappage."""
     stocksku: str
     label: str
     category: str
@@ -92,11 +93,15 @@ class CatalogItem:
 
     @property
     def display_name(self) -> str:
+        """Retourne le label ou le SKU si le label est vide."""
         return self.label or self.stocksku
 
 
 class Catalog:
+    """Catalogue d'articles avec index de recherche par nom/variante."""
+
     def __init__(self, raw_items: List[Dict[str, Any]]):
+        """Initialise le catalogue depuis une liste brute d'articles."""
         self.raw_items = raw_items
         self.items = self._prepare_items(raw_items)
         self.sku_index = self._build_sku_index(self.items)
@@ -104,6 +109,7 @@ class Catalog:
 
     @classmethod
     def from_path(cls, path: Path) -> "Catalog":
+        """Charge le catalogue depuis un fichier JSON."""
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -113,6 +119,7 @@ class Catalog:
         return cls(data)
 
     def _prepare_items(self, raw_items: List[Dict[str, Any]]) -> List[CatalogItem]:
+        """Convertit les articles bruts en objets CatalogItem filtrés et normalisés."""
         items: List[CatalogItem] = []
 
         for raw in raw_items:
@@ -141,6 +148,7 @@ class Catalog:
         return items
 
     def _build_sku_index(self, items: Iterable[CatalogItem]) -> Dict[Tuple[str, str], CatalogItem]:
+        """Construit l'index (nom_normalisé, variante_normalisée) → CatalogItem."""
         idx = {}
 
         for item in items:
@@ -149,6 +157,7 @@ class Catalog:
         return idx
 
     def _build_reference_by_sku(self, items: Iterable[CatalogItem]) -> Dict[str, CatalogItem]:
+        """Construit l'index SKU → article de référence (is_stock_reference prioritaire)."""
         refs: Dict[str, CatalogItem] = {}
 
         for item in items:
@@ -158,6 +167,7 @@ class Catalog:
         return refs
 
     def match_product(self, name: str, variant: str) -> Optional[CatalogItem]:
+        """Cherche l'article correspondant au nom+variante, avec fallback partiel."""
         key = (normalize(name), normalize(variant))
 
         if key in self.sku_index:
@@ -178,12 +188,16 @@ class Catalog:
 
 
 class SumUpClient:
+    """Client HTTP pour l'API SumUp (transactions et enrichissement)."""
+
     def __init__(self, api_key: Optional[str], timeout: int = 20):
+        """Initialise le client avec la clé API et le timeout."""
         self.api_key = api_key
         self.timeout = timeout
         self.headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
 
     def fetch_transactions(self, start: str, end: str, mock_file: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Récupère les transactions SumUp sur la période ou depuis un fichier mock."""
         if mock_file:
             with open(mock_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -215,7 +229,10 @@ class SumUpClient:
 
         return []
 
-    def enrich_transactions(self, txns: List[Dict[str, Any]], enrich: bool = True, pause: float = 0.08) -> List[Dict[str, Any]]:
+    def enrich_transactions(
+        self, txns: List[Dict[str, Any]], enrich: bool = True, pause: float = 0.08,
+    ) -> List[Dict[str, Any]]:
+        """Enrichit chaque transaction via GET /v0.1/me/transactions?id=."""
         if not enrich or not self.api_key:
             return txns
         enriched = []
@@ -248,10 +265,14 @@ class SumUpClient:
 
 
 class TransactionAnalyzer:
+    """Analyse et normalise les transactions SumUp selon le catalogue."""
+
     def __init__(self, catalog: Catalog):
+        """Initialise l'analyseur avec le catalogue de référence."""
         self.catalog = catalog
 
     def extract_products(self, txn: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extrait la liste de produits d'une transaction."""
         products = txn.get("products") or []
         out = []
 
@@ -283,6 +304,7 @@ class TransactionAnalyzer:
         return out
 
     def detect_payment_method(self, txn: Dict[str, Any]) -> str:
+        """Détecte le moyen de paiement (cash / cb / autre) depuis la transaction."""
         candidates = [
             txn.get("payment_type"),
             txn.get("payment_method"),
@@ -298,6 +320,7 @@ class TransactionAnalyzer:
         return "cb"
 
     def normalize_transactions(self, txns: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Normalise les transactions en lignes enrichies avec mappage catalogue."""
         rows = []
 
         for txn in txns:
@@ -320,7 +343,8 @@ class TransactionAnalyzer:
             for p in products:
                 item = self.catalog.match_product(p["name"], p["variant"])
                 sale_price = p["unit_price"] if p.get("unit_price") else (item.sale_price if item else None)
-                revenue = p["line_total"] if p.get("line_total") else (sale_price * p["quantity"] if sale_price is not None else None)
+                revenue = (p["line_total"] if p.get("line_total")
+                           else (sale_price * p["quantity"] if sale_price is not None else None))
                 rows.append({
                     "transaction_id": txn.get("id") or txn.get("transaction_id"),
                     "datetime": dt,
@@ -343,6 +367,7 @@ class TransactionAnalyzer:
         return rows
 
     def compute_metrics(self, rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calcule les métriques agrégées (top articles, catégories, paiements)."""
         weeks = sorted({r["week"] for r in rows})
         by_article = defaultdict(lambda: {"qty": 0, "revenue": 0.0, "category": "", "mapped": False})
         by_category_week = defaultdict(lambda: defaultdict(lambda: {"qty": 0, "revenue": 0.0}))
@@ -407,11 +432,15 @@ class TransactionAnalyzer:
 
 
 class ChartFactory:
+    """Génère et sauvegarde les graphiques matplotlib pour le rapport PDF."""
+
     def __init__(self, output_dir: Path):
+        """Initialise la factory avec le répertoire de sortie des images."""
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def save_weekly_category_qty_chart(self, metrics: Dict[str, Any]) -> Optional[Path]:
+        """Génère le graphique de ventes hebdomadaires par catégorie."""
         weeks = metrics["weeks"]
         cats = sorted(metrics["by_category_week"].keys())
 
@@ -436,6 +465,7 @@ class ChartFactory:
         return path
 
     def save_category_revenue_chart(self, metrics: Dict[str, Any]) -> Optional[Path]:
+        """Génère le graphique de chiffre d'affaires estimé par catégorie."""
         data = sorted(metrics["by_category"].items(), key=lambda kv: (-kv[1]["revenue"], kv[0]))
 
         if not data:
@@ -461,6 +491,7 @@ class ChartFactory:
         return path
 
     def save_payment_ratio_chart(self, metrics: Dict[str, Any]) -> Optional[Path]:
+        """Génère le graphique camembert du ratio cash / CB."""
         counts = metrics["payment_counts"]
 
         if not counts:
@@ -490,13 +521,17 @@ class ChartFactory:
 
 
 class StatsPDF(FPDF):
+    """PDF du rapport de statistiques : en-tête, pied de page, tableaux et graphiques."""
+
     def __init__(self, title: str):
+        """Initialise le PDF en portrait A4 avec marges et saut de page automatique."""
         super().__init__(orientation="P", unit="mm", format="A4")
         self.title = title
         self.set_auto_page_break(True, 14)
         self.set_margins(12, 10, 12)
 
     def _safe(self, text: str, max_len: int = 999) -> str:
+        """Nettoie le texte pour l'encodage latin-1 et tronque si nécessaire."""
         t = str(text or "-")
 
         for src, dst in [("€", "EUR"), ("—", "-"), ("–", "-"), ("'", "'"), (" ", " ")]:
@@ -506,6 +541,7 @@ class StatsPDF(FPDF):
         return (t[: max_len - 3] + "...") if len(t) > max_len else t
 
     def header(self):
+        """Affiche le titre et la date de génération en haut de chaque page."""
         self.set_font("Helvetica", "B", 14)
         self.set_text_color(*PALETTE["text"])
         self.cell(0, 8, self._safe(self.title, 90), new_x="LMARGIN", new_y="NEXT")
@@ -517,12 +553,14 @@ class StatsPDF(FPDF):
         self.ln(4)
 
     def footer(self):
+        """Affiche le numéro de page centré en bas de chaque page."""
         self.set_y(-10)
         self.set_font("Helvetica", "", 8)
         self.set_text_color(*PALETTE["muted"])
         self.cell(0, 5, f"Page {self.page_no()}", align="C")
 
     def section(self, title: str):
+        """Insère un titre de section avec barre colorée."""
         self.ln(1)
         self.set_fill_color(*PALETTE["accent"])
         self.rect(self.l_margin, self.get_y(), 2.6, 6, style="F")
@@ -534,6 +572,7 @@ class StatsPDF(FPDF):
         self.ln(1)
 
     def kv_table(self, rows: List[Tuple[str, str]]):
+        """Affiche un tableau clé/valeur sur deux colonnes avec alternance de fond."""
         left = 58
         right = self.w - self.l_margin - self.r_margin - left
 
@@ -549,6 +588,7 @@ class StatsPDF(FPDF):
             self.cell(right, 6.2, self._safe(v, 80), border="B", new_x="LMARGIN", new_y="NEXT")
 
     def simple_table(self, headers: List[str], rows: List[List[str]], widths: List[float]):
+        """Affiche un tableau multi-colonnes avec en-têtes et saut de page automatique."""
         self.set_font("Helvetica", "B", 7.8)
         self.set_text_color(*PALETTE["muted"])
 
@@ -577,6 +617,7 @@ class StatsPDF(FPDF):
             self.ln()
 
     def add_chart(self, img_path: Optional[Path], h: float = 62, w: Optional[float] = None):
+        """Insère un graphique PNG centré sur la page courante."""
         if not img_path or not img_path.exists():
             self.set_font("Helvetica", "I", 8)
             self.set_text_color(*PALETTE["muted"])
@@ -595,11 +636,15 @@ class StatsPDF(FPDF):
 
 
 class ReportBuilder:
+    """Orchestre la génération des graphiques et la création du PDF de rapport."""
+
     def __init__(self, output_dir: Path):
+        """Initialise le builder avec le répertoire de sortie."""
         self.output_dir = output_dir
         self.chart_factory = ChartFactory(output_dir)
 
     def generate_pdf(self, metrics: Dict[str, Any], pdf_path: Path, title: str):
+        """Génère le PDF complet (graphiques + tableaux) à partir des métriques calculées."""
         weekly_chart = self.chart_factory.save_weekly_category_qty_chart(metrics)
         revenue_chart = self.chart_factory.save_category_revenue_chart(metrics)
         payment_chart = self.chart_factory.save_payment_ratio_chart(metrics)
@@ -679,7 +724,8 @@ class ReportBuilder:
         return pdf_path
 
 
-def send_statistics_email(weeks: int, pdf_path: Path, metrics: Dict[str, Any]) -> None:
+def send_statistics_email(_weeks: int, pdf_path: Path, metrics: Dict[str, Any]) -> None:
+    """Compose et envoie l'email de rapport statistiques avec le PDF en pièce jointe."""
     n_weeks = len(metrics["weeks"])
     period_start = metrics["weeks"][0] if metrics["weeks"] else "N/A"
     period_end = metrics["weeks"][-1] if metrics["weeks"] else "N/A"
@@ -786,17 +832,17 @@ def run_report(
     enrich: bool = True,
     send_mail: bool = True,
 ) -> Path:
-
+    """Exécute le pipeline complet : chargement, transactions, métriques, PDF, email."""
     now = datetime.now(timezone.utc)
     start_dt = now - timedelta(weeks=weeks)
 
     items_file = items_file or BASE_DIR / "stocks" / "stock_items.json"
 
-    log.info(f"== Rapport Statistiques SumUp == {weeks} semaines")
+    log.info("== Rapport Statistiques SumUp == %s semaines", weeks)
 
     log.info("Etape 1/4 - Chargement du catalogue...")
     catalog = Catalog.from_path(items_file)
-    log.info(f"Catalogue charge : {len(catalog.items)} article(s) actif(s)")
+    log.info("Catalogue charge : %s article(s) actif(s)", len(catalog.items))
 
     log.info("Etape 2/4 - Recuperation des transactions...")
     client = SumUpClient(api_key=api_key or SUMUP_API_KEY)
@@ -805,7 +851,7 @@ def run_report(
         now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         mock_file=mock_file,
     )
-    log.info(f"Transactions recuperees : {len(txns)}")
+    log.info("Transactions recuperees : %s", len(txns))
     txns = client.enrich_transactions(txns, enrich=enrich)
 
     log.info("Etape 3/4 - Analyse et calcul des metriques...")
@@ -813,17 +859,17 @@ def run_report(
     rows = analyzer.normalize_transactions(txns)
     metrics = analyzer.compute_metrics(rows)
     log.info(
-        f"Analyse : {metrics['total_qty']} unites vendues, "
-        f"CA estime {metrics['total_revenue']:.2f} EUR, "
-        f"mapping {metrics['mapped_rows']}/{metrics['total_rows']} lignes"
+        "Analyse : %s unites vendues, CA estime %.2f EUR, mapping %s/%s lignes",
+        metrics['total_qty'], metrics['total_revenue'],
+        metrics['mapped_rows'], metrics['total_rows'],
     )
     if metrics["unmapped"]:
-        log.warning(f"{len(metrics['unmapped'])} produit(s) non mappes au catalogue")
+        log.warning("%s produit(s) non mappes au catalogue", len(metrics['unmapped']))
 
     log.info("Etape 4/4 - Generation du PDF...")
     title = f"Rapport statistiques ventes - {weeks} semaines"
     ReportBuilder(pdf_path.parent).generate_pdf(metrics, pdf_path, title)
-    log.info(f"PDF genere -> {pdf_path}")
+    log.info("PDF genere -> %s", pdf_path)
 
     if send_mail:
         send_statistics_email(weeks, pdf_path, metrics)
@@ -835,14 +881,18 @@ def run_report(
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
+    """Construit et retourne le parseur d'arguments CLI."""
     p = argparse.ArgumentParser(
         description="Rapport de statistiques des ventes SumUp avec PDF synthetique",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    p.add_argument("--weeks", type=int, default=DEFAULT_WEEKS, help=f"Nombre de semaines analysees (defaut : {DEFAULT_WEEKS})")
-    p.add_argument("--items", default=None, help="Chemin vers le catalogue JSON (defaut : stocks/stock_items.json)")
-    p.add_argument("--pdf", default=None, help="Chemin du PDF de sortie (defaut : rapport_statistiques_sumup_YYYY_WNN.pdf)")
+    p.add_argument("--weeks", type=int, default=DEFAULT_WEEKS,
+                   help=f"Nombre de semaines analysees (defaut : {DEFAULT_WEEKS})")
+    p.add_argument("--items", default=None,
+                   help="Chemin vers le catalogue JSON (defaut : stocks/stock_items.json)")
+    p.add_argument("--pdf", default=None,
+                   help="Chemin du PDF de sortie (defaut : rapport_statistiques_sumup_YYYY_WNN.pdf)")
     p.add_argument("--mock", default=None, help="Fichier JSON de transactions mock")
     p.add_argument("--api-key", default=None, help="Cle API SumUp ; sinon variable d'environnement SUMUP_API_KEY")
     p.add_argument("--no-enrich", action="store_true", help="Desactive l'enrichissement transaction par transaction")
@@ -851,6 +901,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def main():
+    """Point d'entrée : parse les arguments et lance run_report."""
     args = build_arg_parser().parse_args()
     api_key = args.api_key or SUMUP_API_KEY
 
@@ -863,7 +914,7 @@ def main():
         weeks=args.weeks,
         items_file=items_file,
         pdf_path=Path(args.pdf) if args.pdf else default_pdf,
-        mock_file=args.mock,
+        mock_file=args.mock or os.getenv("SUMUP_MOCK_FILE") or None,
         api_key=api_key,
         enrich=not args.no_enrich,
         send_mail=not args.no_mail,

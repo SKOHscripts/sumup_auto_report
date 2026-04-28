@@ -86,7 +86,7 @@ SUMUP_API_KEY = os.getenv("SUMUP_API_KEY")
 
 def enrich_transactions(txns: list, headers: dict) -> list:
     """Récupère le détail complet de chaque transaction via GET /v0.1/me/transactions?id={id}."""
-    log.info(f"Enrichissement de {len(txns)} transaction(s)…")
+    log.info("Enrichissement de %s transaction(s)...", len(txns))
     enriched = []
 
     for t in txns:
@@ -111,14 +111,14 @@ def enrich_transactions(txns: list, headers: dict) -> list:
                 if isinstance(detail, dict):
                     t = {**t, **{k: v for k, v in detail.items() if v is not None}}
             else:
-                log.warning(f"↳ {txn_id} : réponse {resp.status_code}")
+                log.warning("↳ %s : reponse %s", txn_id, resp.status_code)
         except Exception as e:
-            log.warning(f"↳ Échec enrichissement {txn_id} : {e}")
+            log.warning("↳ Echec enrichissement %s : %s", txn_id, e)
 
         enriched.append(t)
         time.sleep(0.1)
 
-    log.info(f"Enrichissement terminé : {len(enriched)} transaction(s)")
+    log.info("Enrichissement termine : %s transaction(s)", len(enriched))
 
     return enriched
 
@@ -190,6 +190,7 @@ def _matches_adhesion_label(text: str, filters: list = None) -> bool:
 
 
 def count_adhesions_in_txn(txn: dict, filters: list = None) -> int:
+    """Compte le nombre d'adhésions dans une transaction selon les filtres actifs."""
     products = txn.get("products") or []
     total = 0
 
@@ -231,6 +232,7 @@ def count_adhesions_in_txn(txn: dict, filters: list = None) -> int:
 
 
 def count_adhesions_in_group(txns: list, filters: list = None) -> int:
+    """Additionne les adhésions sur un groupe de transactions."""
     return sum(count_adhesions_in_txn(txn, filters=filters) for txn in txns)
 
 
@@ -280,7 +282,7 @@ def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
     # ── Mode mock ──
 
     if mock_file:
-        log.info(f"  [MOCK] Lecture depuis '{mock_file}'")
+        log.info("  [MOCK] Lecture depuis '%s'", mock_file)
         with open(mock_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
@@ -314,7 +316,7 @@ def fetch_transactions(start: str, end: str, mock_file: str = None) -> list:
     else:
         items = []
 
-    log.info(f"Total brut récupéré : {len(items)} transaction(s)")
+    log.info("Total brut recupere : %s transaction(s)", len(items))
 
     return items
 
@@ -334,10 +336,11 @@ def remove_accents(text: str) -> str:
 
 
 def filter_adhesions(txns: list, filters: list = None) -> list:
+    """Retourne uniquement les transactions dont la description correspond aux filtres."""
     active = [remove_accents(kw.lower()) for kw in (filters or TRANSACTION_FILTERS) if kw.strip()]
 
     if not active:
-        log.info(f"Aucun filtre actif — {len(txns)} transaction(s) conservée(s)")
+        log.info("Aucun filtre actif — %s transaction(s) conservee(s)", len(txns))
 
         return txns
 
@@ -348,14 +351,15 @@ def filter_adhesions(txns: list, filters: list = None) -> list:
         ]
 
     log.info(
-        f"Filtre(s) actif(s) : {active} — "
-        f"{len(filtered)}/{len(txns)} transaction(s) conservée(s)"
+        "Filtre(s) actif(s) : %s — %s/%s transaction(s) conservee(s)",
+        active, len(filtered), len(txns),
         )
 
     return filtered
 
 
 def get_count_label(filters: list = None, default_label: str = "adhésion") -> str:
+    """Retourne le libellé à utiliser pour le comptage selon les filtres actifs."""
     active = [kw.strip() for kw in (filters or TRANSACTION_FILTERS) if kw and kw.strip()]
 
     if not active:
@@ -368,6 +372,7 @@ def get_count_label(filters: list = None, default_label: str = "adhésion") -> s
 
 
 def format_count_label(count: int, filters: list = None, default_label: str = "adhésion") -> str:
+    """Retourne le libellé accordé en nombre (singulier/pluriel)."""
     label = get_count_label(filters=filters, default_label=default_label)
 
     if count <= 1:
@@ -416,10 +421,9 @@ def group_by_payment(txns: list) -> dict:
         g.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
     log.info(
-        f"Répartition -> Espèces: {len(groups['CASH'])} | "
-        f"Visa: {len(groups['VISA'])} | "
-        f"Mastercard: {len(groups['MASTERCARD'])} | "
-        f"Autres: {len(groups['OTHER'])}"
+        "Repartition -> Especes: %s | Visa: %s | Mastercard: %s | Autres: %s",
+        len(groups["CASH"]), len(groups["VISA"]),
+        len(groups["MASTERCARD"]), len(groups["OTHER"]),
         )
 
     return groups
@@ -470,7 +474,10 @@ HEAD_H = 7.5
 
 
 class AdhesionPDF(FPDF):
+    """PDF formaté pour le rapport des adhésions SumUp (orientation paysage)."""
+
     def __init__(self, start_date, end_date):
+        """Initialise le PDF avec les dates de la période."""
         super().__init__(orientation="L", unit="mm", format="A4")
         self.start_date = start_date
         self.end_date = end_date
@@ -478,6 +485,7 @@ class AdhesionPDF(FPDF):
         self.set_auto_page_break(True, margin=16)
 
     def _pw(self) -> float:
+        """Retourne la largeur utile de la page."""
         return self.w - self.l_margin - self.r_margin
 
     def _safe(self, text, max_len=999) -> str:
@@ -488,7 +496,7 @@ class AdhesionPDF(FPDF):
 
     # ── En-tête de page ──────────────────────────────────────────────────────
     def header(self):
-        # Police obligatoire en premier dans fpdf2 avant tout appel cell()
+        """Affiche la barre de titre et les informations d'en-tête du rapport."""
         self.set_font("Helvetica", "", 8)
 
         pw = self._pw()
@@ -523,6 +531,7 @@ class AdhesionPDF(FPDF):
 
     # ── Pied de page ─────────────────────────────────────────────────────────
     def footer(self):
+        """Affiche le pied de page avec numéro de page centré."""
         self.set_y(-13)
         self.set_draw_color(*PALETTE["divider"])
         self.set_line_width(0.2)
@@ -533,6 +542,7 @@ class AdhesionPDF(FPDF):
 
     # ── Titre de section ─────────────────────────────────────────────────────
     def section_header(self, cat: str):
+        """Insère un titre de section coloré selon la catégorie de paiement."""
         color = PALETTE[cat]
         x, y = self.get_x(), self.get_y()
 
@@ -565,6 +575,7 @@ class AdhesionPDF(FPDF):
 
     # ── En-tête du tableau ───────────────────────────────────────────────────
     def table_header(self):
+        """Affiche les en-têtes de colonnes du tableau de transactions."""
         self.set_font("Helvetica", "B", 7.5)
         self.set_text_color(*PALETTE["text_mid"])
         self.set_draw_color(*PALETTE["divider"])
@@ -600,6 +611,7 @@ class AdhesionPDF(FPDF):
         return n_lines * ROW_H
 
     def transaction_row(self, txn: dict, even: bool, filters: list = None):
+        """Dessine une ligne de transaction dans le tableau PDF."""
         raw = txn.get("timestamp", txn.get("transaction_date", ""))
         try:
             dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
@@ -694,6 +706,7 @@ class AdhesionPDF(FPDF):
 
     # ── Sous-total de section ─────────────────────────────────────────────────
     def section_total(self, txns: list, cat: str, filters: list = None):
+        """Affiche le sous-total d'une section (montant et nombre d'adhésions)."""
         total_amount = sum(get_filtered_amount(t, filters) for t in txns)
         total_count = count_adhesions_in_group(txns, filters=filters)
         count_label = format_count_label(total_count, filters=filters, default_label="adhésion")
@@ -738,6 +751,7 @@ class AdhesionPDF(FPDF):
 
 
 def generate_pdf(groups: dict, start: str, end: str, path: str, filters: list = None):
+    """Génère le fichier PDF complet depuis les groupes de transactions."""
     pdf = AdhesionPDF(start, end)
     pdf.add_page()
 
@@ -803,7 +817,7 @@ def generate_pdf(groups: dict, start: str, end: str, path: str, filters: list = 
     pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
 
     pdf.output(path)
-    log.info(f"PDF genere -> {path} ({grand_count} {count_label}, {grand_total:.2f} EUR)")
+    log.info("PDF genere -> %s (%s %s, %.2f EUR)", path, grand_count, count_label, grand_total)
 
     return grand_count, grand_total
 
@@ -813,7 +827,7 @@ def generate_pdf(groups: dict, start: str, end: str, path: str, filters: list = 
 def send_report_email(pdf_path: str, start: str, end: str,
                       groups: dict, grand_count: int, grand_total: float,
                       filters: list = None):
-
+    """Envoie le rapport PDF par email avec un résumé des adhésions par section."""
     section_lines = []
 
     for cat in SECTION_ORDER:
@@ -880,6 +894,7 @@ Corentin via {Path(__file__).name}
 
 def run_report(start: str = None, end: str = None, send_mail: bool = True,
                mock_file: str = None, filters: list = None):
+    """Pipeline principal : récupère, filtre, génère et envoie le rapport d'adhésions."""
     now = datetime.now(timezone.utc)
 
     if not end:
@@ -889,7 +904,7 @@ def run_report(start: str = None, end: str = None, send_mail: bool = True,
         end_dt = datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
         start = (end_dt - timedelta(days=DEFAULT_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    log.info(f"══ Rapport SumUp ══ {start[:10]} -> {end[:10]}")
+    log.info("══ Rapport SumUp ══ %s -> %s", start[:10], end[:10])
     log.info("Étape 1/4 - Récupération des transactions…")
     headers = {"Authorization": f"Bearer {SUMUP_API_KEY}"}
     all_txns = fetch_transactions(start, end, mock_file=mock_file)
@@ -899,11 +914,11 @@ def run_report(start: str = None, end: str = None, send_mail: bool = True,
     if not mock_file:
         all_txns = enrich_transactions(all_txns, headers)
 
-    log.info(f"Étape 2/4 - Filtrage {filters or TRANSACTION_FILTERS}…")
+    log.info("Etape 2/4 - Filtrage %s...", filters or TRANSACTION_FILTERS)
     adhesions = filter_adhesions(all_txns, filters=filters)
 
     if not adhesions:
-        log.warning(f"Aucune adhésion trouvée entre {start[:10]} et {end[:10]}.")
+        log.warning("Aucune adhesion trouvee entre %s et %s.", start[:10], end[:10])
         return
 
     log.info("Étape 3/4 - Tri et génération du PDF…")
@@ -938,6 +953,7 @@ def run_report(start: str = None, end: str = None, send_mail: bool = True,
 # ─── 7. CLI ───────────────────────────────────────────────────────────────────
 
 def main():
+    """Point d'entrée CLI : parse les arguments et lance run_report."""
     parser = argparse.ArgumentParser(
         description="Rapport des Adhésions SumUp",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -959,6 +975,10 @@ def main():
         "Avec --filtres sans valeur : toutes les transactions.",
         )
     args = parser.parse_args()
+
+    if args.filtres is None and "SUMUP_FILTRES" in os.environ:
+        env_filtres = os.environ["SUMUP_FILTRES"]
+        args.filtres = env_filtres.split() if env_filtres.strip() else []
 
     def fmt_start(d: str) -> str:
         return f"{d}T00:00:00Z" if d else None

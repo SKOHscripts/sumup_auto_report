@@ -1,3 +1,4 @@
+"""Script one-shot d'initialisation du stock depuis des captures SumUp."""
 import json
 import re
 
@@ -25,7 +26,7 @@ items_from_images = [
 with open('stock_items.json', 'r', encoding='utf-8') as f:
     original_items = json.load(f)
 
-inventory_date = "2026-04-05"
+INVENTORY_DATE = "2026-04-05"
 updated_items = []
 seen_names = set()
 
@@ -41,7 +42,7 @@ for item in original_items:
     match_found = None
 
     for img_name, qty in items_from_images:
-        if name_sm == img_name or full_name2 == img_name:
+        if img_name in (name_sm, full_name2):
             match_found = (img_name, qty)
 
             break
@@ -52,7 +53,7 @@ for item in original_items:
         if "stock_state" not in item:
             item["stock_state"] = {}
         item["stock_state"]["stock_on_hand"] = qty
-        item["stock_state"]["last_inventory_date"] = inventory_date
+        item["stock_state"]["last_INVENTORY_DATE"] = INVENTORY_DATE
         item["stock_state"]["inventory_count_method"] = "manual"
 
         # Nettoyage de l'historique auto car c'est un nouvel inventaire
@@ -94,7 +95,7 @@ for img_name, qty in items_from_images:
                 "stock_reserved": 0,
                 "incoming_qty": 0,
                 "incoming_eta": "",
-                "last_inventory_date": inventory_date,
+                "last_INVENTORY_DATE": INVENTORY_DATE,
                 "inventory_count_method": "manual",
                 "stock_history": []
             }

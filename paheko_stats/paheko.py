@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Dashboard statistiques membres Paheko : données démographiques et visualisations."""
 import sys
 from pathlib import Path
 # Permet l'exécution directe `python paheko_stats/paheko.py` en plus de `python -m`
@@ -105,6 +106,7 @@ plt.rcParams.update({
 
 
 def to_clean_str(value):
+    """Convertit une valeur en chaîne propre (sans espaces superflus)."""
     if value is None:
         return ""
 
@@ -112,6 +114,7 @@ def to_clean_str(value):
 
 
 def qualify_sql_expr(expr, table_alias="u"):
+    """Qualifie une expression SQL simple avec l'alias de table."""
     expr = to_clean_str(expr)
 
     if not expr:
@@ -125,6 +128,7 @@ def qualify_sql_expr(expr, table_alias="u"):
 
 
 def sql_select_expr(sql_expr, alias, table_alias="u"):
+    """Retourne une clause SELECT qualifiée ou NULL AS alias si vide."""
     qualified = qualify_sql_expr(sql_expr, table_alias=table_alias)
 
     if qualified:
@@ -134,6 +138,7 @@ def sql_select_expr(sql_expr, alias, table_alias="u"):
 
 
 def paheko_request(method, path, *, data=None, params=None):
+    """Effectue une requête vers l'API Paheko et retourne le résultat JSON ou texte."""
     url = f"{PAHEKO_BASE_URL}/api/{path.lstrip('/')}"
     response = session.request(method, url, data=data, params=params, timeout=60)
 
@@ -154,6 +159,7 @@ def paheko_request(method, path, *, data=None, params=None):
 
 
 def run_sql(sql):
+    """Exécute une requête SQL via l'API Paheko et retourne les résultats."""
     payload = paheko_request("POST", "sql/", data={"sql": sql})
 
     if isinstance(payload, dict):
@@ -166,6 +172,7 @@ def run_sql(sql):
 
 
 def get_table_columns(table: str) -> set:
+    """Retourne l'ensemble des colonnes d'une table Paheko (avec cache local)."""
     _columns_cache: dict[str, set] = {}
 
     if table in _columns_cache:
@@ -175,7 +182,7 @@ def get_table_columns(table: str) -> set:
         rows = run_sql(f'SELECT * FROM "{table}" LIMIT 1;')
         cols = set(rows[0].keys()) if rows else set()
     except Exception as e:
-        log.warning(f"Impossible de lire les colonnes de {table}: {e}")
+        log.warning("Impossible de lire les colonnes de %s: %s", table, e)
         cols = set()
 
     _columns_cache[table] = cols
@@ -184,6 +191,7 @@ def get_table_columns(table: str) -> set:
 
 
 def pick_existing_key(row, candidates):
+    """Retourne le premier candidat présent dans row, ou None."""
     for key in candidates:
         if key and key in row:
             return key
@@ -192,6 +200,7 @@ def pick_existing_key(row, candidates):
 
 
 def normalize_newsletter(value):
+    """Normalise la valeur d'abonnement newsletter en 'Oui', 'Non' ou la valeur brute."""
     value = to_clean_str(value)
 
     if not value:
@@ -209,12 +218,13 @@ def normalize_newsletter(value):
 
 
 def parse_date_flexible(value):
+    """Parse une date depuis plusieurs formats possibles (dd/mm/yyyy, ISO, etc.)."""
     value = to_clean_str(value)
 
     if not value:
         return None
 
-    value = value.split(" ")[0]
+    value = value.split(" ", maxsplit=1)[0]
     patterns = [
         "%d/%m/%Y",
         "%Y-%m-%d",
@@ -235,6 +245,7 @@ def parse_date_flexible(value):
 
 
 def month_key_from_date(value):
+    """Retourne une clé mensuelle 'YYYY-MM' depuis une date, ou None."""
     dt = parse_date_flexible(value)
 
     if not dt:
@@ -244,6 +255,7 @@ def month_key_from_date(value):
 
 
 def find_category_count(cat_counts, expected_name):
+    """Cherche le comptage d'une catégorie par son nom normalisé."""
     expected = to_clean_str(expected_name).lower()
 
     for name, count in cat_counts.items():
@@ -254,6 +266,7 @@ def find_category_count(cat_counts, expected_name):
 
 
 def fetch_categories_lookup():
+    """Charge le dictionnaire {id → nom} des catégories depuis Paheko."""
     sql = f"SELECT * FROM {PAHEKO_CATEGORIES_TABLE} LIMIT {PAHEKO_SQL_LIMIT};"
     rows = run_sql(sql)
     category_lookup = {}
@@ -292,6 +305,7 @@ def fetch_categories_lookup():
 
 
 def build_members_sql():
+    """Construit la requête SQL pour récupérer les membres avec les champs configurés."""
     known_cols = get_table_columns(PAHEKO_USERS_TABLE)
 
     def safe_expr(field_var, alias):
@@ -304,9 +318,9 @@ def build_members_sql():
 
         if is_simple_ident and known_cols and expr not in known_cols:
             log.warning(
-                f'Colonne "{expr}" introuvable dans {PAHEKO_USERS_TABLE} '
-                f'(colonnes connues: {sorted(known_cols)}). '
-                f'Remplacez la variable .env correspondante.'
+                'Colonne configurée introuvable dans %s pour le champ "%s". '
+                "Vérifiez la variable .env correspondante.",
+                PAHEKO_USERS_TABLE, alias,
             )
 
             return f'NULL AS "{alias}"'
@@ -334,6 +348,7 @@ LIMIT {PAHEKO_SQL_LIMIT};
 
 
 def fetch_members_rows(category_lookup):
+    """Récupère et normalise les lignes membres depuis Paheko."""
     sql = build_members_sql()
     rows = run_sql(sql)
     normalized_rows = []
@@ -362,6 +377,7 @@ def fetch_members_rows(category_lookup):
 
 
 def create_kpi_card(ax, value, label, color, subtext="", sample=""):
+    """Dessine une carte KPI dans l'axe donné avec valeur, label et couleur."""
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis("off")
@@ -410,6 +426,7 @@ def create_kpi_card(ax, value, label, color, subtext="", sample=""):
 
 
 def add_card_background(fig, rect, title=""):
+    """Ajoute un fond de carte arrondi dans la figure matplotlib."""
     card_ax = fig.add_axes(rect, zorder=1)
     card_ax.set_xlim(0, 1)
     card_ax.set_ylim(0, 1)
@@ -439,6 +456,7 @@ def add_card_background(fig, rect, title=""):
 
 
 def compute_stats(lignes):
+    """Calcule les statistiques agrégées (âges, catégories, newsletter, etc.)."""
     date_ref = datetime.now()
 
     ages_precis = []
@@ -529,6 +547,7 @@ def compute_stats(lignes):
 
 
 def render_dashboard(stats, output_path):
+    """Génère le dashboard matplotlib et l'enregistre en PNG."""
     fig = plt.figure(figsize=(20, 13), facecolor=COLORS["background"])
 
     header_ax = fig.add_axes([0, 0.90, 1, 0.10])
@@ -556,12 +575,19 @@ def render_dashboard(stats, output_path):
     ax_kpi5 = fig.add_axes([0.68, 0.78, 0.145, 0.10])
     ax_kpi6 = fig.add_axes([0.845, 0.78, 0.135, 0.10])
 
-    create_kpi_card(ax_kpi1, stats["membres_actifs"], "Membres actifs", COLORS["accent"], sample=f'n={stats["n_categories"]}')
-    create_kpi_card(ax_kpi2, stats["anciens_membres"], "Anciens membres", COLORS["accent3"], sample=f'n={stats["n_categories"]}')
-    create_kpi_card(ax_kpi3, f'{stats["taux_abo"]:.0f}%', "Abonnés newsletter", COLORS["accent2"], sample=f'n={stats["n_newsletter"]}')
-    create_kpi_card(ax_kpi4, f'{stats["age_moyen"]:.0f}', "Âge moyen", COLORS["accent4"], subtext=f'{stats["age_min"]} - {stats["age_max"]} ans', sample=f'n={stats["n_ages"]}')
-    create_kpi_card(ax_kpi5, stats["n_codes_uniques"], "Codes postaux", COLORS["accent2"], sample=f'n={stats["n_codes_postaux"]}')
-    create_kpi_card(ax_kpi6, stats["n_villes_uniques"], "Villes", COLORS["accent"], sample=f'n={stats["n_villes"]}')
+    create_kpi_card(ax_kpi1, stats["membres_actifs"], "Membres actifs",
+                    COLORS["accent"], sample=f'n={stats["n_categories"]}')
+    create_kpi_card(ax_kpi2, stats["anciens_membres"], "Anciens membres",
+                    COLORS["accent3"], sample=f'n={stats["n_categories"]}')
+    create_kpi_card(ax_kpi3, f'{stats["taux_abo"]:.0f}%', "Abonnés newsletter",
+                    COLORS["accent2"], sample=f'n={stats["n_newsletter"]}')
+    create_kpi_card(ax_kpi4, f'{stats["age_moyen"]:.0f}', "Âge moyen", COLORS["accent4"],
+                    subtext=f'{stats["age_min"]} - {stats["age_max"]} ans',
+                    sample=f'n={stats["n_ages"]}')
+    create_kpi_card(ax_kpi5, stats["n_codes_uniques"], "Codes postaux",
+                    COLORS["accent2"], sample=f'n={stats["n_codes_postaux"]}')
+    create_kpi_card(ax_kpi6, stats["n_villes_uniques"], "Villes",
+                    COLORS["accent"], sample=f'n={stats["n_villes"]}')
 
     add_card_background(fig=fig, rect=[0.02, 0.42, 0.31, 0.34], title="Répartition par catégorie")
     ax1 = fig.add_axes([0.04, 0.44, 0.27, 0.28], zorder=2)
@@ -592,7 +618,7 @@ def render_dashboard(stats, output_path):
             autopct="",
             colors=cat_colors,
             startangle=90,
-            wedgeprops=dict(width=0.55, edgecolor=COLORS["card"], linewidth=2)
+            wedgeprops={"width": 0.55, "edgecolor": COLORS["card"], "linewidth": 2}
             )
 
         centre_circle = plt.Circle((0, 0), 0.38, fc=COLORS["card"])
@@ -676,9 +702,11 @@ def render_dashboard(stats, output_path):
             edgecolor=COLORS["card"], linewidth=2
             )
 
-        for bar, val in zip(bars, news_values):
-            ax3.text(bar.get_width() + 1, bar.get_y() + bar.get_height() / 2,
-                     f"{val}", va="center", fontsize=11, fontweight="bold", color=COLORS["primary"])
+        for rect_bar, val in zip(bars, news_values):
+            ax3.text(
+                rect_bar.get_width() + 1, rect_bar.get_y() + rect_bar.get_height() / 2,
+                f"{val}", va="center", fontsize=11, fontweight="bold", color=COLORS["primary"],
+            )
 
         ax3.set_xlabel("Membres", color=COLORS["text_light"], fontsize=9)
         ax3.tick_params(colors=COLORS["text_light"], labelsize=9)
@@ -721,7 +749,7 @@ def render_dashboard(stats, output_path):
             f"{max(values)}", (max_idx, max(values)),
             textcoords="offset points", xytext=(0, 12),
             ha="center", fontsize=10, fontweight="bold", color=COLORS["primary"],
-            bbox=dict(boxstyle="round,pad=0.3", facecolor=COLORS["accent"], alpha=0.2)
+            bbox={"boxstyle": "round,pad=0.3", "facecolor": COLORS["accent"], "alpha": 0.2}
             )
 
         ax4.set_xticks(range(len(mois_tries)))
@@ -766,9 +794,11 @@ def render_dashboard(stats, output_path):
             height=0.6, edgecolor=COLORS["card"], linewidth=1.5
             )
 
-        for bar, val in zip(bars_v, values_villes):
-            ax_villes.text(bar.get_width() + 1, bar.get_y() + bar.get_height() / 2,
-                           f"{val}", va="center", fontsize=9, fontweight="bold", color=COLORS["primary"])
+        for rect_bar, val in zip(bars_v, values_villes):
+            ax_villes.text(
+                rect_bar.get_width() + 1, rect_bar.get_y() + rect_bar.get_height() / 2,
+                f"{val}", va="center", fontsize=9, fontweight="bold", color=COLORS["primary"],
+            )
 
         ax_villes.set_yticks(y_pos_villes)
         ax_villes.set_yticklabels(labels_villes, fontsize=9)
@@ -801,9 +831,11 @@ def render_dashboard(stats, output_path):
             height=0.6, edgecolor=COLORS["card"], linewidth=1.5
             )
 
-        for bar, val in zip(bars_c, values_cp):
-            ax_cp.text(bar.get_width() + 1, bar.get_y() + bar.get_height() / 2,
-                       f"{val}", va="center", fontsize=9, fontweight="bold", color=COLORS["primary"])
+        for rect_bar, val in zip(bars_c, values_cp):
+            ax_cp.text(
+                rect_bar.get_width() + 1, rect_bar.get_y() + rect_bar.get_height() / 2,
+                f"{val}", va="center", fontsize=9, fontweight="bold", color=COLORS["primary"],
+            )
 
         ax_cp.set_yticks(y_pos_cp)
         ax_cp.set_yticklabels(labels_cp, fontsize=9)
@@ -847,6 +879,7 @@ def render_dashboard(stats, output_path):
 
 
 def save_anonymized_csv(lignes, output_path):
+    """Exporte les données membres anonymisées (sans date de naissance) en CSV."""
     fieldnames = [
         "Date de naissance complète",
         "Année de naissance",
@@ -868,6 +901,7 @@ def save_anonymized_csv(lignes, output_path):
 
 
 def send_dashboard_email(stats, dashboard_path, csv_path):
+    """Envoie le dashboard PNG et le CSV par email avec un résumé des statistiques."""
     today = datetime.now().strftime("%d/%m/%Y")
     now_str = datetime.now().strftime("%d/%m/%Y à %H:%M")
     logs_str = build_log_footer(_log_buffer)
@@ -923,7 +957,8 @@ Corentin via {Path(__file__).name}
         )
 
 
-def run_dashboard(send_email: bool = True):
+def run_dashboard(send_mail: bool = True):
+    """Pipeline complet : récupère, calcule, génère le dashboard et envoie l'email."""
     log.info("Étape 1/5 - Récupération des catégories…")
     category_lookup = fetch_categories_lookup()
 
@@ -940,10 +975,10 @@ def run_dashboard(send_email: bool = True):
     render_dashboard(stats, dashboard_path)
     save_anonymized_csv(lignes, csv_path)
 
-    log.info(f"Dashboard créé : {dashboard_path.name}")
-    log.info(f"CSV anonymisé créé : {csv_path.name}")
+    log.info("Dashboard cree : %s", dashboard_path.name)
+    log.info("CSV anonymise cree : %s", csv_path.name)
 
-    if send_email:
+    if send_mail:
         log.info("Étape 5/5 - Envoi par email…")
         send_dashboard_email(stats, dashboard_path, csv_path)
     else:
@@ -953,6 +988,7 @@ def run_dashboard(send_email: bool = True):
 
 
 def main():
+    """Point d'entrée CLI pour le dashboard Paheko."""
     parser = argparse.ArgumentParser(description="Dashboard membres Paheko")
     parser.add_argument(
         "--no-mail",
@@ -960,7 +996,7 @@ def main():
         help="Génère le dashboard et les fichiers sans envoyer d'email",
         )
     args = parser.parse_args()
-    run_dashboard(send_email=not args.no_mail)
+    run_dashboard(send_mail=not args.no_mail)
 
 
 if __name__ == "__main__":

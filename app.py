@@ -1,3 +1,4 @@
+"""Interface Streamlit pour lancer les rapports SumUp et Paheko manuellement."""
 import os
 import sys
 import subprocess
@@ -37,7 +38,8 @@ SCRIPTS = {
             "Récupère les transactions SumUp des dernières semaines, "
             "déduit les quantités vendues de chaque article, et génère un rapport PDF "
             "avec l'état des stocks, les seuils de réapprovisionnement et les alertes. "
-            "Met aussi à jour le fichier `stock_items.json` (la mise à jour git doit être faite manuellement ou via crontab)."
+            "Met aussi à jour le fichier `stock_items.json` "
+            "(la mise à jour git doit être faite manuellement ou via crontab)."
         ),
         "path": "stocks/sumup_stocks.py",
         "email_env_var": "EMAIL_TO_SUMUP_ALL_CA",
@@ -85,6 +87,7 @@ for sid in SCRIPTS:
 
 
 def build_env(email_overrides=None):
+    """Construit l'environnement du sous-processus depuis os.environ et st.secrets."""
     env = dict(os.environ)
 
     # Garantit que run.sh utilise le même Python que Streamlit (venv inclus)
@@ -119,42 +122,77 @@ def _default_recipients(env_var):
     return st.secrets.get(env_var, "")
 
 
-def build_cmd(cfg, extra_args):
-    module = Path(cfg["path"]).with_suffix("").as_posix().replace("/", ".")
-    return [sys.executable, "-m", module] + extra_args
+def _sanitize_mock_file(raw_value):
+    """Valide un chemin de fichier mock utilisateur et retourne une valeur sûre."""
+    value = (raw_value or "").strip()
+    if not value:
+        return ""
+    p = Path(value)
+    if p.is_absolute():
+        raise ValueError("Le fichier mock doit être un chemin relatif.")
+    if ".." in p.parts:
+        raise ValueError("Le fichier mock ne doit pas contenir de '..'.")
+    if p.suffix.lower() != ".json":
+        raise ValueError("Le fichier mock doit être un fichier .json.")
+    allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-/")
+    if any(ch not in allowed_chars for ch in value):
+        raise ValueError("Le fichier mock contient des caractères non autorisés.")
+    return value
 
 
-def run_script(sid, cmd, email_env_var=None, email_override=None):
-    st.session_state[f"logs_{sid}"] = []
-    st.session_state[f"rc_{sid}"] = None
-    st.session_state[f"running_{sid}"] = True
+def _sanitize_filter_tokens(raw_value):
+    """Valide les mots-clés de filtre saisis par l'utilisateur."""
+    value = raw_value or ""
+    parts = value.split()
+    allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
+    for tok in parts:
+        if len(tok) > 50:
+            raise ValueError("Un mot-clé de filtre est trop long.")
+        if any(ch not in allowed_chars for ch in tok):
+            raise ValueError("Les mots-clés contiennent des caractères non autorisés.")
+    return parts
+
+
+def build_cmd(script_cfg, cmd_args):
+    """Retourne la commande Python pour exécuter un script comme module."""
+    module = Path(script_cfg["path"]).with_suffix("").as_posix().replace("/", ".")
+    return [sys.executable, "-m", module] + cmd_args
+
+
+def run_script(script_id, script_cmd, mail_env_var=None, email_override=None, extra_env=None):
+    """Lance un script en sous-processus et affiche sa sortie en temps réel."""
+    st.session_state[f"logs_{script_id}"] = []
+    st.session_state[f"rc_{script_id}"] = None
+    st.session_state[f"running_{script_id}"] = True
 
     overrides = {}
-    if email_env_var and email_override and email_override.strip():
-        overrides[email_env_var] = email_override.strip()
+    if mail_env_var and email_override and email_override.strip():
+        overrides[mail_env_var] = email_override.strip()
+    if extra_env:
+        overrides.update(extra_env)
 
     env = build_env(email_overrides=overrides)
     log_area = st.empty()
     log_lines = []
 
     with st.spinner("Script en cours..."):
-        process = subprocess.Popen(
-            cmd,
+        with subprocess.Popen(
+            script_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             env=env,
             cwd=BASE_DIR,
-        )
-        for line in process.stdout:
-            log_lines.append(line)
-            log_area.code("".join(log_lines))
-        process.wait()
+        ) as process:
+            for line in process.stdout:
+                log_lines.append(line)
+                log_area.code("".join(log_lines))
+            process.wait()
 
     log_area.code("".join(log_lines))
-    st.session_state[f"logs_{sid}"] = log_lines
-    st.session_state[f"rc_{sid}"] = process.returncode
-    st.session_state[f"running_{sid}"] = False
+    st.session_state[f"logs_{script_id}"] = log_lines
+    st.session_state[f"rc_{script_id}"] = process.returncode
+    st.session_state[f"running_{script_id}"] = False
 
 
 # ── main UI ───────────────────────────────────────────────────────────────────
@@ -175,6 +213,7 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
     is_running = st.session_state[f"running_{sid}"]
     email_env_var = cfg.get("email_env_var")
     extra_args = []
+    extra_env_overrides = {}
 
     # ── options spécifiques à chaque script ───────────────────────────────────
 
@@ -212,8 +251,12 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         extra_args += ["--weeks", str(int(weeks))]
         if no_mail:
             extra_args.append("--no-mail")
-        if mock_file.strip():
-            extra_args += ["--mock", mock_file.strip()]
+        try:
+            safe_mock_file = _sanitize_mock_file(mock_file)
+            if safe_mock_file:
+                extra_env_overrides["SUMUP_MOCK_FILE"] = safe_mock_file
+        except ValueError as exc:
+            st.error(str(exc))
 
     elif sid == "adhesions":
         today = date.today()
@@ -254,12 +297,15 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         extra_args += ["--start", str(start_date), "--end", str(end_date)]
         if no_mail:
             extra_args.append("--no-mail")
-        tokens = filtres.split()
-        if tokens:
-            extra_args += ["--filtres"] + tokens
-        elif filtres.strip() == "" and filtres != "":
-            # espace seul → --filtres sans valeur (toutes transactions)
-            extra_args.append("--filtres")
+        try:
+            tokens = _sanitize_filter_tokens(filtres)
+            if tokens:
+                extra_env_overrides["SUMUP_FILTRES"] = " ".join(tokens)
+            elif filtres.strip() == "" and filtres != "":
+                # espace seul → toutes les transactions
+                extra_env_overrides["SUMUP_FILTRES"] = ""
+        except ValueError as exc:
+            st.error(str(exc))
 
     elif sid == "paheko":
         no_mail = st.checkbox(
@@ -317,10 +363,12 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
             extra_args.append("--no-mail")
         if no_enrich:
             extra_args.append("--no-enrich")
-        if mock_file.strip():
-            extra_args += ["--mock", mock_file.strip()]
-
-    # ── destinataires + bouton de lancement ───────────────────────────────────
+        try:
+            safe_mock_file = _sanitize_mock_file(mock_file)
+            if safe_mock_file:
+                extra_env_overrides["SUMUP_MOCK_FILE"] = safe_mock_file
+        except ValueError as exc:
+            st.error(str(exc))
 
     email_input = st.text_input(
         "Destinataires (séparés par des virgules)",
@@ -332,7 +380,8 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
 
     if st.button("Lancer", key=f"btn_{sid}", disabled=is_running):
         cmd = build_cmd(cfg, extra_args)
-        run_script(sid, cmd, email_env_var=email_env_var, email_override=email_input)
+        run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input,
+                   extra_env=extra_env_overrides)
 
     logs = st.session_state[f"logs_{sid}"]
     rc = st.session_state[f"rc_{sid}"]

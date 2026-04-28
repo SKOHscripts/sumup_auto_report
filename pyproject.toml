@@ -73,6 +73,35 @@ ignore = ["E501"]  # ligne trop longue — les scripts ont des f-strings longues
 python_version = "3.10"
 ignore_missing_imports = true  # requests, fpdf2 n'ont pas toujours des stubs complets
 
+# ── Pylint ───────────────────────────────────────────────────────────────────
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-args = 8
+max-locals = 55
+max-statements = 160
+max-branches = 20
+max-module-lines = 2000
+
+[tool.pylint.basic]
+good-names = "i,j,k,v,p,n,w,f,e,c,ax,x,y,dt,ts,sm,pw,kpi"
+
+[tool.pylint.similarities]
+min-similarity-lines = 8
+
+[tool.pylint.messages_control]
+disable = [
+    "import-error",
+    "wrong-import-position",
+    "wrong-import-order",
+    "duplicate-code",
+    "too-few-public-methods",
+    "broad-exception-caught",
+    "too-many-instance-attributes",
+    "too-many-positional-arguments",
+]
+
 # ── Pytest ───────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
 testpaths = ["tests"]

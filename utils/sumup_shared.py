@@ -13,6 +13,7 @@ from typing import Any, Optional
 
 
 def remove_accents(text: str) -> str:
+    """Supprime les diacritiques d'une chaîne (ex: 'é' → 'e')."""
     if not text:
         return ""
     return "".join(
@@ -22,6 +23,7 @@ def remove_accents(text: str) -> str:
 
 
 def normalize(text: str) -> str:
+    """Normalise en minuscules sans accents."""
     return remove_accents(text or "").strip().lower()
 
 
@@ -39,18 +41,20 @@ def week_start(year: int, week: int) -> date:
 
 
 def safe_float(value: Any, default: float = 0.0) -> float:
+    """Convertit en float sans lever d'exception, retourne default en cas d'erreur."""
     try:
         if value in (None, ""):
             return default
         return float(value)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return default
 
 
 def parse_dt(value: str) -> Optional[datetime]:
+    """Parse une chaîne ISO 8601 en datetime, retourne None si invalide."""
     if not value:
         return None
     try:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return None
