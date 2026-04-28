@@ -360,11 +360,6 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
             extra_args.append("--no-mail")
         if no_enrich:
             extra_args.append("--no-enrich")
-        if mock_file.strip():
-            extra_args += ["--mock", mock_file.strip()]
-
-    # ── destinataires + bouton de lancement ───────────────────────────────────
-
         try:
             safe_mock_file = _sanitize_mock_file(mock_file)
             if safe_mock_file:
