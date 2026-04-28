@@ -143,14 +143,14 @@ def _sanitize_mock_file(raw_value):
 def _sanitize_filter_tokens(raw_value):
     """Valide les mots-clés de filtre saisis par l'utilisateur."""
     value = raw_value or ""
-    tokens = value.split()
+    parts = value.split()
     allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
-    for tok in tokens:
+    for tok in parts:
         if len(tok) > 50:
             raise ValueError("Un mot-clé de filtre est trop long.")
         if any(ch not in allowed_chars for ch in tok):
             raise ValueError("Les mots-clés contiennent des caractères non autorisés.")
-    return tokens
+    return parts
 
 
 def build_cmd(script_cfg, cmd_args):
