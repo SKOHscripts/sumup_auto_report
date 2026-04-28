@@ -4,10 +4,20 @@
 import io
 import logging
 import os
+import re
 
 log = logging.getLogger(__name__)
 
 _SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+
+try:
+    from google.oauth2 import service_account  # type: ignore[import-untyped]
+    from googleapiclient.discovery import build  # type: ignore[import-untyped]
+    from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
+    from googleapiclient.http import MediaIoBaseDownload  # type: ignore[import-untyped]
+    _GOOGLE_AVAILABLE = True
+except ImportError:
+    _GOOGLE_AVAILABLE = False
 
 
 def download_file_as_bytes(file_id: str, credentials_path: str) -> bytes:
@@ -22,20 +32,15 @@ def download_file_as_bytes(file_id: str, credentials_path: str) -> bytes:
 
     Raises:
         ImportError: Si google-api-python-client / google-auth ne sont pas installés.
-        FileNotFoundError: Si credentials_path est introuvable ou si le fichier Drive n'existe pas.
+        FileNotFoundError: Si credentials_path est introuvable ou fichier Drive absent.
         PermissionError: Si le service account n'a pas accès au fichier.
         RuntimeError: Pour toute autre erreur d'API Google Drive.
     """
-    try:
-        from google.oauth2 import service_account  # type: ignore[import-untyped]
-        from googleapiclient.discovery import build  # type: ignore[import-untyped]
-        from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
-        from googleapiclient.http import MediaIoBaseDownload  # type: ignore[import-untyped]
-    except ImportError as exc:
+    if not _GOOGLE_AVAILABLE:
         raise ImportError(
             "Modules Google requis manquants. "
             "Installez : pip install google-api-python-client google-auth"
-        ) from exc
+        )
 
     if not os.path.exists(credentials_path):
         raise FileNotFoundError(f"Fichier credentials introuvable : {credentials_path}")
@@ -78,11 +83,9 @@ def extract_file_id_from_url(url: str) -> str:
       https://docs.google.com/spreadsheets/d/FILE_ID/edit
       FILE_ID  (déjà un identifiant brut)
     """
-    import re
     match = re.search(r"/d/([a-zA-Z0-9_-]{20,})", url)
     if match:
         return match.group(1)
-    # Si la valeur ne contient pas de slash, c'est déjà un ID brut
     if "/" not in url and len(url) >= 20:
         return url.strip()
     raise ValueError(

@@ -17,6 +17,7 @@ Variables d'environnement requises (sauf --local) :
 """
 
 import argparse
+import io
 import json
 import logging
 import os
@@ -28,8 +29,15 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from stocks.gdrive_loader import download_file_as_bytes
 from utils.mail_utils import load_project_env
 from utils.sumup_shared import normalize
+
+try:
+    import openpyxl  # type: ignore[import-untyped]
+    _OPENPYXL_AVAILABLE = True
+except ImportError:
+    _OPENPYXL_AVAILABLE = False
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +50,7 @@ PURCHASE_MAPPING_PATH = STOCKS_DIR / "purchase_mapping.json"
 @dataclass
 class PurchaseItem:
     """Un produit acheté dans une colonne du fichier Excel."""
+
     excel_label: str
     qty: float
 
@@ -49,6 +58,7 @@ class PurchaseItem:
 @dataclass
 class PurchaseEvent:
     """Un achat complet : une colonne du fichier Excel."""
+
     purchase_date: date
     buyer: str
     items: list[PurchaseItem] = field(default_factory=list)
@@ -57,6 +67,7 @@ class PurchaseEvent:
 # ── Lecture / écriture stock_items.json ───────────────────────────────────────
 
 def _load_stock_items_raw(path: Path) -> list:
+    """Charge et retourne la liste brute JSON depuis stock_items.json."""
     if not path.exists():
         raise FileNotFoundError(f"stock_items.json introuvable : {path}")
     with open(path, "r", encoding="utf-8") as f:
@@ -92,15 +103,12 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
         col B : nom catégorie (MAJUSCULES) ou nom produit
         col C+: quantités achetées
     """
-    try:
-        import openpyxl  # type: ignore[import-untyped]
-    except ImportError as exc:
+    if not _OPENPYXL_AVAILABLE:
         raise ImportError(
             "openpyxl est requis pour lire les fichiers Excel. "
             "Installez : pip install openpyxl"
-        ) from exc
+        )
 
-    import io
     wb = openpyxl.load_workbook(io.BytesIO(excel_bytes), data_only=True, read_only=True)
     ws = wb.active
 
@@ -116,7 +124,6 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
     # et filtre les colonnes "exemple"
     purchase_cols: list[tuple[int, date, str]] = []  # (col_idx, date, buyer)
     for col_idx in range(2, len(row_dates)):
-        # Ignore si marquée "exemple"
         if col_idx < len(row_example):
             marker = str(row_example[col_idx] or "").strip().lower()
             if "exemple" in marker:
@@ -137,29 +144,21 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
         log.warning("Aucune colonne d'achat valide trouvée dans le fichier Excel.")
         return []
 
-    # Construit les événements d'achat ligne par ligne (à partir de la ligne 6)
     events: dict[int, PurchaseEvent] = {
         col_idx: PurchaseEvent(purchase_date=d, buyer=b)
         for col_idx, d, b in purchase_cols
     }
 
-    current_unit_type = ""
     for row in rows[6:]:
-        col_a = str(row[0] or "").strip() if len(row) > 0 else ""
         col_b = str(row[1] or "").strip() if len(row) > 1 else ""
 
         if not col_b:
             continue
 
-        # Met à jour le type d'unité courant
-        if col_a:
-            current_unit_type = col_a
-
-        # Ignore les en-têtes de catégorie (tout en majuscules ou en majuscules avec /&)
+        # Ignore les en-têtes de catégorie (tout en majuscules)
         if col_b == col_b.upper() and col_b.replace("/", "").replace("&", "").replace(" ", "").isupper():
             continue
 
-        # Traite chaque colonne d'achat pour ce produit
         for col_idx, _, _ in purchase_cols:
             raw_qty = row[col_idx] if col_idx < len(row) else None
             if raw_qty is None:
@@ -215,7 +214,7 @@ def load_purchase_mapping(path: Path) -> dict[str, tuple[str, float]]:
 # ── Déduplication ─────────────────────────────────────────────────────────────
 
 def find_already_processed_dates(raw_items: list) -> set[date]:
-    """Parcourt stock_history et retourne les dates déjà intégrées (type='purchase')."""
+    """Retourne les dates déjà intégrées via stock_history (type='purchase')."""
     processed: set[date] = set()
     for item in raw_items:
         state = item.get("stock_state") or {}
@@ -247,7 +246,6 @@ def apply_purchases_to_stock(
     Returns:
         (raw_items_mis_à_jour, liste_de_succès, liste_de_warnings)
     """
-    # Indexe les reference items par stock_sku pour une mise à jour O(1)
     ref_items_by_sku: dict[str, dict] = {}
     for item in raw_items:
         if not item.get("enabled", True):
@@ -264,9 +262,7 @@ def apply_purchases_to_stock(
 
     for event in sorted(events, key=lambda e: e.purchase_date):
         if event.purchase_date in already_processed:
-            log.info(
-                "Achat du %s déjà intégré → ignoré.", event.purchase_date.isoformat()
-            )
+            log.info("Achat du %s déjà intégré → ignoré.", event.purchase_date.isoformat())
             continue
 
         date_str = event.purchase_date.isoformat()
@@ -341,7 +337,6 @@ def apply_purchases_to_stock(
                 state["stock_history"].append(history_entry)
 
         if not dry_run:
-            # Marque la date comme traitée pour les prochaines itérations
             already_processed.add(event.purchase_date)
 
     return raw_items, successes, warnings
@@ -370,6 +365,7 @@ def _load_gdrive_config() -> tuple[str, str]:
 # ── Point d'entrée principal ───────────────────────────────────────────────────
 
 def main():
+    """Intègre les achats du fichier Google Drive (ou local) dans stock_items.json."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
@@ -406,7 +402,6 @@ def main():
     items_path = Path(args.items)
     mapping_path = Path(args.mapping)
 
-    # Charge les variables d'environnement depuis .env si présent
     load_project_env(required_vars=[])
 
     # ── 1. Téléchargement ou lecture locale du fichier Excel ───────────────────
@@ -424,7 +419,6 @@ def main():
             log.error("%s", exc)
             sys.exit(1)
 
-        from stocks.gdrive_loader import download_file_as_bytes  # noqa: PLC0415
         try:
             log.info("Téléchargement du fichier Drive '%s'…", file_id)
             excel_bytes = download_file_as_bytes(file_id, creds_path)
@@ -472,12 +466,12 @@ def main():
         print(f"\n=== Achats intégrés : {len(successes)} mise(s) à jour ===\n")
 
     for line in successes:
-        print(f"  ✓ {line}")
+        print(f"  + {line}")
 
     if warnings:
         print(f"\n=== {len(warnings)} avertissement(s) ===\n")
         for w in warnings:
-            print(f"  ⚠ {w}")
+            print(f"  ! {w}")
 
     # ── 6. Sauvegarde ─────────────────────────────────────────────────────────
     if not args.dry_run and successes:
@@ -489,5 +483,6 @@ def main():
         print("\nAucune modification à apporter.")
 
 
+# app.py l'importe via subprocess; ce bloc sert aussi à l'appel direct
 if __name__ == "__main__":
     main()
