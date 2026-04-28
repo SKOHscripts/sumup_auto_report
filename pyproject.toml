@@ -91,6 +91,9 @@ good-names = "i,j,k,v,p,n,w,f,e,c,ax,x,y,dt,ts,sm,pw,kpi"
 [tool.pylint.similarities]
 min-similarity-lines = 8
 
+[tool.pylint.main]
+ignore-paths = ["tests"]
+
 [tool.pylint.messages_control]
 disable = [
     "import-error",
