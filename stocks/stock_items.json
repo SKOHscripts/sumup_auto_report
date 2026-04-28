@@ -145,7 +145,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 18.0,
+      "stock_on_hand": 36.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -168,6 +168,15 @@
           "consumed_qty": 4.0,
           "previous_stock_on_hand": 22.0,
           "new_stock_on_hand": 18.0
+        },
+        {
+          "type": "purchase",
+          "date": "2026-04-28",
+          "buyer": "",
+          "qty_added": 18.0,
+          "previous_stock_on_hand": 18.0,
+          "new_stock_on_hand": 36.0,
+          "source": "gdrive_excel"
         }
       ]
     },
@@ -429,7 +438,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 19.0,
+      "stock_on_hand": 19,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -1121,7 +1130,7 @@
       "variant": "Saucissons mini sachet"
     },
     "stock_state": {
-      "stock_on_hand": 10.0,
+      "stock_on_hand": 20.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -1151,6 +1160,15 @@
           "consumed_qty": 4.0,
           "previous_stock_on_hand": 14.0,
           "new_stock_on_hand": 10.0
+        },
+        {
+          "type": "purchase",
+          "date": "2026-04-28",
+          "buyer": "",
+          "qty_added": 10.0,
+          "previous_stock_on_hand": 10.0,
+          "new_stock_on_hand": 20.0,
+          "source": "gdrive_excel"
         }
       ],
       "last_auto_update": "2026-04-24"
@@ -1379,7 +1397,7 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 4.0,
+      "stock_on_hand": 14.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -1401,6 +1419,15 @@
           "consumed_qty": 3.0,
           "previous_stock_on_hand": 7.0,
           "new_stock_on_hand": 4.0
+        },
+        {
+          "type": "purchase",
+          "date": "2026-04-28",
+          "buyer": "",
+          "qty_added": 10.0,
+          "previous_stock_on_hand": 4.0,
+          "new_stock_on_hand": 14.0,
+          "source": "gdrive_excel"
         }
       ],
       "last_auto_update": "2026-04-19"

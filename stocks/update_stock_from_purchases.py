@@ -137,7 +137,8 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
         if purchase_date is None:
             continue
 
-        buyer = str(row_buyers[col_idx] or "").strip() if col_idx < len(row_buyers) else ""
+        # buyer = str(row_buyers[col_idx] or "").strip() if col_idx < len(row_buyers) else ""
+        buyer = str("").strip() if col_idx < len(row_buyers) else ""
         purchase_cols.append((col_idx, purchase_date, buyer))
 
     if not purchase_cols:
