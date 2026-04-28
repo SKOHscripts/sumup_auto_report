@@ -228,7 +228,7 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 5,
+      "stock_on_hand": 9.7,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -275,7 +275,7 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 2.9,
+      "stock_on_hand": 6,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -359,7 +359,7 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 4.95,
+      "stock_on_hand": 9.95,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
