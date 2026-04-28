@@ -164,6 +164,7 @@ def run_script(script_id, script_cmd, mail_env_var=None, email_override=None, ex
     st.session_state[f"logs_{script_id}"] = []
     st.session_state[f"rc_{script_id}"] = None
     st.session_state[f"running_{script_id}"] = True
+    st.session_state[f"fresh_run_{script_id}"] = True
 
     overrides = {}
     if mail_env_var and email_override and email_override.strip():
@@ -386,7 +387,7 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
     logs = st.session_state[f"logs_{sid}"]
     rc = st.session_state[f"rc_{sid}"]
 
-    if logs:
+    if logs and not st.session_state.pop(f"fresh_run_{sid}", False):
         st.code("".join(logs))
 
     if rc is not None:
