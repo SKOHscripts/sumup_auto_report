@@ -2,6 +2,7 @@
 import os
 import sys
 import subprocess
+import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -417,12 +418,12 @@ with st.expander("À propos de cette fonctionnalité", expanded=False):
         "Les achats déjà intégrés sont automatiquement ignorés (déduplication par date)."
     )
 
-_purch_id = "purchases"
-st.session_state.setdefault(f"logs_{_purch_id}", [])
-st.session_state.setdefault(f"running_{_purch_id}", False)
-st.session_state.setdefault(f"rc_{_purch_id}", None)
+_PURCH_ID = "purchases"
+st.session_state.setdefault(f"logs_{_PURCH_ID}", [])
+st.session_state.setdefault(f"running_{_PURCH_ID}", False)
+st.session_state.setdefault(f"rc_{_PURCH_ID}", None)
 
-_purch_running = st.session_state[f"running_{_purch_id}"]
+_purch_running = st.session_state[f"running_{_PURCH_ID}"]
 
 col_p1, col_p2 = st.columns([1, 2])
 with col_p1:
@@ -442,9 +443,7 @@ with col_p2:
         help="Si renseigné, utilise ce fichier au lieu de Google Drive.",
     )
 
-if st.button("Lancer la mise à jour des achats", key=f"btn_{_purch_id}", disabled=_purch_running):
-    import tempfile
-
+if st.button("Lancer la mise à jour des achats", key=f"btn_{_PURCH_ID}", disabled=_purch_running):
     extra_purch_args = []
     extra_purch_env: dict[str, str] = {}
 
@@ -463,15 +462,15 @@ if st.button("Lancer la mise à jour des achats", key=f"btn_{_purch_id}", disabl
     ] + extra_purch_args
 
     run_script(
-        _purch_id,
+        _PURCH_ID,
         purchases_cmd,
         extra_env=extra_purch_env,
     )
 
-_purch_logs = st.session_state[f"logs_{_purch_id}"]
-_purch_rc = st.session_state[f"rc_{_purch_id}"]
+_purch_logs = st.session_state[f"logs_{_PURCH_ID}"]
+_purch_rc = st.session_state[f"rc_{_PURCH_ID}"]
 
-if _purch_logs and not st.session_state.pop(f"fresh_run_{_purch_id}", False):
+if _purch_logs and not st.session_state.pop(f"fresh_run_{_PURCH_ID}", False):
     st.code("".join(_purch_logs))
 
 if _purch_rc is not None:
