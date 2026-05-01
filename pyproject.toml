@@ -46,9 +46,10 @@ dev = [
 ]
 
 [project.scripts]
-sumup-adhesions  = "adhesions.sumup_adhesions:main"
-sumup-stocks     = "stocks.sumup_stocks:main"
-paheko-dashboard = "paheko_stats.paheko:main"
+sumup-adhesions    = "adhesions.sumup_adhesions:main"
+sumup-stocks       = "stocks.sumup_stocks:main"
+paheko-dashboard   = "paheko_stats.paheko:main"
+update-purchases   = "stocks.update_stock_from_purchases:main"
 
 [project.urls]
 Homepage   = "https://github.com/SKOHscripts/sumup_auto_report"
@@ -89,6 +90,9 @@ good-names = "i,j,k,v,p,n,w,f,e,c,ax,x,y,dt,ts,sm,pw,kpi"
 
 [tool.pylint.similarities]
 min-similarity-lines = 8
+
+[tool.pylint.main]
+ignore-paths = ["tests"]
 
 [tool.pylint.messages_control]
 disable = [

@@ -1,0 +1,177 @@
+{
+  "_version": "1",
+  "_comment": "Correspondance entre les libellés produits de la feuille Excel ACHATS et les stock_sku de stock_items.json. qty_multiplier convertit la quantité Excel en unité de stock.",
+  "products": [
+    {
+      "excel_label": "Café en grains 1 kg",
+      "stock_sku": "cafe_espresso",
+      "qty_multiplier": 1000,
+      "comment": "1 kg = 1000 g (unité stock : g)"
+    },
+    {
+      "excel_label": "Thé - boîte 25 sachets",
+      "stock_sku": "the",
+      "qty_multiplier": 25,
+      "comment": "1 boîte = 25 sachets (unité stock : sachet)"
+    },
+    {
+      "excel_label": "Tisane - boîte 25 sachets",
+      "stock_sku": "the",
+      "qty_multiplier": 25,
+      "comment": "Partage le stock du thé (même contenant)"
+    },
+    {
+      "excel_label": "Chocolat en poudre 1kg",
+      "stock_sku": "chocolat_chaud",
+      "qty_multiplier": 1,
+      "comment": "Unité stock = dose unitaire (vérifier cohérence avec consumption_per_sale)"
+    },
+    {
+      "excel_label": "coca",
+      "stock_sku": "jus_sodas_coca_cola_classique",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "coca zéro",
+      "stock_sku": "jus_sodas_coca_cola_zero",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "orangina",
+      "stock_sku": "jus_sodas_orangina",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "oasis",
+      "stock_sku": "jus_sodas_oasis",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "lipton ice tea",
+      "stock_sku": "lipton_ice_tea",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "schweppes agrumes",
+      "stock_sku": "schweppes_agrumes",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "jus de pomme 1 litre",
+      "stock_sku": "jus_pomme_verre",
+      "qty_multiplier": 1,
+      "comment": "1 bouteille 1 L → 1 L de stock (unité stock : L)"
+    },
+    {
+      "excel_label": "Brique jus de pomme 20cl",
+      "stock_sku": "jus_pomme_bio_20cl_brique",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "eau gazeuse 50cl",
+      "stock_sku": "eau_gazeuse",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "Sirop grenadine 1l",
+      "stock_sku": "sirop_grenadine",
+      "qty_multiplier": 1,
+      "comment": "1 bouteille = 1 L (unité stock : L)"
+    },
+    {
+      "excel_label": "Sirop Citron 1l",
+      "stock_sku": "sirop_citron",
+      "qty_multiplier": 1,
+      "comment": "1 bouteille = 1 L (unité stock : L)"
+    },
+    {
+      "excel_label": "Sirop Menthe 1l",
+      "stock_sku": "sirop_menthe",
+      "qty_multiplier": 1,
+      "comment": "1 bouteille = 1 L (unité stock : L)"
+    },
+    {
+      "excel_label": "Blanc",
+      "stock_sku": "vin_blanc",
+      "qty_multiplier": 1,
+      "comment": "Quantité Excel en litres (unité stock : L)"
+    },
+    {
+      "excel_label": "Rouge",
+      "stock_sku": "vin_rouge",
+      "qty_multiplier": 1,
+      "comment": "Quantité Excel en litres (unité stock : L)"
+    },
+    {
+      "excel_label": "Rosé",
+      "stock_sku": "vin_rose",
+      "qty_multiplier": 1,
+      "comment": "Quantité Excel en litres (unité stock : L)"
+    },
+    {
+      "excel_label": "blanche 25cl",
+      "stock_sku": "bieres_commerce_blonde_25cl",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "ambrée 25cl",
+      "stock_sku": "bieres_commerce_ambree_25cl",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "blonde 25cl",
+      "stock_sku": "bieres_commerce_blonde_25cl",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "chips",
+      "stock_sku": "chips",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "cacahuetes grillées salées",
+      "stock_sku": "sachet_cacahuetes",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "olives vertes/anchois",
+      "stock_sku": "olives_vertes_anchois",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "biscuits sucrés",
+      "stock_sku": "biscuit_sucre",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "mini saucissons 130 gr",
+      "stock_sku": "saucissons_mini_sachet",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "saucisson entier",
+      "stock_sku": "saucisson_ficelle",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "saucisse entiere",
+      "stock_sku": "saucisse",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "mini pâté croûte entier",
+      "stock_sku": "pate_en_croute",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "dès fromage apéro 150 gr",
+      "stock_sku": "fromage_ap_ritif",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "pop corn salé",
+      "stock_sku": "pop_corn_sal",
+      "qty_multiplier": 1
+    }
+  ]
+}
