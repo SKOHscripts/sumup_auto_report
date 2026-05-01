@@ -1,5 +1,4 @@
 """Tests unitaires pour stocks/gdrive_loader.py."""
-import io
 from unittest.mock import MagicMock, patch
 
 import pytest

@@ -118,7 +118,6 @@ class TestWeekStart:
         assert result.weekday() == 0
 
     def test_consecutive_weeks_differ_by_7(self):
-        from datetime import timedelta
         d1 = week_start(2026, 10)
         d2 = week_start(2026, 11)
         assert (d2 - d1).days == 7
