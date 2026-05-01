@@ -120,7 +120,7 @@ class TestParsePurchasesExcel:
         ])
         events = self.parse(xlsx)
         assert len(events) == 1
-        assert events[0].buyer == "Alice"
+        assert events[0].buyer == ""  # anonymisé volontairement dans le JSON
         assert events[0].purchase_date == date(2026, 4, 20)
         labels = {item.excel_label for item in events[0].items}
         assert "chips" in labels
@@ -160,7 +160,7 @@ class TestParsePurchasesExcel:
 
         events = self.parse(buf.getvalue())
         assert len(events) == 1
-        assert events[0].buyer == "Alice"
+        assert events[0].buyer == ""  # anonymisé volontairement dans le JSON
         assert events[0].purchase_date == date(2026, 4, 20)
 
     def test_zero_qty_ignored(self):

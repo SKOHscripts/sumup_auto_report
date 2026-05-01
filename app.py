@@ -471,4 +471,3 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
 
     if i < len(SCRIPTS) - 1:
         st.divider()
-
