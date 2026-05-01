@@ -82,10 +82,16 @@ SCRIPTS = {
     },
 }
 
+_PURCH_ID = "purchases"
+
 for sid in SCRIPTS:
     st.session_state.setdefault(f"logs_{sid}", [])
     st.session_state.setdefault(f"running_{sid}", False)
     st.session_state.setdefault(f"rc_{sid}", None)
+
+st.session_state.setdefault(f"logs_{_PURCH_ID}", [])
+st.session_state.setdefault(f"running_{_PURCH_ID}", False)
+st.session_state.setdefault(f"rc_{_PURCH_ID}", None)
 
 
 def build_env(email_overrides=None):
@@ -261,6 +267,68 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
         except ValueError as exc:
             st.error(str(exc))
 
+        # ── Étape 1 — Intégrer les achats ─────────────────────────────────────
+        st.markdown("---")
+        st.markdown("**Étape 1 — Intégrer les achats** *(recommandé avant de générer le rapport)*")
+        with st.expander("À propos de la mise à jour des achats", expanded=False):
+            st.markdown(
+                "Télécharge `ACHATS_suivi_stock.xlsx` depuis Google Drive, "
+                "parse les colonnes d'achat et ajoute les quantités achetées au `stock_on_hand`. "
+                "Les achats déjà intégrés sont ignorés automatiquement (déduplication par date)."
+            )
+
+        _purch_running = st.session_state[f"running_{_PURCH_ID}"]
+        col_p1, col_p2 = st.columns([1, 2])
+        with col_p1:
+            _dry_run = st.checkbox(
+                "Simulation (--dry-run)",
+                value=True,
+                key="dry_run_purchases",
+                disabled=_purch_running,
+                help="Affiche les mises à jour prévues sans modifier stock_items.json.",
+            )
+        with col_p2:
+            _local_file = st.file_uploader(
+                "Fichier Excel local (optionnel, pour test)",
+                type=["xlsx"],
+                key="local_xlsx_purchases",
+                disabled=_purch_running,
+                help="Si renseigné, utilise ce fichier au lieu de Google Drive.",
+            )
+
+        if st.button("Mettre à jour les achats", key=f"btn_{_PURCH_ID}", disabled=_purch_running):
+            extra_purch_args = []
+            extra_purch_env: dict[str, str] = {}
+            if _dry_run:
+                extra_purch_args.append("--dry-run")
+            if _local_file is not None:
+                with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+                    tmp.write(_local_file.read())
+                    tmp_path = tmp.name
+                extra_purch_args += ["--local", tmp_path]
+            if _local_file is None:
+                sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT")
+                if sa_info:
+                    extra_purch_env["GDRIVE_SERVICE_ACCOUNT_JSON"] = json.dumps(dict(sa_info))
+            purchases_cmd = [sys.executable, "-m", "stocks.update_stock_from_purchases"] + extra_purch_args
+            run_script(_PURCH_ID, purchases_cmd, extra_env=extra_purch_env)
+
+        _purch_logs = st.session_state[f"logs_{_PURCH_ID}"]
+        _purch_rc = st.session_state[f"rc_{_PURCH_ID}"]
+        if _purch_logs and not st.session_state.pop(f"fresh_run_{_PURCH_ID}", False):
+            st.code("".join(_purch_logs))
+        if _purch_rc is not None:
+            if _purch_rc == 0:
+                if st.session_state.get("dry_run_purchases", True):
+                    st.info("Simulation terminée — aucune modification effectuée.")
+                else:
+                    st.success("stock_items.json mis à jour avec les achats.")
+            else:
+                st.error("Erreur — voir les logs ci-dessus.")
+
+        st.markdown("---")
+        st.markdown("**Étape 2 — Générer le rapport**")
+
     elif sid == "adhesions":
         today = date.today()
         col1, col2 = st.columns(2)
@@ -404,88 +472,3 @@ for i, (sid, cfg) in enumerate(SCRIPTS.items()):
     if i < len(SCRIPTS) - 1:
         st.divider()
 
-# ── Section : Mise à jour des stocks depuis les achats ────────────────────────
-
-st.divider()
-st.subheader("Mise à jour des achats")
-st.caption("Intègre le fichier Excel d'achats Google Drive dans stock_items.json")
-
-with st.expander("À propos de cette fonctionnalité", expanded=False):
-    st.markdown(
-        "Télécharge le fichier `ACHATS_suivi_stock.xlsx` depuis Google Drive, "
-        "parse les colonnes d'achat (date + acheteur + quantités), et ajoute "
-        "les quantités achetées au `stock_on_hand` de chaque article dans `stock_items.json`. "
-        "Chaque achat est tracé dans `stock_history` avec le type `purchase`. "
-        "Les achats déjà intégrés sont automatiquement ignorés (déduplication par date)."
-    )
-
-_PURCH_ID = "purchases"
-st.session_state.setdefault(f"logs_{_PURCH_ID}", [])
-st.session_state.setdefault(f"running_{_PURCH_ID}", False)
-st.session_state.setdefault(f"rc_{_PURCH_ID}", None)
-
-_purch_running = st.session_state[f"running_{_PURCH_ID}"]
-
-col_p1, col_p2 = st.columns([1, 2])
-with col_p1:
-    _dry_run = st.checkbox(
-        "Simulation (--dry-run)",
-        value=True,
-        key="dry_run_purchases",
-        disabled=_purch_running,
-        help="Affiche les mises à jour prévues sans modifier stock_items.json.",
-    )
-with col_p2:
-    _local_file = st.file_uploader(
-        "Fichier Excel local (optionnel, pour test)",
-        type=["xlsx"],
-        key="local_xlsx_purchases",
-        disabled=_purch_running,
-        help="Si renseigné, utilise ce fichier au lieu de Google Drive.",
-    )
-
-if st.button("Lancer la mise à jour des achats", key=f"btn_{_PURCH_ID}", disabled=_purch_running):
-    extra_purch_args = []
-    extra_purch_env: dict[str, str] = {}
-
-    if _dry_run:
-        extra_purch_args.append("--dry-run")
-
-    if _local_file is not None:
-        # Écrit le fichier uploadé dans un fichier temporaire
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-            tmp.write(_local_file.read())
-            tmp_path = tmp.name
-        extra_purch_args += ["--local", tmp_path]
-
-    # Injecte le service account depuis secrets.toml si présent
-    # (prioritaire sur GDRIVE_SERVICE_ACCOUNT_FILE, utilisé sur Streamlit Cloud)
-    if _local_file is None:
-        sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT")
-        if sa_info:
-            extra_purch_env["GDRIVE_SERVICE_ACCOUNT_JSON"] = json.dumps(dict(sa_info))
-
-    purchases_cmd = [
-        sys.executable, "-m", "stocks.update_stock_from_purchases"
-    ] + extra_purch_args
-
-    run_script(
-        _PURCH_ID,
-        purchases_cmd,
-        extra_env=extra_purch_env,
-    )
-
-_purch_logs = st.session_state[f"logs_{_PURCH_ID}"]
-_purch_rc = st.session_state[f"rc_{_PURCH_ID}"]
-
-if _purch_logs and not st.session_state.pop(f"fresh_run_{_PURCH_ID}", False):
-    st.code("".join(_purch_logs))
-
-if _purch_rc is not None:
-    if _purch_rc == 0:
-        if st.session_state.get("dry_run_purchases", True):
-            st.info("Simulation terminée — aucune modification effectuée.")
-        else:
-            st.success("stock_items.json mis à jour avec les achats.")
-    else:
-        st.error("Erreur — voir les logs ci-dessus.")
