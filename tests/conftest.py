@@ -5,10 +5,11 @@ import os
 import pytest
 
 # Variables d'environnement requises par les modules avant leur import
-os.environ.setdefault("SUMUP_API_KEY", "test_api_key_fixture")
+# Valeurs fictives uniquement pour les tests — pas de credentials réels
+os.environ.setdefault("SUMUP_API_KEY", "test_placeholder")
 os.environ.setdefault("PAHEKO_BASE_URL", "http://localhost:9999")
-os.environ.setdefault("PAHEKO_API_USER", "test_user")
-os.environ.setdefault("PAHEKO_API_PASSWORD", "test_pass")
+os.environ.setdefault("PAHEKO_API_USER", "test_placeholder")
+os.environ.setdefault("PAHEKO_API_PASSWORD", "test_placeholder")
 
 
 # ── Fixtures stock items ───────────────────────────────────────────────────────

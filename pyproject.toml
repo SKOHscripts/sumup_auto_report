@@ -106,6 +106,10 @@ disable = [
     "too-many-positional-arguments",
 ]
 
+# ── Bandit (sécurité) ────────────────────────────────────────────────────────
+[tool.bandit]
+exclude_dirs = ["tests"]   # assert B101 et placeholders de test sont intentionnels
+
 # ── Pytest ───────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
 testpaths = ["tests"]

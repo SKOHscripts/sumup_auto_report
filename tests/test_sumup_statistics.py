@@ -4,8 +4,8 @@ import os
 
 import pytest
 
-# Requis avant l'import du module (load_project_env au niveau module)
-os.environ.setdefault("SUMUP_API_KEY", "test_api_key_fixture")
+# Valeur fictive requise avant l'import du module (load_project_env au niveau module)
+os.environ.setdefault("SUMUP_API_KEY", "test_placeholder")
 
 
 # ── Fixtures locales ──────────────────────────────────────────────────────────
