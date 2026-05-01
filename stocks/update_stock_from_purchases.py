@@ -12,7 +12,8 @@ Usage :
   python -m stocks.update_stock_from_purchases --local FICHIER.xlsx
 
 Variables d'environnement requises (sauf --local) :
-  GDRIVE_SERVICE_ACCOUNT_FILE  Chemin vers le JSON du service account Google
+  GDRIVE_SERVICE_ACCOUNT_JSON  Contenu JSON du service account (prioritaire, pour Streamlit)
+  GDRIVE_SERVICE_ACCOUNT_FILE  Chemin vers le JSON du service account (CLI / crontab)
   GDRIVE_PURCHASES_FILE_ID     ID du fichier Excel dans Google Drive
 """
 
@@ -29,7 +30,7 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from stocks.gdrive_loader import download_file_as_bytes
+from stocks.gdrive_loader import download_file_as_bytes, download_file_as_bytes_from_info
 from utils.mail_utils import load_project_env
 from utils.sumup_shared import normalize
 
@@ -345,20 +346,35 @@ def apply_purchases_to_stock(
 
 # ── Chargement des credentials depuis l'environnement ─────────────────────────
 
-def _load_gdrive_config() -> tuple[str, str]:
-    """Retourne (credentials_path, file_id) depuis les variables d'environnement."""
-    creds_path = os.environ.get("GDRIVE_SERVICE_ACCOUNT_FILE", "")
-    file_id = os.environ.get("GDRIVE_PURCHASES_FILE_ID", "")
+def _load_gdrive_config() -> tuple[str | dict, str]:
+    """Retourne (credentials, file_id) depuis les variables d'environnement.
 
-    missing = []
-    if not creds_path:
-        missing.append("GDRIVE_SERVICE_ACCOUNT_FILE")
+    credentials est soit un dict (si GDRIVE_SERVICE_ACCOUNT_JSON est défini)
+    soit un chemin de fichier str (si GDRIVE_SERVICE_ACCOUNT_FILE est défini).
+    GDRIVE_SERVICE_ACCOUNT_JSON est prioritaire (utilisé par Streamlit).
+    """
+    file_id = os.environ.get("GDRIVE_PURCHASES_FILE_ID", "")
     if not file_id:
-        missing.append("GDRIVE_PURCHASES_FILE_ID")
-    if missing:
         raise EnvironmentError(
-            f"Variables d'environnement manquantes : {', '.join(missing)}. "
-            "Configurez-les dans .env ou secrets.toml."
+            "Variable d'environnement manquante : GDRIVE_PURCHASES_FILE_ID. "
+            "Configurez-la dans .env ou secrets.toml."
+        )
+
+    sa_json = os.environ.get("GDRIVE_SERVICE_ACCOUNT_JSON", "")
+    if sa_json:
+        try:
+            return json.loads(sa_json), file_id
+        except json.JSONDecodeError as exc:
+            raise EnvironmentError(
+                "GDRIVE_SERVICE_ACCOUNT_JSON n'est pas un JSON valide."
+            ) from exc
+
+    creds_path = os.environ.get("GDRIVE_SERVICE_ACCOUNT_FILE", "")
+    if not creds_path:
+        raise EnvironmentError(
+            "Aucune credentials Google Drive configurée. "
+            "Définissez GDRIVE_SERVICE_ACCOUNT_JSON (Streamlit) "
+            "ou GDRIVE_SERVICE_ACCOUNT_FILE (CLI/cron) dans .env ou secrets.toml."
         )
     return creds_path, file_id
 
@@ -415,14 +431,17 @@ def main():
         excel_bytes = local_path.read_bytes()
     else:
         try:
-            creds_path, file_id = _load_gdrive_config()
+            creds, file_id = _load_gdrive_config()
         except EnvironmentError as exc:
             log.error("%s", exc)
             sys.exit(1)
 
         try:
             log.info("Téléchargement du fichier Drive '%s'…", file_id)
-            excel_bytes = download_file_as_bytes(file_id, creds_path)
+            if isinstance(creds, dict):
+                excel_bytes = download_file_as_bytes_from_info(file_id, creds)
+            else:
+                excel_bytes = download_file_as_bytes(file_id, creds)
         except (FileNotFoundError, PermissionError, RuntimeError) as exc:
             log.error("Erreur Google Drive : %s", exc)
             sys.exit(1)

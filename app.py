@@ -1,4 +1,5 @@
 """Interface Streamlit pour lancer les rapports SumUp et Paheko manuellement."""
+import json
 import os
 import sys
 import subprocess
@@ -456,6 +457,13 @@ if st.button("Lancer la mise à jour des achats", key=f"btn_{_PURCH_ID}", disabl
             tmp.write(_local_file.read())
             tmp_path = tmp.name
         extra_purch_args += ["--local", tmp_path]
+
+    # Injecte le service account depuis secrets.toml si présent
+    # (prioritaire sur GDRIVE_SERVICE_ACCOUNT_FILE, utilisé sur Streamlit Cloud)
+    if _local_file is None:
+        sa_info = st.secrets.get("GDRIVE_SERVICE_ACCOUNT")
+        if sa_info:
+            extra_purch_env["GDRIVE_SERVICE_ACCOUNT_JSON"] = json.dumps(dict(sa_info))
 
     purchases_cmd = [
         sys.executable, "-m", "stocks.update_stock_from_purchases"
