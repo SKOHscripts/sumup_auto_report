@@ -20,36 +20,13 @@ except ImportError:
     _GOOGLE_AVAILABLE = False
 
 
-def download_file_as_bytes(file_id: str, credentials_path: str) -> bytes:
-    """Télécharge un fichier depuis Google Drive et retourne son contenu brut.
+def _build_drive_service(creds):
+    """Construit le service Google Drive v3 à partir de credentials déjà créés."""
+    return build("drive", "v3", credentials=creds, cache_discovery=False)
 
-    Args:
-        file_id: ID du fichier dans Google Drive (chaîne entre /d/ et / dans l'URL).
-        credentials_path: Chemin absolu vers le JSON du service account Google.
 
-    Returns:
-        Contenu binaire du fichier.
-
-    Raises:
-        ImportError: Si google-api-python-client / google-auth ne sont pas installés.
-        FileNotFoundError: Si credentials_path est introuvable ou fichier Drive absent.
-        PermissionError: Si le service account n'a pas accès au fichier.
-        RuntimeError: Pour toute autre erreur d'API Google Drive.
-    """
-    if not _GOOGLE_AVAILABLE:
-        raise ImportError(
-            "Modules Google requis manquants. "
-            "Installez : pip install google-api-python-client google-auth"
-        )
-
-    if not os.path.exists(credentials_path):
-        raise FileNotFoundError(f"Fichier credentials introuvable : {credentials_path}")
-
-    creds = service_account.Credentials.from_service_account_file(
-        credentials_path, scopes=_SCOPES
-    )
-    service = build("drive", "v3", credentials=creds, cache_discovery=False)
-
+def _download_from_service(service, file_id: str) -> bytes:
+    """Télécharge un fichier Drive via le service fourni et retourne les octets."""
     try:
         request = service.files().get_media(fileId=file_id)
         buffer = io.BytesIO()
@@ -60,7 +37,6 @@ def download_file_as_bytes(file_id: str, credentials_path: str) -> bytes:
         size = buffer.tell()
         log.info("Fichier Drive '%s' téléchargé (%d octets)", file_id, size)
         return buffer.getvalue()
-
     except HttpError as exc:
         status = exc.resp.status
         if status == 403:
@@ -73,6 +49,59 @@ def download_file_as_bytes(file_id: str, credentials_path: str) -> bytes:
                 f"Fichier Drive introuvable : '{file_id}'. Vérifiez GDRIVE_PURCHASES_FILE_ID."
             ) from exc
         raise RuntimeError(f"Erreur API Google Drive (HTTP {status}) : {exc}") from exc
+
+
+def _check_google_available():
+    if not _GOOGLE_AVAILABLE:
+        raise ImportError(
+            "Modules Google requis manquants. "
+            "Installez : pip install google-api-python-client google-auth"
+        )
+
+
+def download_file_as_bytes(file_id: str, credentials_path: str) -> bytes:
+    """Télécharge un fichier depuis Google Drive et retourne son contenu brut.
+
+    Args:
+        file_id: ID du fichier dans Google Drive (chaîne entre /d/ et / dans l'URL).
+        credentials_path: Chemin absolu vers le JSON du service account Google.
+
+    Raises:
+        ImportError: Si google-api-python-client / google-auth ne sont pas installés.
+        FileNotFoundError: Si credentials_path est introuvable ou fichier Drive absent.
+        PermissionError: Si le service account n'a pas accès au fichier.
+        RuntimeError: Pour toute autre erreur d'API Google Drive.
+    """
+    _check_google_available()
+    if not os.path.exists(credentials_path):
+        raise FileNotFoundError(f"Fichier credentials introuvable : {credentials_path}")
+    creds = service_account.Credentials.from_service_account_file(
+        credentials_path, scopes=_SCOPES
+    )
+    return _download_from_service(_build_drive_service(creds), file_id)
+
+
+def download_file_as_bytes_from_info(file_id: str, service_account_info: dict) -> bytes:
+    """Télécharge un fichier Drive en passant les credentials directement en dict.
+
+    Utilisé depuis Streamlit où les secrets sont stockés dans secrets.toml
+    sans fichier JSON sur le disque.
+
+    Args:
+        file_id: ID du fichier dans Google Drive.
+        service_account_info: Contenu du JSON service account sous forme de dict
+            (clés : type, project_id, private_key, client_email, …).
+
+    Raises:
+        ImportError: Si google-api-python-client / google-auth ne sont pas installés.
+        PermissionError: Si le service account n'a pas accès au fichier.
+        RuntimeError: Pour toute autre erreur d'API Google Drive.
+    """
+    _check_google_available()
+    creds = service_account.Credentials.from_service_account_info(
+        service_account_info, scopes=_SCOPES
+    )
+    return _download_from_service(_build_drive_service(creds), file_id)
 
 
 def extract_file_id_from_url(url: str) -> str:
