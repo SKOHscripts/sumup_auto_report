@@ -1685,6 +1685,27 @@ Corentin via sumup_stocks.py
 
 # ─── 10. PIPELINE PRINCIPAL ───────────────────────────────────────────────────
 
+def _persist_weekly_history(weekly_usage: dict, weekly_sales_count: dict) -> None:
+    """Append/maj idempotent du parquet d'historique pour les modeles ML.
+
+    Échoue silencieusement si pandas/pyarrow ne sont pas dispo : la persistance
+    est non bloquante pour la generation du rapport.
+    """
+    try:
+        from stocks.ml.dataset import update_weekly_usage  # pylint: disable=import-outside-toplevel
+    except ImportError as exc:
+        log.info("Persistance ML ignoree (dependances manquantes : %s)", exc)
+        return
+    try:
+        merged = update_weekly_usage(weekly_usage, weekly_sales_count)
+        log.info(
+            "Historique ML mis a jour : %d lignes au total (%d SKU).",
+            len(merged), merged["stock_sku"].nunique(),
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        log.warning("Echec de la persistance ML (non bloquant) : %s", exc)
+
+
 def run_stock_report(
     weeks: int = DEFAULT_WEEKS,
     send_mail: bool = True,
@@ -1742,6 +1763,8 @@ def run_stock_report(
     weekly_usage, weekly_sales_count = aggregate_weekly_stock_usage(stock_items, weekly_sales, weeks_range)
     if unmapped:
         log.warning("%s produit(s) SumUp non mappe(s) au catalogue", len(unmapped))
+
+    _persist_weekly_history(weekly_usage, weekly_sales_count)
 
     log.info("Étape 4/6 - Mise a jour automatique des stocks…")
     stocks_updated = refresh_stock_state_in_items(
