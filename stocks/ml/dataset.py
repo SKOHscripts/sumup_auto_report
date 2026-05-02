@@ -17,7 +17,6 @@ corrompre l'historique.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Iterable, Mapping
@@ -38,26 +37,6 @@ SCHEMA_COLUMNS = [
     "usage",
     "sales_count",
 ]
-
-
-@dataclass(frozen=True)
-class WeeklyRow:
-    stock_sku: str
-    week_label: str
-    usage: float
-    sales_count: int
-
-    @property
-    def year(self) -> int:
-        return int(self.week_label.split("-W")[0])
-
-    @property
-    def week(self) -> int:
-        return int(self.week_label.split("-W")[1])
-
-    @property
-    def week_start(self) -> date:
-        return iso_week_start(self.year, self.week)
 
 
 def _empty_dataframe() -> pd.DataFrame:
