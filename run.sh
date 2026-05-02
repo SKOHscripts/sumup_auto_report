@@ -58,13 +58,16 @@ case "$MODULE" in
         # Pull avec priorité au remote en cas de conflit
         git pull --rebase -X theirs origin master
 
-        # Exécution du rapport
+        # Mise à jour des stocks depuis le fichier Excel (Google Drive)
+        "$PYTHON" -m stocks.update_stock_from_purchases
+
+        # Rapport hebdomadaire + recalage local (décompte des ventes)
         "$PYTHON" -m stocks.sumup_stocks "$@"
 
-        # Commit + push si stock_items.json a été mis à jour
+        # Commit + push si stock_items.json a été modifié (achats + décompte ventes)
         if [ -n "$(git status --porcelain stocks/stock_items.json)" ]; then
             git add stocks/stock_items.json
-            git commit -m "auto: recalage du stock au $(date +'%Y-%m-%d %H:%M')"
+            git commit -m "auto: stocks au $(date +'%Y-%m-%d %H:%M') (achats + décompte ventes)"
             git push origin master
         fi
         ;;

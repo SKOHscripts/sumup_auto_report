@@ -90,10 +90,8 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ENV_FILE = BASE_DIR / ".env"
 
 load_project_env(
-    env_file=ENV_FILE,
     required_vars=["SUMUP_API_KEY"],
     logger=log,
     )

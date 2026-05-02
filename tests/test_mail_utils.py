@@ -43,52 +43,81 @@ class TestParseEmailList:
 # ── load_project_env ──────────────────────────────────────────────────────────
 
 class TestLoadProjectEnv:
-    """Tests de load_project_env."""
+    """Tests de load_project_env (lit un fichier secrets.toml)."""
 
     def test_no_required_vars_does_not_raise(self, tmp_path):
-        env_file = tmp_path / ".env"
-        env_file.write_text("MY_VAR=hello\n", encoding="utf-8")
-        result = load_project_env(env_file=str(env_file), required_vars=[])
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text('MY_VAR = "hello"\n', encoding="utf-8")
+        result = load_project_env(env_file=str(secrets_file), required_vars=[])
         assert result is not None
 
     def test_missing_required_var_raises_runtime_error(self, tmp_path, monkeypatch):
-        env_file = tmp_path / ".env"
-        env_file.write_text("", encoding="utf-8")
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text("", encoding="utf-8")
         monkeypatch.delenv("_SUMUP_TEST_MISSING_VAR_", raising=False)
         with pytest.raises(RuntimeError, match="_SUMUP_TEST_MISSING_VAR_"):
-            load_project_env(env_file=str(env_file), required_vars=["_SUMUP_TEST_MISSING_VAR_"])
+            load_project_env(env_file=str(secrets_file), required_vars=["_SUMUP_TEST_MISSING_VAR_"])
 
-    def test_nonexistent_env_file_silently_skipped(self, tmp_path):
-        fake_path = tmp_path / "nonexistent.env"
+    def test_nonexistent_secrets_file_silently_skipped(self, tmp_path):
+        fake_path = tmp_path / "nonexistent.toml"
         result = load_project_env(env_file=str(fake_path), required_vars=[])
         assert result is not None
 
-    def test_env_var_loaded_from_file(self, tmp_path, monkeypatch):
+    def test_var_loaded_from_toml(self, tmp_path, monkeypatch):
         monkeypatch.delenv("_SUMUP_TEST_LOADED_VAR_", raising=False)
-        env_file = tmp_path / ".env"
-        env_file.write_text("_SUMUP_TEST_LOADED_VAR_=hello_from_env\n", encoding="utf-8")
-        load_project_env(env_file=str(env_file), required_vars=[])
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text('_SUMUP_TEST_LOADED_VAR_ = "hello_from_env"\n', encoding="utf-8")
+        load_project_env(env_file=str(secrets_file), required_vars=[])
         assert os.getenv("_SUMUP_TEST_LOADED_VAR_") == "hello_from_env"
 
     def test_returns_path_object(self, tmp_path):
-        env_file = tmp_path / ".env"
-        env_file.write_text("", encoding="utf-8")
-        result = load_project_env(env_file=str(env_file), required_vars=[])
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text("", encoding="utf-8")
+        result = load_project_env(env_file=str(secrets_file), required_vars=[])
         from pathlib import Path
         assert isinstance(result, Path)
 
     def test_multiple_missing_vars_all_listed(self, tmp_path, monkeypatch):
-        env_file = tmp_path / ".env"
-        env_file.write_text("", encoding="utf-8")
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text("", encoding="utf-8")
         monkeypatch.delenv("_MISSING_A_", raising=False)
         monkeypatch.delenv("_MISSING_B_", raising=False)
         with pytest.raises(RuntimeError) as exc_info:
             load_project_env(
-                env_file=str(env_file),
+                env_file=str(secrets_file),
                 required_vars=["_MISSING_A_", "_MISSING_B_"],
             )
         assert "_MISSING_A_" in str(exc_info.value)
         assert "_MISSING_B_" in str(exc_info.value)
+
+    def test_aliases_applied_from_toml(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("SUMUP_API_KEY", raising=False)
+        monkeypatch.delenv("SMTP_USER", raising=False)
+        monkeypatch.delenv("EMAIL_FROM", raising=False)
+        monkeypatch.delenv("SMTP_PASS", raising=False)
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text(
+            'SUMUP_TOKEN = "tok123"\nEMAIL_ADDRESS = "x@y.com"\nEMAIL_PASSWORD = "pw"\n',
+            encoding="utf-8",
+        )
+        load_project_env(env_file=str(secrets_file), required_vars=[])
+        assert os.getenv("SUMUP_API_KEY") == "tok123"
+        assert os.getenv("SMTP_USER") == "x@y.com"
+        assert os.getenv("EMAIL_FROM") == "x@y.com"
+        assert os.getenv("SMTP_PASS") == "pw"
+
+    def test_nested_table_serialized_to_json(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("GDRIVE_SERVICE_ACCOUNT_JSON", raising=False)
+        secrets_file = tmp_path / "secrets.toml"
+        secrets_file.write_text(
+            '[GDRIVE_SERVICE_ACCOUNT]\ntype = "service_account"\nclient_email = "sa@p.com"\n',
+            encoding="utf-8",
+        )
+        load_project_env(env_file=str(secrets_file), required_vars=[])
+        import json
+        data = json.loads(os.getenv("GDRIVE_SERVICE_ACCOUNT_JSON", "{}"))
+        assert data.get("type") == "service_account"
+        assert data.get("client_email") == "sa@p.com"
 
 
 # ── get_email_settings ────────────────────────────────────────────────────────

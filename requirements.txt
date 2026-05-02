@@ -1,27 +1,13 @@
-# requirements.txt — SumUp Auto Report
+# Dépendances pour le déploiement Streamlit Cloud.
+# En local, installez le projet avec : pip install -e ".[web]"
+# Les dépendances canoniques sont déclarées dans pyproject.toml.
 
-# Interface web
 streamlit>=1.35
-
-# Appels HTTP vers l'API SumUp et Paheko
 requests>=2.31
-
-# Génération de PDF
 fpdf2>=2.7,<3
-
-# Graphiques (paheko, statistiques)
 matplotlib>=3.8
 numpy>=1.26
-
-# Parsing de dates
 python-dateutil>=2.9
-
-# Chargement du fichier .env (mode cron)
-python-dotenv>=1.0
-
-# Lecture des fichiers Excel (achats)
 openpyxl>=3.1
-
-# Intégration Google Drive (téléchargement du fichier d'achats)
 google-api-python-client>=2.100
 google-auth>=2.20

@@ -1,5 +1,6 @@
 """Utilitaires d'envoi d'email via SMTP/TLS avec pièces jointes."""
 import io
+import json
 import os
 import ssl
 import smtplib
@@ -7,28 +8,75 @@ import logging
 from pathlib import Path
 from email.message import EmailMessage
 
-from dotenv import load_dotenv
+try:
+    import tomllib
+except ImportError:
+    try:
+        import tomli as tomllib  # type: ignore[import-untyped]
+    except ImportError:
+        tomllib = None  # type: ignore[assignment]
+
+
+def _inject_secrets(secrets: dict) -> None:
+    """Injecte les secrets TOML dans os.environ avec les alias nécessaires."""
+    for key, val in secrets.items():
+        if isinstance(val, (str, int, float, bool)):
+            os.environ.setdefault(key, str(val))
+        elif isinstance(val, dict):
+            # Section imbriquée (ex: [GDRIVE_SERVICE_ACCOUNT]) → sérialisée en JSON
+            os.environ.setdefault(f"{key}_JSON", json.dumps(dict(val)))
+
+    # Alias : noms dans secrets.toml → noms attendus par les scripts
+    if "SUMUP_TOKEN" in secrets:
+        os.environ.setdefault("SUMUP_API_KEY", str(secrets["SUMUP_TOKEN"]))
+    if "EMAIL_ADDRESS" in secrets:
+        os.environ.setdefault("SMTP_USER", str(secrets["EMAIL_ADDRESS"]))
+        os.environ.setdefault("EMAIL_FROM", str(secrets["EMAIL_ADDRESS"]))
+    if "EMAIL_PASSWORD" in secrets:
+        os.environ.setdefault("SMTP_PASS", str(secrets["EMAIL_PASSWORD"]))
 
 
 def load_project_env(env_file=None, required_vars=None, logger=None):
-    """Charge le fichier .env et vérifie que les variables requises sont définies."""
+    """Charge les secrets depuis .streamlit/secrets.toml et les expose comme variables d'environnement.
+
+    Args:
+        env_file: Chemin optionnel vers un fichier secrets.toml (utile pour les tests).
+                  Si None, cherche automatiquement .streamlit/secrets.toml à la racine du projet.
+        required_vars: Liste de variables d'environnement requises après chargement.
+        logger: Logger optionnel.
+
+    Returns:
+        Path vers le fichier secrets.toml utilisé.
+
+    Raises:
+        RuntimeError: Si des variables requises sont absentes après chargement.
+    """
     logger = logger or logging.getLogger(__name__)
 
-    if env_file is None:
-        env_file = Path(__file__).resolve().parent / ".env"
+    if env_file is not None:
+        secrets_path = Path(env_file)
     else:
-        env_file = Path(env_file)
+        project_root = Path(__file__).resolve().parent.parent
+        secrets_path = project_root / ".streamlit" / "secrets.toml"
 
-    if env_file.exists():
-        load_dotenv(dotenv_path=env_file, override=False)
-        logger.info(".env chargé depuis : %s", env_file.name)
+    if tomllib is None:
+        logger.error(
+            "tomllib/tomli non disponible. Sur Python < 3.11, installez : pip install tomli"
+        )
+    elif not secrets_path.exists():
+        logger.warning("Fichier de secrets introuvable : %s", secrets_path)
+    else:
+        with open(secrets_path, "rb") as f:
+            secrets = tomllib.load(f)
+        _inject_secrets(secrets)
+        logger.info("Secrets chargés depuis : %s", secrets_path)
 
     missing = [var for var in (required_vars or []) if not os.getenv(var)]
 
     if missing:
         raise RuntimeError(f"Variables manquantes : {', '.join(missing)}")
 
-    return env_file
+    return secrets_path
 
 
 def setup_memory_log_capture(datefmt="%Y-%m-%d %H:%M:%S"):
