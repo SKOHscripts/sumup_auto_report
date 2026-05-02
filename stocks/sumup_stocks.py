@@ -90,6 +90,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOGO_PATH = BASE_DIR / "assets" / "logo_village.png"
 
 load_project_env(
     required_vars=["SUMUP_API_KEY"],
@@ -892,22 +893,33 @@ class StockPDF(FPDF):
 
     def header(self):
         """Affiche la barre de titre et les informations d'en-tête."""
-        self.set_font("Helvetica", "", 8)
         pw = self.usable_width()
         self.set_fill_color(*PALETTE["accent"])
         self.set_draw_color(*PALETTE["accent"])
         self.cell(0, 3, "", fill=True, border=0, new_x="LMARGIN", new_y="NEXT")
-        self.ln(3)
-        self.set_font("Helvetica", "B", 14)
+        self.ln(2)
+
+        logo_h = 14
+        logo_w = 22
+        y_logo = self.get_y()
+        if LOGO_PATH.exists():
+            self.image(str(LOGO_PATH), x=self.l_margin, y=y_logo, w=logo_w, h=logo_h)
+
+        text_x = self.l_margin + logo_w + 3
+        text_w = pw - logo_w - 3
+        self.set_xy(text_x, y_logo + 2)
+        self.set_font("Helvetica", "B", 13)
         self.set_text_color(*PALETTE["text_dark"])
-        self.cell(pw * 0.65, 9, " Rapport Gestion des Stocks",
+        self.cell(text_w * 0.70, 6, "Rapport Gestion des Stocks",
                   border=0, fill=False, new_x="RIGHT", new_y="TOP")
         self.set_font("Helvetica", "", 8)
         self.set_text_color(*PALETTE["text_mid"])
         gen = datetime.now().strftime("%d/%m/%Y %H:%M")
-        self.cell(0, 9,
+        self.cell(0, 6,
                   f"Semaine : {self.week_label}  |  Genere le {gen}",
                   border=0, fill=False, align="R", new_x="LMARGIN", new_y="NEXT")
+
+        self.set_y(y_logo + logo_h + 2)
         self.set_draw_color(*PALETTE["divider"])
         self.set_line_width(0.3)
         self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
