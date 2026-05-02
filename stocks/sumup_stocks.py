@@ -893,6 +893,7 @@ class StockPDF(FPDF):
 
     def header(self):
         """Affiche la barre de titre et les informations d'en-tête."""
+        self.set_font("Helvetica", "", 8)
         pw = self.usable_width()
         self.set_fill_color(*PALETTE["accent"])
         self.set_draw_color(*PALETTE["accent"])

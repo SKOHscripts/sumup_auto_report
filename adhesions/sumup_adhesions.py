@@ -70,6 +70,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOGO_PATH = BASE_DIR / "assets" / "logo_village.png"
 
 load_project_env(
     required_vars=["SUMUP_API_KEY"],
@@ -429,22 +430,22 @@ def group_by_payment(txns: list) -> dict:
 
 # ─── 4. GÉNÉRATION PDF ─── Style sobre / print-friendly ──────────────────────
 PALETTE = {
-    "CASH": (34, 110, 90),    # teal
-    "VISA": (50, 75, 165),    # indigo
-    "MASTERCARD": (165, 38, 58),    # bordeaux
-    "OTHER": (100, 95, 85),    # gris chaud
-    "accent": (60, 120, 220),   # bleu acier (header + total)
-    "text_dark": (40, 42, 48),     # ardoise foncé (remplace le noir pur)
-    "text_mid": (120, 124, 135),  # gris moyen
-    "text_light": (170, 173, 182),  # gris clair (pied de page)
-    "row_even": (246, 247, 250),  # gris quasi blanc (zébrage léger)
-    "row_odd": (255, 255, 255),  # blanc
-    "divider": (210, 213, 220),  # séparateur gris clair
+    "CASH": (0, 129, 138),
+    "VISA": (200, 134, 10),
+    "MASTERCARD": (160, 38, 58),
+    "OTHER": (107, 101, 100),
+    "accent": (0, 129, 138),
+    "text_dark": (64, 59, 58),
+    "text_mid": (107, 101, 100),
+    "text_light": (158, 152, 151),
+    "row_even": (237, 248, 249),
+    "row_odd": (255, 255, 255),
+    "divider": (210, 213, 220),
     "status": {
-        "SUCCESSFUL": (30, 115, 70),
+        "SUCCESSFUL": (0, 129, 138),
         "FAILED": (160, 38, 58),
-        "CANCELLED": (150, 95, 20),
-        "PENDING": (70, 75, 170),
+        "CANCELLED": (200, 134, 10),
+        "PENDING": (107, 101, 100),
         },
     }
 
@@ -496,32 +497,36 @@ class AdhesionPDF(FPDF):
     def header(self):
         """Affiche la barre de titre et les informations d'en-tête du rapport."""
         self.set_font("Helvetica", "", 8)
-
         pw = self._pw()
 
-        # Bande accent fine en haut (3mm)
         self.set_fill_color(*PALETTE["accent"])
         self.set_draw_color(*PALETTE["accent"])
         self.cell(0, 3, "", fill=True, border=0, new_x="LMARGIN", new_y="NEXT")
+        self.ln(2)
 
-        # Titre
-        self.ln(3)
-        self.set_font("Helvetica", "B", 15)
+        logo_h = 14
+        logo_w = 22
+        y_logo = self.get_y()
+        if LOGO_PATH.exists():
+            self.image(str(LOGO_PATH), x=self.l_margin, y=y_logo, w=logo_w, h=logo_h)
+
+        text_x = self.l_margin + logo_w + 3
+        text_w = pw - logo_w - 3
+        self.set_xy(text_x, y_logo + 2)
+        self.set_font("Helvetica", "B", 14)
         self.set_text_color(*PALETTE["text_dark"])
-        self.cell(pw * 0.58, 9, " Rapport des Adhésions SumUp",
+        self.cell(text_w * 0.60, 6, "Rapport des Adhesions SumUp",
                   border=0, fill=False, new_x="RIGHT", new_y="TOP")
-
-        # Période + date à droite
         self.set_font("Helvetica", "", 8)
         self.set_text_color(*PALETTE["text_mid"])
         gen = datetime.now().strftime("%d/%m/%Y %H:%M")
         self.cell(
-            0, 9,
-            f"Periode : {self.start_date} - {self.end_date}  Genere le {gen}",
+            0, 6,
+            f"Periode : {self.start_date} - {self.end_date}  |  Genere le {gen}",
             border=0, fill=False, align="R", new_x="LMARGIN", new_y="NEXT"
             )
 
-        # Ligne séparatrice
+        self.set_y(y_logo + logo_h + 2)
         self.set_draw_color(*PALETTE["divider"])
         self.set_line_width(0.3)
         self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
