@@ -18,7 +18,22 @@ cd "$SCRIPT_DIR"
 STATE_DIR="$SCRIPT_DIR/.state"
 mkdir -p "$STATE_DIR"
 
-PYTHON="${PYTHON:-/usr/bin/python3}"
+# Auto-détection du virtualenv local (.venv/) si PYTHON n'est pas défini
+if [ -z "${PYTHON:-}" ]; then
+    if [ -x "$SCRIPT_DIR/.venv/bin/python3" ]; then
+        PYTHON="$SCRIPT_DIR/.venv/bin/python3"
+    else
+        PYTHON="/usr/bin/python3"
+    fi
+fi
+
+# Vérifie que les dépendances principales sont installées
+if ! "$PYTHON" -c "import requests, fpdf, matplotlib, numpy, openpyxl" 2>/dev/null; then
+    echo "[$(date)] ERREUR : dépendances Python manquantes." >&2
+    echo "  Installez le projet avec : pip install -e '.[web]'" >&2
+    echo "  Ou créez un venv : python3 -m venv .venv && .venv/bin/pip install -e '.[web]'" >&2
+    exit 1
+fi
 
 usage() {
     cat <<EOF
