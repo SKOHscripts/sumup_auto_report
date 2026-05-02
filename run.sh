@@ -18,7 +18,22 @@ cd "$SCRIPT_DIR"
 STATE_DIR="$SCRIPT_DIR/.state"
 mkdir -p "$STATE_DIR"
 
-PYTHON="${PYTHON:-/usr/bin/python3}"
+# Auto-détection du virtualenv local (.venv/) si PYTHON n'est pas défini
+if [ -z "${PYTHON:-}" ]; then
+    if [ -x "$SCRIPT_DIR/.venv/bin/python3" ]; then
+        PYTHON="$SCRIPT_DIR/.venv/bin/python3"
+    else
+        PYTHON="/usr/bin/python3"
+    fi
+fi
+
+# Vérifie que les dépendances principales sont installées
+if ! "$PYTHON" -c "import requests, fpdf, matplotlib, numpy, openpyxl" 2>/dev/null; then
+    echo "[$(date)] ERREUR : dépendances Python manquantes." >&2
+    echo "  Installez le projet avec : pip install -e '.[web]'" >&2
+    echo "  Ou créez un venv : python3 -m venv .venv && .venv/bin/pip install -e '.[web]'" >&2
+    exit 1
+fi
 
 usage() {
     cat <<EOF
@@ -58,13 +73,16 @@ case "$MODULE" in
         # Pull avec priorité au remote en cas de conflit
         git pull --rebase -X theirs origin master
 
-        # Exécution du rapport
+        # Mise à jour des stocks depuis le fichier Excel (Google Drive)
+        "$PYTHON" -m stocks.update_stock_from_purchases
+
+        # Rapport hebdomadaire + recalage local (décompte des ventes)
         "$PYTHON" -m stocks.sumup_stocks "$@"
 
-        # Commit + push si stock_items.json a été mis à jour
+        # Commit + push si stock_items.json a été modifié (achats + décompte ventes)
         if [ -n "$(git status --porcelain stocks/stock_items.json)" ]; then
             git add stocks/stock_items.json
-            git commit -m "auto: recalage du stock au $(date +'%Y-%m-%d %H:%M')"
+            git commit -m "auto: stocks au $(date +'%Y-%m-%d %H:%M') (achats + décompte ventes)"
             git push origin master
         fi
         ;;
