@@ -64,6 +64,7 @@ CATEGORY_COLORS = {
 }
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOGO_PATH = BASE_DIR / "assets" / "logo_village.png"
 
 load_project_env(
     required_vars=["SUMUP_API_KEY"],
@@ -542,12 +543,24 @@ class StatsPDF(FPDF):
 
     def header(self):
         """Affiche le titre et la date de génération en haut de chaque page."""
-        self.set_font("Helvetica", "B", 14)
+        logo_h = 14
+        logo_w = 22
+        y_logo = self.get_y() + 1
+        if LOGO_PATH.exists():
+            self.image(str(LOGO_PATH), x=self.l_margin, y=y_logo, w=logo_w, h=logo_h)
+
+        text_x = self.l_margin + logo_w + 3
+        text_w = self.w - text_x - self.r_margin
+        self.set_xy(text_x, y_logo + 2)
+        self.set_font("Helvetica", "B", 13)
         self.set_text_color(*PALETTE["text"])
-        self.cell(0, 8, self._safe(self.title, 90), new_x="LMARGIN", new_y="NEXT")
+        self.cell(text_w, 6, self._safe(self.title, 90), new_x="LMARGIN", new_y="NEXT")
+        self.set_xy(text_x, y_logo + 8)
         self.set_font("Helvetica", "", 8)
         self.set_text_color(*PALETTE["muted"])
-        self.cell(0, 5, f"Genere le {datetime.now().strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+        self.cell(text_w, 5, f"Genere le {datetime.now().strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT")
+
+        self.set_y(y_logo + logo_h + 2)
         self.set_draw_color(*PALETTE["divider"])
         self.line(self.l_margin, self.get_y() + 1, self.w - self.r_margin, self.get_y() + 1)
         self.ln(4)
