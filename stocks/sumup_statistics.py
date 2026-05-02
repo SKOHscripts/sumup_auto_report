@@ -43,24 +43,24 @@ SUMUP_HISTORY_URL = "https://api.sumup.com/v0.1/me/transactions/history"
 SUMUP_TXN_URL = "https://api.sumup.com/v0.1/me/transactions"
 
 PALETTE = {
-    "accent": (38, 84, 124),
-    "accent2": (88, 133, 175),
-    "text": (45, 48, 54),
-    "muted": (110, 115, 125),
+    "accent": (0, 129, 138),
+    "accent2": (0, 102, 112),
+    "text": (64, 59, 58),
+    "muted": (110, 109, 108),
     "divider": (214, 218, 224),
-    "row_even": (247, 248, 250),
-    "cash": (46, 125, 50),
-    "cb": (31, 78, 121),
+    "row_even": (237, 248, 249),
+    "cash": (0, 129, 138),
+    "cb": (200, 134, 10),
 }
 
 CATEGORY_COLORS = {
-    "bar": "#1f77b4",
-    "soft": "#ff7f0e",
-    "snacking": "#2ca02c",
-    "adhesions": "#9467bd",
-    "boissonschaudes": "#8c564b",
-    "dons": "#e377c2",
-    "autres": "#7f7f7f",
+    "bar": "#00818A",
+    "soft": "#FFA70B",
+    "snacking": "#14B8A6",
+    "adhesions": "#C8860A",
+    "boissonschaudes": "#006670",
+    "dons": "#FFCB4F",
+    "autres": "#8a8480",
 }
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -444,7 +444,9 @@ class ChartFactory:
 
         if not weeks or not cats:
             return None
+        brand_cycle = ["#00818A", "#FFA70B", "#14B8A6", "#C8860A", "#E05A2B", "#006670", "#FFCB4F"]
         plt.figure(figsize=(10, 4.5), dpi=160)
+        plt.gca().set_prop_cycle(color=brand_cycle)
 
         for cat in cats:
             values = [metrics["by_category_week"].get(cat, {}).get(w, {}).get("qty", 0) for w in weeks]
@@ -498,7 +500,7 @@ class ChartFactory:
         values = []
         colors = []
 
-        for k, color in [("cash", "#3b8a3e"), ("cb", "#2b6cb0")]:
+        for k, color in [("cash", "#00818A"), ("cb", "#FFA70B")]:
             if counts.get(k, 0) > 0:
                 labels.append(k.upper())
                 values.append(counts[k])

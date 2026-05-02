@@ -831,21 +831,21 @@ def compute_indicators(
 # ─── 7. GÉNÉRATION PDF ────────────────────────────────────────────────────────
 
 PALETTE = {
-    "accent": (60, 120, 220),
-    "text_dark": (40, 42, 48),
-    "text_mid": (120, 124, 135),
-    "text_light": (170, 173, 182),
-    "row_even": (246, 247, 250),
+    "accent": (0, 129, 138),
+    "text_dark": (64, 59, 58),
+    "text_mid": (107, 101, 100),
+    "text_light": (158, 152, 151),
+    "row_even": (237, 248, 249),
     "row_odd": (255, 255, 255),
     "divider": (210, 213, 220),
-    "OK": (30, 115, 70),
-    "SURVEILLANCE": (180, 130, 20),
-    "A COMMANDER": (200, 80, 20),
+    "OK": (0, 129, 138),
+    "SURVEILLANCE": (200, 134, 10),
+    "A COMMANDER": (224, 90, 43),
     "RISQUE RUPTURE": (160, 38, 58),
     "N/A": (150, 150, 150),
     "status_bg": {
-        "OK": (220, 245, 230),
-        "SURVEILLANCE": (255, 245, 220),
+        "OK": (224, 247, 248),
+        "SURVEILLANCE": (255, 243, 215),
         "A COMMANDER": (255, 228, 210),
         "RISQUE RUPTURE": (255, 215, 220),
         "N/A": (240, 240, 240),
@@ -1073,7 +1073,7 @@ class StockPDF(FPDF):
                 var_val = float(var_str.replace("+", "").replace("%", ""))
 
                 if var_val > 0:
-                    self.set_text_color(30, 115, 70)
+                    self.set_text_color(0, 129, 138)
                 elif var_val < 0:
                     self.set_text_color(160, 38, 58)
                 else:
@@ -1214,7 +1214,7 @@ class StockPDF(FPDF):
         ax.plot(
             history_dates,
             history_values,
-            color="#3c78dc",
+            color="#00818A",
             linewidth=2.2,
             marker="o",
             markersize=4,
@@ -1225,7 +1225,7 @@ class StockPDF(FPDF):
         ax.plot(
             trend_dates,
             trend_values,
-            color="#DC513C",
+            color="#E05A2B",
             linewidth=2.0,
             linestyle="--",
             marker="o",
@@ -1234,10 +1234,10 @@ class StockPDF(FPDF):
             )
 
         # Seuils
-        ax.axvspan(week_dates[start_idx], week_dates[-1], color="#C2D5F4", alpha=0.18, label="Période de tendance")
-        ax.axhspan(0, safety_stock, color="#F4C9C2", alpha=0.35)
-        ax.axhline(safety_stock, color="#DF624E", linestyle=":", linewidth=1.3, label="Stock de sécurité")
-        ax.axhline(reorder_point, color="#DCA13C", linestyle=":", linewidth=1.3, label="Point de commande")
+        ax.axvspan(week_dates[start_idx], week_dates[-1], color="#B3E0E3", alpha=0.18, label="Période de tendance")
+        ax.axhspan(0, safety_stock, color="#FFE5C8", alpha=0.35)
+        ax.axhline(safety_stock, color="#E05A2B", linestyle=":", linewidth=1.3, label="Stock de sécurité")
+        ax.axhline(reorder_point, color="#FFA70B", linestyle=":", linewidth=1.3, label="Point de commande")
 
         plotted_values = (
             [1.0]
@@ -1260,9 +1260,9 @@ class StockPDF(FPDF):
                 xy=(rupture_dt, 0.0),
                 xytext=(rupture_dt + timedelta(days=2), label_y),
                 fontsize=8,
-                color="#A13CDC",
-                arrowprops={"arrowstyle": "->", "color": "#A13CDC", "lw": 1},
-                bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#A13CDC", "alpha": 0.9},
+                color="#403B3A",
+                arrowprops={"arrowstyle": "->", "color": "#403B3A", "lw": 1},
+                bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#403B3A", "alpha": 0.9},
                 )
 
         # Etiquettes historique
@@ -1275,7 +1275,7 @@ class StockPDF(FPDF):
                 xytext=(0, 7),
                 ha="center",
                 fontsize=7,
-                color="#3c78dc",
+                color="#00818A",
                 )
 
         # Etiquettes projection : seulement sur les ticks hebdo de projection
@@ -1288,7 +1288,7 @@ class StockPDF(FPDF):
                 xytext=(0, 7),
                 ha="center",
                 fontsize=7,
-                color="#cc4125",
+                color="#C8860A",
                 )
 
             ax.set_title("Evolution du stock et tendance", fontsize=11)

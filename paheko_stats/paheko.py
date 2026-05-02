@@ -71,19 +71,19 @@ session.auth = (PAHEKO_API_USER, PAHEKO_API_PASSWORD)
 session.headers.update({"Accept": "application/json"})
 
 COLORS = {
-    "primary": "#1A1A2E",
-    "secondary": "#4A4A6A",
-    "accent": "#00D9A5",
-    "accent2": "#0096FF",
-    "accent3": "#FF6B6B",
-    "accent4": "#A855F7",
+    "primary": "#403B3A",
+    "secondary": "#00818A",
+    "accent": "#00818A",
+    "accent2": "#FFA70B",
+    "accent3": "#E05A2B",
+    "accent4": "#403B3A",
     "background": "#F8FAFC",
     "card": "#FFFFFF",
-    "success": "#10B981",
-    "warning": "#F59E0B",
-    "text": "#1E293B",
-    "text_light": "#64748B",
-    "text_muted": "#94A3B8",
+    "success": "#00818A",
+    "warning": "#FFA70B",
+    "text": "#403B3A",
+    "text_light": "#6B6564",
+    "text_muted": "#9E9897",
     "border": "#E2E8F0",
     }
 
@@ -563,7 +563,7 @@ def render_dashboard(stats, output_path):
     header_ax.text(
         0.5, 0.25,
         f'Analyse au {datetime.now().strftime("%d/%m/%Y")} • {stats["total_membres"]} membres au total',
-        ha="center", va="center", fontsize=13, color="#94A3B8", zorder=2
+        ha="center", va="center", fontsize=13, color=COLORS["text_muted"], zorder=2
         )
 
     ax_kpi1 = fig.add_axes([0.02, 0.78, 0.145, 0.10])
@@ -592,16 +592,16 @@ def render_dashboard(stats, output_path):
     ax1.set_facecolor(COLORS["card"])
 
     palette = [
-        COLORS["accent"],
-        COLORS["accent2"],
-        COLORS["accent3"],
-        COLORS["accent4"],
-        COLORS["success"],
-        COLORS["warning"],
+        "#00818A",
+        "#FFA70B",
+        "#E05A2B",
+        "#6B6564",
         "#14B8A6",
-        "#6366F1",
+        "#FFCB4F",
+        "#006670",
+        "#C8860A",
         "#F97316",
-        "#EC4899",
+        "#00A3AF",
         ]
 
     cat_items = stats["cat_counts"].most_common()
