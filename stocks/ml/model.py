@@ -51,7 +51,7 @@ class ModelMetadata:
 
 def _config_hash(config: dict[str, Any]) -> str:
     payload = json.dumps(config, sort_keys=True, default=str).encode("utf-8")
-    return hashlib.sha1(payload, usedforsecurity=False).hexdigest()[:12]
+    return hashlib.sha256(payload).hexdigest()[:12]
 
 
 class RidgeForecaster:
