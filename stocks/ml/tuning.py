@@ -245,8 +245,8 @@ def build_fine_grid(best_params: dict) -> dict:
 
 
 def tune_and_save(history_df: pd.DataFrame,
-                  n_iter_coarse: int = 3000,
-                  n_iter_fine: int = 2000,
+                  n_iter_coarse: int = 200,
+                  n_iter_fine: int = None,
                   config_path=None) -> MLConfig:
     """Tune puis persiste la config. Retourne la ``MLConfig`` mise à jour."""
     cfg = load_config(config_path)

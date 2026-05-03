@@ -133,14 +133,14 @@ def run_train(
     drifted, drift_msg = detect_drift(n=3, mape_threshold=cfg.mape_threshold)
 
     if drifted:
-        log.error("ALERTE DRIFT : %s", drift_msg)
+        log.warning("ALERTE DRIFT : %s", drift_msg)
 
         return 3
 
     return 0 if promoted else 4
 
 
-def run_tune(n_iter_coarse: int = 3000) -> int:
+def run_tune(n_iter_coarse: int = 200) -> int:
     """Tuning RandomizedSearchCV puis sauvegarde de la config + train final."""
     history = load_weekly_usage()
 
@@ -255,8 +255,8 @@ def main():
     parser.add_argument("--no-promote", action="store_true", help="N'archive pas et ne met pas a jour current")
 
     # Tuning.
-    parser.add_argument("--n_iter_coarse", type=int, default=3000,
-                        help="Iterations de RandomizedSearchCV (defaut : 3000)")
+    parser.add_argument("--n_iter_coarse", type=int, default=200,
+                        help="Iterations de RandomizedSearchCV (defaut : 200)")
 
     # Configurables (persistes dans config.json).
     parser.add_argument("--quantiles", type=_parse_quantiles, default=None,
@@ -281,8 +281,8 @@ def main():
         sys.exit(run_diagnose(args.diagnose_csv))
 
     if args.tune:
-        sys.exit(run_tune(n_iter_coarse=args.n_iter_coarse))
-    sys.exit(run_train(cfg, force=args.force, do_promote=not args.no_promote))
+        run_tune(n_iter_coarse=args.n_iter_coarse)
+    run_train(cfg, force=args.force, do_promote=not args.no_promote)
 
 
 if __name__ == "__main__":
