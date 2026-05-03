@@ -154,15 +154,15 @@ class QuantileGradientBoostingForecaster:
     one-hot : HGB gère les catégories).
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         quantiles: tuple[float, ...] = DEFAULT_QUANTILES,
         max_iter: int = 200,
         max_depth: int | None = 6,
         learning_rate: float = 0.05,
         min_samples_leaf: int = 5,
-        l2_regularization: float = 0.0,   # NOUVEAU
-        max_leaf_nodes: int = 31,        # NOUVEAU
+        l2_regularization: float = 0.0,
+        max_leaf_nodes: int = 31,
         random_state: int = 0,
         sku_col: str = "stock_sku",
     ):

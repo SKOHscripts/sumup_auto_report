@@ -54,7 +54,7 @@ def test_tune_and_save_persists_config(tmp_path, monkeypatch, long_history):
         "min_samples_leaf": [5],
     }
     monkeypatch.setattr(tuning, "PARAM_GRID", grid)
-    cfg = tuning.tune_and_save(long_history, n_iter=2)
+    cfg = tuning.tune_and_save(long_history, n_iter_coarse=2, n_iter_fine=2)
 
     assert target.exists()
     assert cfg.tuned_at is not None
