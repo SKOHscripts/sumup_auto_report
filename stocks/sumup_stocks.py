@@ -1098,7 +1098,7 @@ class StockPDF(FPDF):
         self.set_text_color(*PALETTE["text_dark"])
         self.ln(3)
 
-    def weekly_graph(self, kpi: dict):
+    def weekly_graph(self, kpi: dict):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """Génère et insère le graphique d'évolution du stock pour un article."""
         weeks = kpi["weeks_range"]
         sales = kpi["sales_series"]
@@ -1246,6 +1246,45 @@ class StockPDF(FPDF):
             label="Tendance",
             )
 
+        # Tendance ML : on consomme directement la bande de stock issue de la
+        # simulation Monte-Carlo (cf. ``simulate_rupture``). Cela garantit que la
+        # bande visuelle et les dates de rupture annoncees viennent de la meme
+        # distribution.
+        ml_proj = kpi.get("ml_projection") or {}
+        ml_band = ml_proj.get("stock_band") or []
+        ml_low_lbl, ml_med_lbl, ml_high_lbl = _ml_quantile_labels(kpi)
+        ml_dates: list = []
+        ml_low_stock: list = []
+        ml_med_stock: list = []
+        ml_high_stock: list = []
+        if ml_band:
+            ml_initial = float(ml_proj.get("stock_initial", current_stock))
+            ml_dates.append(now_dt)
+            ml_low_stock.append(ml_initial)
+            ml_med_stock.append(ml_initial)
+            ml_high_stock.append(ml_initial)
+            for entry in ml_band:
+                try:
+                    week_dt = datetime.fromisoformat(entry["week_start"])
+                except (KeyError, ValueError):
+                    continue
+                ml_dates.append(week_dt)
+                ml_low_stock.append(float(entry.get("stock_low", 0.0)))
+                ml_med_stock.append(float(entry.get("stock_med", 0.0)))
+                ml_high_stock.append(float(entry.get("stock_high", 0.0)))
+
+            ax.fill_between(
+                ml_dates, ml_low_stock, ml_high_stock,
+                color="#7B4FB8", alpha=0.15,
+                label=f"Intervalle ML {ml_low_lbl}-{ml_high_lbl}",
+            )
+            ax.plot(
+                ml_dates, ml_med_stock,
+                color="#7B4FB8", linewidth=2.0, linestyle="-",
+                marker="s", markersize=3.0,
+                label=f"Mediane ML ({ml_med_lbl})",
+            )
+
         # Seuils
         ax.axvspan(week_dates[start_idx], week_dates[-1], color="#B3E0E3", alpha=0.18, label="Période de tendance")
         ax.axhspan(0, safety_stock, color="#FFE5C8", alpha=0.35)
@@ -1256,6 +1295,7 @@ class StockPDF(FPDF):
             [1.0]
             + [float(v) for v in history_values]
             + [float(v) for v in trend_values]
+            + [float(v) for v in ml_high_stock]
             + [target_stock]
             + [reorder_point]
             + [safety_stock]
@@ -1276,6 +1316,27 @@ class StockPDF(FPDF):
                 color="#403B3A",
                 arrowprops={"arrowstyle": "->", "color": "#403B3A", "lw": 1},
                 bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#403B3A", "alpha": 0.9},
+                )
+
+        ml_med_iso = ml_proj.get("rupture_date_med")
+        if ml_med_iso:
+            try:
+                ml_med_dt = datetime.fromisoformat(ml_med_iso)
+            except ValueError:
+                ml_med_dt = None
+            if ml_med_dt is not None:
+                low_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_low") or "")
+                med_lbl = ml_med_dt.strftime("%d/%m/%Y")
+                high_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_high") or "")
+                ml_label_y = ymax * 0.45 if ymax > 0 else 1.0
+                ax.annotate(
+                    f"Rupture ML {ml_med_lbl}\n{med_lbl}\n({low_lbl} - {high_lbl})",
+                    xy=(ml_med_dt, 0.0),
+                    xytext=(ml_med_dt + timedelta(days=2), ml_label_y),
+                    fontsize=7.5,
+                    color="#4A2D75",
+                    arrowprops={"arrowstyle": "->", "color": "#7B4FB8", "lw": 1},
+                    bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#7B4FB8", "alpha": 0.9},
                 )
 
         # Etiquettes historique
@@ -1324,6 +1385,8 @@ class StockPDF(FPDF):
 
         if rupture_dt is not None:
             xmax_candidates.append(rupture_dt + timedelta(days=4))
+        if ml_dates:
+            xmax_candidates.append(ml_dates[-1] + timedelta(days=4))
         xmax = max(xmax_candidates)
         ax.set_xlim(xmin, xmax)
 
@@ -1435,6 +1498,56 @@ def render_page_summary(pdf: StockPDF, all_kpis: list, week_label: str, _weeks_r
 # ─── Pages article ────────────────────────────────────────────────────────────
 
 
+def _format_iso_date_dmy(value: str) -> str:
+    """Convertit '2026-06-12' -> '12/06/2026'. Retourne 'N/A' si invalide."""
+    if not value:
+        return "N/A"
+    try:
+        return datetime.fromisoformat(value).strftime("%d/%m/%Y")
+    except ValueError:
+        return "N/A"
+
+
+def _quantile_pct_label(frac: float) -> str:
+    """Convertit une fraction (0.05) en etiquette percentile ('P5'). Entier si possible."""
+    pct = frac * 100.0
+    if abs(pct - round(pct)) < 1e-6:
+        return f"P{int(round(pct))}"
+    return f"P{pct:g}"
+
+
+def _ml_quantile_labels(kpi: dict) -> tuple[str, str, str]:
+    """Retourne ``(low_lbl, med_lbl, high_lbl)`` pour les percentiles du modele.
+
+    Lit ``ml_projection.quantiles`` si present, sinon retombe sur P10/P50/P90.
+    """
+    proj = kpi.get("ml_projection") or {}
+    qs = proj.get("quantiles")
+    if qs and len(qs) == 3:
+        return (
+            _quantile_pct_label(float(qs[0])),
+            _quantile_pct_label(float(qs[1])),
+            _quantile_pct_label(float(qs[2])),
+        )
+    return ("P10", "P50", "P90")
+
+
+def _ml_rupture_label(kpi: dict) -> str:
+    """Etiquette de la rupture ML (mediane) pour le tableau KPI. 'N/A' si pas de projection ML."""
+    proj = kpi.get("ml_projection") or {}
+    return _format_iso_date_dmy(proj.get("rupture_date_med") or "")
+
+
+def _ml_rupture_range(kpi: dict) -> str:
+    """Etiquette de l'intervalle ML (low..high)."""
+    proj = kpi.get("ml_projection") or {}
+    low = _format_iso_date_dmy(proj.get("rupture_date_low") or "")
+    high = _format_iso_date_dmy(proj.get("rupture_date_high") or "")
+    if low == "N/A" and high == "N/A":
+        return "N/A"
+    return f"{low} -> {high}"
+
+
 def render_article_page(pdf: StockPDF, kpi: dict):
     """Génère la page détaillée d'un article (KPIs, graphique, tableau hebdomadaire)."""
     pdf.add_page()
@@ -1483,6 +1596,8 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         # ("Projection vente 4 sem.", kpi["proj_4_weeks"]),
         ("Couverture estimee", cov),
         ("Date rupture estimee", kpi["rupture_date"] or "N/A"),
+        (f"Rupture ML ({_ml_quantile_labels(kpi)[1]})", _ml_rupture_label(kpi)),
+        (f"Intervalle ML ({_ml_quantile_labels(kpi)[0]}..{_ml_quantile_labels(kpi)[2]})", _ml_rupture_range(kpi)),
         (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
         # ("Variation S vs S-1", var),
         # ("Sem. sans vente", kpi["n_zero_weeks"]),
@@ -1685,12 +1800,50 @@ Corentin via sumup_stocks.py
 
 # ─── 10. PIPELINE PRINCIPAL ───────────────────────────────────────────────────
 
+def _persist_weekly_history(weekly_usage: dict, weekly_sales_count: dict) -> None:
+    """Append/maj idempotent du parquet d'historique pour les modeles ML.
+
+    Échoue silencieusement si pandas/pyarrow ne sont pas dispo : la persistance
+    est non bloquante pour la generation du rapport.
+    """
+    try:
+        from stocks.ml.dataset import update_weekly_usage  # pylint: disable=import-outside-toplevel
+    except ImportError as exc:
+        log.info("Persistance ML ignoree (dependances manquantes : %s)", exc)
+        return
+    try:
+        merged = update_weekly_usage(weekly_usage, weekly_sales_count)
+        log.info(
+            "Historique ML mis a jour : %d lignes au total (%d SKU).",
+            len(merged), merged["stock_sku"].nunique(),
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        log.warning("Echec de la persistance ML (non bloquant) : %s", exc)
+
+
+def _attach_ml_if_enabled(all_kpis: list, enable: bool) -> list:
+    """Optionnel : enrichit chaque KPI avec une projection ML quantile."""
+    if not enable:
+        return all_kpis
+    try:
+        from stocks.ml.inference import attach_ml_projections  # pylint: disable=import-outside-toplevel
+    except ImportError as exc:
+        log.info("Projection ML ignoree (dependances manquantes : %s)", exc)
+        return all_kpis
+    try:
+        return attach_ml_projections(all_kpis)
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        log.warning("Projection ML echouee (non bloquant) : %s", exc)
+        return all_kpis
+
+
 def run_stock_report(
     weeks: int = DEFAULT_WEEKS,
     send_mail: bool = True,
     mock_file: str = None,
     items_file: Path = None,
     state_file: Path = None,
+    use_ml: bool = False,
 ):
     """Exécute le pipeline complet : chargement, API, agrégation, PDF, CSV, email."""
     items_file = items_file or BASE_DIR / "stocks" / "stock_items.json"
@@ -1743,6 +1896,8 @@ def run_stock_report(
     if unmapped:
         log.warning("%s produit(s) SumUp non mappe(s) au catalogue", len(unmapped))
 
+    _persist_weekly_history(weekly_usage, weekly_sales_count)
+
     log.info("Étape 4/6 - Mise a jour automatique des stocks…")
     stocks_updated = refresh_stock_state_in_items(
         stock_items,
@@ -1772,6 +1927,10 @@ def run_stock_report(
             kpi['stock_sku'], fmt_num(kpi['available_stock']),
             fmt_num(kpi['total_sold']), kpi['status'],
         )
+
+    if use_ml:
+        log.info("Etape 5b/6 - Projection ML quantile (--ml)...")
+        all_kpis = _attach_ml_if_enabled(all_kpis, enable=True)
 
     log.info("Étape 6/6 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")
@@ -1821,6 +1980,10 @@ def main():
         "--state", metavar="FICHIER", default=None,
         help="Chemin vers stock_state.json (défaut : ./stock_state.json)",
         )
+    parser.add_argument(
+        "--ml", action="store_true",
+        help="Active la projection ML quantile en plus de la projection lineaire historique",
+        )
     args = parser.parse_args()
 
     run_stock_report(
@@ -1829,6 +1992,7 @@ def main():
         mock_file=args.mock or os.getenv("SUMUP_MOCK_FILE") or None,
         items_file=Path(args.items) if args.items else None,
         state_file=Path(args.state) if args.state else None,
+        use_ml=args.ml,
         )
 
 

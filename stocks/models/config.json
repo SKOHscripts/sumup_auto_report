@@ -1,0 +1,20 @@
+{
+  "coverage_target": 0.8,
+  "coverage_tolerance": 0.1,
+  "mape_threshold": 0.45,
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "tuned_at": "2026-05-03T19:19:41+00:00",
+  "tuned_params": {
+    "l2_regularization": 1.0,
+    "learning_rate": 0.05,
+    "max_depth": 5,
+    "max_iter": 125,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 10
+  },
+  "tuning_score": 1.2792841879745378
+}
