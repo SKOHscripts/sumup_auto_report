@@ -133,6 +133,10 @@ def attach_ml_projections(
     Effet de bord : ajoute la clé ``ml_projection`` à chaque KPI éligible.
     Best-effort : retourne les KPIs inchangés si l'historique est absent ou
     si l'entraînement échoue.
+
+    Si un modèle archivé existe (cf. ``stocks.ml.registry.load_current``), il
+    est réutilisé tel quel (pas de réentraînement). Sinon on entraîne un
+    modèle à la volée sur tout l'historique.
     """
     history = load_weekly_usage(history_path) if history_path else load_weekly_usage()
     if len(history) == 0:
@@ -142,7 +146,7 @@ def attach_ml_projections(
     if skus:
         history = filter_skus(history, skus)
 
-    model = train_global_model(history)
+    model = _load_or_train_model(history)
     if model is None:
         return all_kpis
 
@@ -162,6 +166,19 @@ def attach_ml_projections(
             n_attached += 1
     log.info("ML : projections attachees a %d/%d SKU.", n_attached, len(all_kpis))
     return all_kpis
+
+
+def _load_or_train_model(history_df: pd.DataFrame) -> QuantileGradientBoostingForecaster | None:
+    """Charge le modèle archivé via le registry, sinon entraîne à la volée."""
+    try:
+        from stocks.ml.registry import load_current  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return train_global_model(history_df)
+    cached = load_current()
+    if cached is not None:
+        log.info("ML : modele charge depuis le registry (%s)", cached.metadata.config_hash)
+        return cached
+    return train_global_model(history_df)
 
 
 def _parse_eta(value):
