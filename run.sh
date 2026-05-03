@@ -76,8 +76,11 @@ case "$MODULE" in
         # Mise à jour des stocks depuis le fichier Excel (Google Drive)
         "$PYTHON" -m stocks.update_stock_from_purchases
 
+        # Mise à jour du modèle
+        "$PYTHON" -m stocks.ml.train --tune
+
         # Rapport hebdomadaire + recalage local (décompte des ventes)
-        "$PYTHON" -m stocks.sumup_stocks "$@"
+        "$PYTHON" -m stocks.sumup_stocks --ml "$@"
 
         # Commit + push si stock_items.json a été modifié (achats + décompte ventes)
         if [ -n "$(git status --porcelain stocks/stock_items.json)" ]; then

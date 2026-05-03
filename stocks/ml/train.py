@@ -226,7 +226,7 @@ def main():
     parser.add_argument("--no-promote", action="store_true", help="N'archive pas et ne met pas a jour current")
 
     # Tuning.
-    parser.add_argument("--n-iter", type=int, default=20, help="Iterations de RandomizedSearchCV (defaut : 20)")
+    parser.add_argument("--n-iter", type=int, default=200, help="Iterations de RandomizedSearchCV (defaut : 200)")
 
     # Configurables (persistes dans config.json).
     parser.add_argument("--quantiles", type=_parse_quantiles, default=None,
