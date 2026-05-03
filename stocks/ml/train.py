@@ -148,7 +148,7 @@ def run_tune(n_iter_coarse: int = 200) -> int:
         log.error("Aucun historique persistant. Lancer 'python -m stocks.ml.bootstrap' avant.")
 
         return 1
-    log.info("Tuning des hyperparametres (n_iter_coarse=%d)...", n_iter_coarse)
+    log.info("Tuning des hyperparametres (n_iter_coarse=%s)...", n_iter_coarse)
     new_cfg = tune_and_save(history, n_iter_coarse=n_iter_coarse)
     log.info(
         "Config sauvegardee : %s (params=%s, score_pinball=%.4f)",
@@ -255,7 +255,7 @@ def main():
     parser.add_argument("--no-promote", action="store_true", help="N'archive pas et ne met pas a jour current")
 
     # Tuning.
-    parser.add_argument("--n_iter_coarse", type=int, default=200,
+    parser.add_argument("--n_iter_coarse", type=int, default=None,
                         help="Iterations de RandomizedSearchCV (defaut : 200)")
 
     # Configurables (persistes dans config.json).

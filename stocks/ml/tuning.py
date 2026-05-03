@@ -116,6 +116,7 @@ def tune_hyperparameters(
         cv=splitter,
         random_state=random_state,
         n_jobs=-1,  # all processors
+        verbose=2,
         refit=False,
     )
     search.fit(X, y)
@@ -253,7 +254,7 @@ def tune_and_save(history_df: pd.DataFrame,
 
     # 1) Coarse search avec la grosse grille
     log.info(
-        "Tuning coarse: n_iter=%d sur grille grossiere (RandomizedSearchCV)...",
+        "Tuning coarse: n_iter=%s sur grille grossiere (RandomizedSearchCV)...",
         n_iter_coarse,
     )
     coarse_best, coarse_score = tune_hyperparameters(
@@ -268,14 +269,10 @@ def tune_and_save(history_df: pd.DataFrame,
 
     # 2) Fine search autour de coarse_best
     fine_grid = build_fine_grid(coarse_best)
-    print(fine_grid)
     log.info(
-        "Tuning fine: n_iter=%d autour du best coarse (grid taille=%d)...",
+        "Tuning fine: n_iter=%s autour du best coarse (grid taille=%d)...",
         n_iter_fine,
-        len(fine_grid["max_iter"])
-        * len(fine_grid["max_depth"])
-        * len(fine_grid["learning_rate"])
-        * len(fine_grid["min_samples_leaf"]),
+        _grid_size(fine_grid)
     )
     fine_best, fine_score = tune_hyperparameters(
         history_df,
