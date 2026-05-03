@@ -1246,40 +1246,43 @@ class StockPDF(FPDF):
             label="Tendance",
             )
 
-        # Tendance ML (bande P10-P90 + ligne P50) si projection ML disponible
+        # Tendance ML : on consomme directement la bande de stock issue de la
+        # simulation Monte-Carlo (cf. ``simulate_rupture``). Cela garantit que la
+        # bande visuelle et les dates de rupture annoncees viennent de la meme
+        # distribution.
         ml_proj = kpi.get("ml_projection") or {}
-        ml_weekly = ml_proj.get("weekly_forecast") or []
+        ml_band = ml_proj.get("stock_band") or []
+        ml_low_lbl, ml_med_lbl, ml_high_lbl = _ml_quantile_labels(kpi)
         ml_dates: list = []
-        ml_p10_stock: list = []
-        ml_p50_stock: list = []
-        ml_p90_stock: list = []
-        if ml_weekly:
-            stock_p10 = stock_p50 = stock_p90 = float(effective_stock_now)
+        ml_low_stock: list = []
+        ml_med_stock: list = []
+        ml_high_stock: list = []
+        if ml_band:
+            ml_initial = float(ml_proj.get("stock_initial", current_stock))
             ml_dates.append(now_dt)
-            ml_p10_stock.append(stock_p10)
-            ml_p50_stock.append(stock_p50)
-            ml_p90_stock.append(stock_p90)
-            for entry in ml_weekly:
+            ml_low_stock.append(ml_initial)
+            ml_med_stock.append(ml_initial)
+            ml_high_stock.append(ml_initial)
+            for entry in ml_band:
                 try:
                     week_dt = datetime.fromisoformat(entry["week_start"])
                 except (KeyError, ValueError):
                     continue
-                stock_p10 = max(0.0, stock_p10 - float(entry.get("q_high", 0.0)))  # pessimiste = grosse conso
-                stock_p50 = max(0.0, stock_p50 - float(entry.get("q_med", 0.0)))
-                stock_p90 = max(0.0, stock_p90 - float(entry.get("q_low", 0.0)))  # optimiste = petite conso
                 ml_dates.append(week_dt)
-                ml_p10_stock.append(stock_p10)
-                ml_p50_stock.append(stock_p50)
-                ml_p90_stock.append(stock_p90)
+                ml_low_stock.append(float(entry.get("stock_low", 0.0)))
+                ml_med_stock.append(float(entry.get("stock_med", 0.0)))
+                ml_high_stock.append(float(entry.get("stock_high", 0.0)))
 
             ax.fill_between(
-                ml_dates, ml_p10_stock, ml_p90_stock,
-                color="#7B4FB8", alpha=0.15, label="Intervalle ML P10-P90",
+                ml_dates, ml_low_stock, ml_high_stock,
+                color="#7B4FB8", alpha=0.15,
+                label=f"Intervalle ML {ml_low_lbl}-{ml_high_lbl}",
             )
             ax.plot(
-                ml_dates, ml_p50_stock,
+                ml_dates, ml_med_stock,
                 color="#7B4FB8", linewidth=2.0, linestyle="-",
-                marker="s", markersize=3.0, label="Mediane ML (P50)",
+                marker="s", markersize=3.0,
+                label=f"Mediane ML ({ml_med_lbl})",
             )
 
         # Seuils
@@ -1292,7 +1295,7 @@ class StockPDF(FPDF):
             [1.0]
             + [float(v) for v in history_values]
             + [float(v) for v in trend_values]
-            + [float(v) for v in ml_p90_stock]
+            + [float(v) for v in ml_high_stock]
             + [target_stock]
             + [reorder_point]
             + [safety_stock]
@@ -1315,21 +1318,21 @@ class StockPDF(FPDF):
                 bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#403B3A", "alpha": 0.9},
                 )
 
-        ml_p50_iso = ml_proj.get("rupture_date_p50")
-        if ml_p50_iso:
+        ml_med_iso = ml_proj.get("rupture_date_med")
+        if ml_med_iso:
             try:
-                ml_p50_dt = datetime.fromisoformat(ml_p50_iso)
+                ml_med_dt = datetime.fromisoformat(ml_med_iso)
             except ValueError:
-                ml_p50_dt = None
-            if ml_p50_dt is not None:
-                p10_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_p10") or "")
-                p50_lbl = ml_p50_dt.strftime("%d/%m/%Y")
-                p90_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_p90") or "")
+                ml_med_dt = None
+            if ml_med_dt is not None:
+                low_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_low") or "")
+                med_lbl = ml_med_dt.strftime("%d/%m/%Y")
+                high_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_high") or "")
                 ml_label_y = ymax * 0.45 if ymax > 0 else 1.0
                 ax.annotate(
-                    f"Rupture ML P50\n{p50_lbl}\n({p10_lbl} - {p90_lbl})",
-                    xy=(ml_p50_dt, 0.0),
-                    xytext=(ml_p50_dt + timedelta(days=2), ml_label_y),
+                    f"Rupture ML {ml_med_lbl}\n{med_lbl}\n({low_lbl} - {high_lbl})",
+                    xy=(ml_med_dt, 0.0),
+                    xytext=(ml_med_dt + timedelta(days=2), ml_label_y),
                     fontsize=7.5,
                     color="#4A2D75",
                     arrowprops={"arrowstyle": "->", "color": "#7B4FB8", "lw": 1},
@@ -1505,20 +1508,44 @@ def _format_iso_date_dmy(value: str) -> str:
         return "N/A"
 
 
-def _ml_rupture_label(kpi: dict) -> str:
-    """Etiquette de la rupture ML (P50) pour le tableau KPI. 'N/A' si pas de projection ML."""
+def _quantile_pct_label(frac: float) -> str:
+    """Convertit une fraction (0.05) en etiquette percentile ('P5'). Entier si possible."""
+    pct = frac * 100.0
+    if abs(pct - round(pct)) < 1e-6:
+        return f"P{int(round(pct))}"
+    return f"P{pct:g}"
+
+
+def _ml_quantile_labels(kpi: dict) -> tuple[str, str, str]:
+    """Retourne ``(low_lbl, med_lbl, high_lbl)`` pour les percentiles du modele.
+
+    Lit ``ml_projection.quantiles`` si present, sinon retombe sur P10/P50/P90.
+    """
     proj = kpi.get("ml_projection") or {}
-    return _format_iso_date_dmy(proj.get("rupture_date_p50") or "")
+    qs = proj.get("quantiles")
+    if qs and len(qs) == 3:
+        return (
+            _quantile_pct_label(float(qs[0])),
+            _quantile_pct_label(float(qs[1])),
+            _quantile_pct_label(float(qs[2])),
+        )
+    return ("P10", "P50", "P90")
+
+
+def _ml_rupture_label(kpi: dict) -> str:
+    """Etiquette de la rupture ML (mediane) pour le tableau KPI. 'N/A' si pas de projection ML."""
+    proj = kpi.get("ml_projection") or {}
+    return _format_iso_date_dmy(proj.get("rupture_date_med") or "")
 
 
 def _ml_rupture_range(kpi: dict) -> str:
-    """Etiquette de l'intervalle ML P10..P90."""
+    """Etiquette de l'intervalle ML (low..high)."""
     proj = kpi.get("ml_projection") or {}
-    p10 = _format_iso_date_dmy(proj.get("rupture_date_p10") or "")
-    p90 = _format_iso_date_dmy(proj.get("rupture_date_p90") or "")
-    if p10 == "N/A" and p90 == "N/A":
+    low = _format_iso_date_dmy(proj.get("rupture_date_low") or "")
+    high = _format_iso_date_dmy(proj.get("rupture_date_high") or "")
+    if low == "N/A" and high == "N/A":
         return "N/A"
-    return f"{p10} -> {p90}"
+    return f"{low} -> {high}"
 
 
 def render_article_page(pdf: StockPDF, kpi: dict):
@@ -1569,8 +1596,8 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         # ("Projection vente 4 sem.", kpi["proj_4_weeks"]),
         ("Couverture estimee", cov),
         ("Date rupture estimee", kpi["rupture_date"] or "N/A"),
-        ("Rupture ML (P50)", _ml_rupture_label(kpi)),
-        ("Intervalle ML (P10..P90)", _ml_rupture_range(kpi)),
+        (f"Rupture ML ({_ml_quantile_labels(kpi)[1]})", _ml_rupture_label(kpi)),
+        (f"Intervalle ML ({_ml_quantile_labels(kpi)[0]}..{_ml_quantile_labels(kpi)[2]})", _ml_rupture_range(kpi)),
         (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
         # ("Variation S vs S-1", var),
         # ("Sem. sans vente", kpi["n_zero_weeks"]),
@@ -1955,7 +1982,7 @@ def main():
         )
     parser.add_argument(
         "--ml", action="store_true",
-        help="Active la projection ML quantile (P10/P50/P90) en plus de la projection lineaire historique",
+        help="Active la projection ML quantile en plus de la projection lineaire historique",
         )
     args = parser.parse_args()
 

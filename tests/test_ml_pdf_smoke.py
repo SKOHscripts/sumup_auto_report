@@ -56,11 +56,24 @@ def _fake_kpi(with_ml: bool) -> dict:
     }
     if with_ml:
         today = date(2026, 5, 4)
+        stock = 50.0
+        band = []
+        for i in range(8):
+            stock = max(0.0, stock - 6.0)
+            band.append({
+                "week_start": (today + timedelta(weeks=i)).isoformat(),
+                "stock_low": max(0.0, stock - 5.0),
+                "stock_med": stock,
+                "stock_high": stock + 5.0,
+            })
         base["ml_projection"] = {
-            "rupture_date_p10": "2026-05-29",
-            "rupture_date_p50": "2026-06-12",
-            "rupture_date_p90": "2026-07-02",
+            "rupture_date_low": "2026-05-29",
+            "rupture_date_med": "2026-06-12",
+            "rupture_date_high": "2026-07-02",
             "prob_rupture": 0.92,
+            "quantiles": [0.1, 0.5, 0.9],
+            "stock_band": band,
+            "stock_initial": 50.0,
             "weekly_forecast": [
                 {
                     "week_start": (today + timedelta(weeks=i)).isoformat(),

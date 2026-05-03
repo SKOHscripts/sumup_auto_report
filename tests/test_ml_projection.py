@@ -139,17 +139,17 @@ def test_simulate_rupture_simple_case(quantiles_df):
     """Stock 50, ~10/semaine → rupture entre semaine 3 et 5."""
     res = simulate_rupture(stock_initial=50.0, weekly_quantiles=quantiles_df, n_simulations=500)
     assert res["prob_rupture"] > 0.99
-    assert res["rupture_date_p50"] is not None
-    p50 = res["rupture_date_p50"]
+    assert res["rupture_date_med"] is not None
+    p50 = res["rupture_date_med"]
     assert date(2026, 5, 18) <= p50 <= date(2026, 6, 8)
-    assert res["rupture_date_p10"] <= res["rupture_date_p50"] <= res["rupture_date_p90"]
+    assert res["rupture_date_low"] <= res["rupture_date_med"] <= res["rupture_date_high"]
 
 
 def test_simulate_rupture_no_rupture_in_horizon(quantiles_df):
     """Stock 1000 sur 8 semaines × ~10 → jamais de rupture."""
     res = simulate_rupture(stock_initial=1000.0, weekly_quantiles=quantiles_df, n_simulations=200)
     assert res["prob_rupture"] == 0.0
-    assert res["rupture_date_p50"] is None
+    assert res["rupture_date_med"] is None
 
 
 def test_simulate_rupture_with_incoming(quantiles_df):
@@ -164,14 +164,14 @@ def test_simulate_rupture_with_incoming(quantiles_df):
         incoming_eta=date(2026, 5, 25),
         n_simulations=300,
     )
-    if res_no_incoming["rupture_date_p50"] and res_with_incoming["rupture_date_p50"]:
-        assert res_with_incoming["rupture_date_p50"] >= res_no_incoming["rupture_date_p50"]
+    if res_no_incoming["rupture_date_med"] and res_with_incoming["rupture_date_med"]:
+        assert res_with_incoming["rupture_date_med"] >= res_no_incoming["rupture_date_med"]
 
 
 def test_simulate_rupture_reproducible(quantiles_df):
     a = simulate_rupture(stock_initial=50.0, weekly_quantiles=quantiles_df, n_simulations=200, seed=42)
     b = simulate_rupture(stock_initial=50.0, weekly_quantiles=quantiles_df, n_simulations=200, seed=42)
-    assert a["rupture_date_p50"] == b["rupture_date_p50"]
+    assert a["rupture_date_med"] == b["rupture_date_med"]
     np.testing.assert_array_equal(a["trajectories"], b["trajectories"])
 
 
@@ -190,5 +190,5 @@ def test_forecast_then_simulate_end_to_end(history_df):
     fc = forecast_horizon(model, chips_hist, horizon_weeks=12)
     res = simulate_rupture(stock_initial=80.0, weekly_quantiles=fc, n_simulations=300)
     # Avec ~15/semaine de chips et 80 unités, rupture attendue dans l'horizon
-    assert res["rupture_date_p50"] is not None
+    assert res["rupture_date_med"] is not None
     assert res["prob_rupture"] > 0.5

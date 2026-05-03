@@ -126,11 +126,23 @@ def project_for_sku(  # pylint: disable=too-many-arguments
         seed=seed,
         quantile_fractions=quantile_fractions,
     )
+    stock_band = [
+        {
+            "week_start": row["week_start"].isoformat(),
+            "stock_low": row["stock_low"],
+            "stock_med": row["stock_med"],
+            "stock_high": row["stock_high"],
+        }
+        for row in sim["stock_band"]
+    ]
     return {
-        "rupture_date_p10": sim["rupture_date_p10"].isoformat() if sim["rupture_date_p10"] else None,
-        "rupture_date_p50": sim["rupture_date_p50"].isoformat() if sim["rupture_date_p50"] else None,
-        "rupture_date_p90": sim["rupture_date_p90"].isoformat() if sim["rupture_date_p90"] else None,
+        "rupture_date_low": sim["rupture_date_low"].isoformat() if sim["rupture_date_low"] else None,
+        "rupture_date_med": sim["rupture_date_med"].isoformat() if sim["rupture_date_med"] else None,
+        "rupture_date_high": sim["rupture_date_high"].isoformat() if sim["rupture_date_high"] else None,
         "prob_rupture": sim["prob_rupture"],
+        "quantiles": list(sim["quantiles"]),
+        "stock_band": stock_band,
+        "stock_initial": sim.get("stock_initial", float(stock_initial)),
         "weekly_forecast": forecast.assign(
             week_start=forecast["week_start"].apply(lambda d: d.isoformat()),
         ).to_dict(orient="records"),

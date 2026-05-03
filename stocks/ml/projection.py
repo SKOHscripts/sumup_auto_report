@@ -197,11 +197,15 @@ def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
 
     Returns:
         dict avec :
-            ``rupture_date_p10`` (pessimiste) / ``rupture_date_p50`` /
-            ``rupture_date_p90`` (optimiste), au format ``date`` (None si pas de
-            rupture observée dans l'horizon).
-            ``prob_rupture`` : probabilité d'avoir une rupture dans l'horizon.
-            ``trajectories``: array (n_simulations, n_weeks) des stocks simulés.
+            ``rupture_date_low`` (pessimiste : percentile bas du modele) /
+            ``rupture_date_med`` (mediane) /
+            ``rupture_date_high`` (optimiste : percentile haut du modele),
+            au format ``date`` (None si pas de rupture observee dans l'horizon).
+            ``prob_rupture`` : probabilite d'avoir une rupture dans l'horizon.
+            ``quantiles`` : tuple ``(low_frac, 0.5, high_frac)`` aligne sur
+            ``quantile_fractions`` pour permettre aux consommateurs de batir
+            des etiquettes dynamiques (ex. "P5"/"P50"/"P95").
+            ``trajectories``: array (n_simulations, n_weeks) des stocks simules.
     """
     if len(weekly_quantiles) == 0:
         raise ValueError("weekly_quantiles est vide")
@@ -251,12 +255,36 @@ def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
             return None
         return _to_date(week_starts[int(idx)])
 
+    low_pct = quantile_fractions[0] * 100.0
+    high_pct = quantile_fractions[1] * 100.0
+
+    # Bande de stock par semaine, calculee directement sur les trajectoires
+    # Monte-Carlo. ``stock_low`` correspond au percentile bas (pessimiste : peu
+    # de stock restant), ``stock_high`` au percentile haut (optimiste). Cette
+    # bande est consommee par le PDF pour rester visuellement coherente avec
+    # les dates de rupture renvoyees ci-dessous.
+    stock_low_band = np.percentile(trajectories, low_pct, axis=0)
+    stock_med_band = np.percentile(trajectories, 50.0, axis=0)
+    stock_high_band = np.percentile(trajectories, high_pct, axis=0)
+    stock_band = [
+        {
+            "week_start": _to_date(week_starts[t]),
+            "stock_low": float(stock_low_band[t]),
+            "stock_med": float(stock_med_band[t]),
+            "stock_high": float(stock_high_band[t]),
+        }
+        for t in range(n_weeks)
+    ]
+
     return {
-        "rupture_date_p10": _percentile_date(10),
-        "rupture_date_p50": _percentile_date(50),
-        "rupture_date_p90": _percentile_date(90),
+        "rupture_date_low": _percentile_date(low_pct),
+        "rupture_date_med": _percentile_date(50.0),
+        "rupture_date_high": _percentile_date(high_pct),
         "prob_rupture": prob_rupture,
+        "quantiles": (quantile_fractions[0], 0.5, quantile_fractions[1]),
         "n_simulations": n_simulations,
+        "stock_band": stock_band,
+        "stock_initial": float(stock_initial),
         "trajectories": trajectories,
     }
 

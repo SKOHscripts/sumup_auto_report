@@ -57,7 +57,7 @@ def test_project_for_sku_returns_dict(long_history):
     model = inf.train_global_model(df, max_iter=30)
     proj = inf.project_for_sku(model, df, sku="chips", stock_initial=100.0, horizon_weeks=8, n_simulations=200)
     assert proj is not None
-    assert "rupture_date_p50" in proj
+    assert "rupture_date_med" in proj
     assert "weekly_forecast" in proj
     assert len(proj["weekly_forecast"]) == 8
     assert "model_version" in proj
