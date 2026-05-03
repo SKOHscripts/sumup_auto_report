@@ -32,7 +32,8 @@ from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-DEFAULT_QUANTILES = (0.1, 0.5, 0.9)
+DEFAULT_QUANTILES = (0.05, 0.5, 0.95)
+QUANTILE_LABELS = ("q_low", "q_med", "q_high")
 
 
 @dataclass
@@ -212,22 +213,32 @@ class QuantileGradientBoostingForecaster:
         return self
 
     def predict_quantiles(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Retourne un DataFrame avec une colonne par quantile (``q10``, ``q50``, …)."""
+        """Retourne un DataFrame avec colonnes ``q_low``, ``q_med``, ``q_high``.
+
+        Les noms sont neutres (low/med/high) plutôt que basés sur la valeur
+        numérique du quantile, ce qui permet de changer la config (ex. 5/95
+        au lieu de 10/90) sans casser le code en aval.
+        """
         if not self.models_:
             raise RuntimeError("Le modèle n'a pas encore été entraîné. Appelez `.fit` d'abord.")
         prepared = self._prepare_features(X)
+        sorted_q = sorted(self.models_.keys())
+        if len(sorted_q) != 3:
+            raise RuntimeError(
+                "predict_quantiles() suppose exactement 3 quantiles (low, med, high). "
+                f"Configuration actuelle : {sorted_q}"
+            )
         out = pd.DataFrame(index=X.index)
-        for q, est in self.models_.items():
-            preds = np.clip(est.predict(prepared), a_min=0.0, a_max=None)
-            out[f"q{int(round(q * 100)):02d}"] = preds
-        # Garantit la monotonie q10 <= q50 <= q90 (peut être violée par 3 modèles indépendants)
-        cols = sorted(out.columns)
-        out[cols] = np.sort(out[cols].to_numpy(), axis=1)
+        for label, q in zip(QUANTILE_LABELS, sorted_q):
+            preds = np.clip(self.models_[q].predict(prepared), a_min=0.0, a_max=None)
+            out[label] = preds
+        # Garantit la monotonie q_low <= q_med <= q_high (peut etre violee par 3 modeles independants)
+        out[list(QUANTILE_LABELS)] = np.sort(out[list(QUANTILE_LABELS)].to_numpy(), axis=1)
         return out
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        """Raccourci : retourne la prédiction médiane (q50) sous forme de tableau."""
-        return self.predict_quantiles(X)["q50"].to_numpy()
+        """Raccourci : retourne la prédiction médiane (q_med) sous forme de tableau."""
+        return self.predict_quantiles(X)["q_med"].to_numpy()
 
     def save(self, path: Path | str) -> Path:
         """Sérialise les 3 modèles + un fichier `<path>.meta.json` à côté."""
@@ -262,6 +273,7 @@ class QuantileGradientBoostingForecaster:
 __all__ = [
     "DEFAULT_QUANTILES",
     "ModelMetadata",
+    "QUANTILE_LABELS",
     "QuantileGradientBoostingForecaster",
     "RidgeForecaster",
 ]

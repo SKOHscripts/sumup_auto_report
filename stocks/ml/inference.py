@@ -48,8 +48,13 @@ def train_global_model(
     history_df: pd.DataFrame,
     max_iter: int = 200,
     random_state: int = 0,
+    config=None,
 ) -> QuantileGradientBoostingForecaster | None:
     """Entraîne le modèle quantile global sur l'historique fourni.
+
+    Si ``config`` (``MLConfig``) est fourni, ses ``quantiles`` et
+    ``tuned_params`` sont utilisés à la place des défauts. Sinon le tuning
+    persisté sur disque est lu, ou les défauts sont appliqués.
 
     Retourne None si l'historique est insuffisant.
     """
@@ -67,10 +72,19 @@ def train_global_model(
     if len(X) < MIN_TRAINING_ROWS:
         log.info("ML : table d'entrainement trop courte apres warm-up (%d lignes)", len(X))
         return None
+
+    if config is None:
+        from stocks.ml.config import load_config  # pylint: disable=import-outside-toplevel
+
+        config = load_config()
+    params = {**config.tuned_params}
+    params["max_iter"] = params.get("max_iter", max_iter)
+
     try:
         model = QuantileGradientBoostingForecaster(
-            max_iter=max_iter,
+            quantiles=config.quantiles,
             random_state=random_state,
+            **params,
         ).fit(X, y)
     except Exception as exc:  # pylint: disable=broad-exception-caught
         log.warning("ML : echec entrainement (%s)", exc)
@@ -102,6 +116,7 @@ def project_for_sku(  # pylint: disable=too-many-arguments
     except Exception as exc:  # pylint: disable=broad-exception-caught
         log.warning("ML : forecast %s echoue (%s)", sku, exc)
         return None
+    quantile_fractions = (model.quantiles[0], model.quantiles[-1])
     sim = simulate_rupture(
         stock_initial=stock_initial,
         weekly_quantiles=forecast,
@@ -109,6 +124,7 @@ def project_for_sku(  # pylint: disable=too-many-arguments
         incoming_eta=incoming_eta,
         n_simulations=n_simulations,
         seed=seed,
+        quantile_fractions=quantile_fractions,
     )
     return {
         "rupture_date_p10": sim["rupture_date_p10"].isoformat() if sim["rupture_date_p10"] else None,

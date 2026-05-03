@@ -1264,9 +1264,9 @@ class StockPDF(FPDF):
                     week_dt = datetime.fromisoformat(entry["week_start"])
                 except (KeyError, ValueError):
                     continue
-                stock_p10 = max(0.0, stock_p10 - float(entry.get("q90", 0.0)))  # pessimiste = grosse conso
-                stock_p50 = max(0.0, stock_p50 - float(entry.get("q50", 0.0)))
-                stock_p90 = max(0.0, stock_p90 - float(entry.get("q10", 0.0)))  # optimiste = petite conso
+                stock_p10 = max(0.0, stock_p10 - float(entry.get("q_high", 0.0)))  # pessimiste = grosse conso
+                stock_p50 = max(0.0, stock_p50 - float(entry.get("q_med", 0.0)))
+                stock_p90 = max(0.0, stock_p90 - float(entry.get("q_low", 0.0)))  # optimiste = petite conso
                 ml_dates.append(week_dt)
                 ml_p10_stock.append(stock_p10)
                 ml_p50_stock.append(stock_p50)

@@ -127,56 +127,73 @@ def forecast_horizon(
         )
         X = pd.DataFrame([feats])
         q_df = model.predict_quantiles(X).iloc[0]
-        q10, q50, q90 = float(q_df["q10"]), float(q_df["q50"]), float(q_df["q90"])
+        q_low = float(q_df["q_low"])
+        q_med = float(q_df["q_med"])
+        q_high = float(q_df["q_high"])
 
         rows.append({
             "stock_sku": sku,
             "year": next_year,
             "week": next_week,
             "week_start": week_start_dt,
-            "q10": q10,
-            "q50": q50,
-            "q90": q90,
+            "q_low": q_low,
+            "q_med": q_med,
+            "q_high": q_high,
         })
-        # Pour le pas suivant, on injecte la médiane comme "réalisation" observée.
-        usage_history.append(q50)
+        # Pour le pas suivant, on injecte la mediane comme "realisation" observee.
+        usage_history.append(q_med)
         last_year, last_week = next_year, next_week
 
     return pd.DataFrame(rows)
 
 
-def _sample_from_quantiles(q10: float, q50: float, q90: float, rng: np.random.Generator) -> float:
-    """Échantillonne une valeur à partir des 3 quantiles (interpolation linéaire par morceaux)."""
+def _sample_from_quantiles(
+    q_low: float,
+    q_med: float,
+    q_high: float,
+    rng: np.random.Generator,
+    low_frac: float = 0.05,
+    high_frac: float = 0.95,
+) -> float:
+    """Échantillonne une valeur à partir des 3 quantiles (interpolation linéaire par morceaux).
+
+    ``low_frac`` et ``high_frac`` sont les fractions des quantiles bas et haut
+    (0.05 et 0.95 par défaut, soit P5/P95). La queue extrapole linéairement
+    au-delà.
+    """
     u = rng.random()
-    if u <= 0.1:
-        # tail gauche : extrapolation linéaire à partir de q10..q50
-        return max(0.0, q10 - (q50 - q10) * (0.1 - u) / 0.4)
+    if u <= low_frac:
+        # Queue gauche : extrapolation lineaire au-dela de q_low
+        return max(0.0, q_low - (q_med - q_low) * (low_frac - u) / (0.5 - low_frac))
     if u <= 0.5:
-        return q10 + (q50 - q10) * (u - 0.1) / 0.4
-    if u <= 0.9:
-        return q50 + (q90 - q50) * (u - 0.5) / 0.4
-    # tail droite
-    return q90 + (q90 - q50) * (u - 0.9) / 0.4
+        return q_low + (q_med - q_low) * (u - low_frac) / (0.5 - low_frac)
+    if u <= high_frac:
+        return q_med + (q_high - q_med) * (u - 0.5) / (high_frac - 0.5)
+    # Queue droite
+    return q_high + (q_high - q_med) * (u - high_frac) / (high_frac - 0.5)
 
 
-def simulate_rupture(
+def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
     stock_initial: float,
     weekly_quantiles: pd.DataFrame,
     incoming_qty: float = 0.0,
     incoming_eta: Optional[date] = None,
     n_simulations: int = 1000,
     seed: int = 0,
+    quantile_fractions: tuple[float, float] = (0.05, 0.95),
 ) -> dict:
     """Simule ``n_simulations`` trajectoires de stock pour estimer la date de rupture.
 
     Args:
         stock_initial: stock physique disponible aujourd'hui.
         weekly_quantiles: DataFrame produit par ``forecast_horizon`` avec ``week_start``,
-            ``q10``, ``q50``, ``q90``.
+            ``q_low``, ``q_med``, ``q_high``.
         incoming_qty: quantité commandée à recevoir.
         incoming_eta: date d'arrivée prévue de ``incoming_qty`` (None = ignoré).
         n_simulations: nombre de trajectoires Monte-Carlo.
         seed: graine de reproductibilité.
+        quantile_fractions: les fractions (low, high) des colonnes q_low/q_high
+            (par défaut (0.05, 0.95) si le modèle est entraîné en P5/P95).
 
     Returns:
         dict avec :
@@ -202,16 +219,19 @@ def simulate_rupture(
     trajectories = np.zeros((n_simulations, n_weeks))
     rupture_weeks = np.full(n_simulations, -1, dtype=int)
 
-    q10_arr = weekly_quantiles["q10"].to_numpy()
-    q50_arr = weekly_quantiles["q50"].to_numpy()
-    q90_arr = weekly_quantiles["q90"].to_numpy()
+    q_low_arr = weekly_quantiles["q_low"].to_numpy()
+    q_med_arr = weekly_quantiles["q_med"].to_numpy()
+    q_high_arr = weekly_quantiles["q_high"].to_numpy()
 
     for s in range(n_simulations):
         stock = float(stock_initial)
         for t in range(n_weeks):
             if t == incoming_week_idx:
                 stock += float(incoming_qty)
-            consumption = _sample_from_quantiles(q10_arr[t], q50_arr[t], q90_arr[t], rng)
+            consumption = _sample_from_quantiles(
+                q_low_arr[t], q_med_arr[t], q_high_arr[t], rng,
+                low_frac=quantile_fractions[0], high_frac=quantile_fractions[1],
+            )
             stock -= consumption
             trajectories[s, t] = max(stock, 0.0)
             if stock <= 0 and rupture_weeks[s] == -1:

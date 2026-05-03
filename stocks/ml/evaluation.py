@@ -37,10 +37,10 @@ class EvaluationMetrics:
 
     mae: float = 0.0
     mape: float = 0.0
-    pinball_q10: float = 0.0
-    pinball_q50: float = 0.0
-    pinball_q90: float = 0.0
-    coverage_p10_p90: float = 0.0
+    pinball_low: float = 0.0
+    pinball_med: float = 0.0
+    pinball_high: float = 0.0
+    coverage_band: float = 0.0
     n_samples: int = 0
     n_folds: int = 0
     fold_metrics: list[dict] = field(default_factory=list)
@@ -50,10 +50,10 @@ class EvaluationMetrics:
         out = {
             "mae": self.mae,
             "mape": self.mape,
-            "pinball_q10": self.pinball_q10,
-            "pinball_q50": self.pinball_q50,
-            "pinball_q90": self.pinball_q90,
-            "coverage_p10_p90": self.coverage_p10_p90,
+            "pinball_low": self.pinball_low,
+            "pinball_med": self.pinball_med,
+            "pinball_high": self.pinball_high,
+            "coverage_band": self.coverage_band,
             "n_samples": self.n_samples,
             "n_folds": self.n_folds,
         }
@@ -125,7 +125,10 @@ def walk_forward_backtest(
         )
         return EvaluationMetrics()
 
-    quantile_list = list(quantiles)
+    quantile_list = sorted(quantiles)
+    if len(quantile_list) != 3:
+        raise ValueError("walk_forward_backtest attend exactement 3 quantiles (low, med, high)")
+    q_low_frac, q_med_frac, q_high_frac = quantile_list
     fold_results: list[dict] = []
     for fold_idx, (train_idx, test_idx) in enumerate(folds):
         model = QuantileGradientBoostingForecaster(
@@ -135,29 +138,29 @@ def walk_forward_backtest(
         ).fit(X.loc[train_idx], y.loc[train_idx])
         preds = model.predict_quantiles(X.loc[test_idx])
         y_test = y.loc[test_idx].to_numpy()
-        q10_arr = preds["q10"].to_numpy()
-        q50_arr = preds["q50"].to_numpy()
-        q90_arr = preds["q90"].to_numpy()
+        q_low_arr = preds["q_low"].to_numpy()
+        q_med_arr = preds["q_med"].to_numpy()
+        q_high_arr = preds["q_high"].to_numpy()
         fold_results.append({
             "fold": fold_idx,
             "n_train": len(train_idx),
             "n_test": len(test_idx),
-            "mae": mae(y_test, q50_arr),
-            "mape": mape(y_test, q50_arr),
-            "pinball_q10": pinball_loss(y_test, q10_arr, 0.1),
-            "pinball_q50": pinball_loss(y_test, q50_arr, 0.5),
-            "pinball_q90": pinball_loss(y_test, q90_arr, 0.9),
-            "coverage_p10_p90": coverage(y_test, q10_arr, q90_arr),
+            "mae": mae(y_test, q_med_arr),
+            "mape": mape(y_test, q_med_arr),
+            "pinball_low": pinball_loss(y_test, q_low_arr, q_low_frac),
+            "pinball_med": pinball_loss(y_test, q_med_arr, q_med_frac),
+            "pinball_high": pinball_loss(y_test, q_high_arr, q_high_frac),
+            "coverage_band": coverage(y_test, q_low_arr, q_high_arr),
         })
 
     n = len(fold_results)
     return EvaluationMetrics(
         mae=float(np.mean([r["mae"] for r in fold_results])),
         mape=float(np.mean([r["mape"] for r in fold_results])),
-        pinball_q10=float(np.mean([r["pinball_q10"] for r in fold_results])),
-        pinball_q50=float(np.mean([r["pinball_q50"] for r in fold_results])),
-        pinball_q90=float(np.mean([r["pinball_q90"] for r in fold_results])),
-        coverage_p10_p90=float(np.mean([r["coverage_p10_p90"] for r in fold_results])),
+        pinball_low=float(np.mean([r["pinball_low"] for r in fold_results])),
+        pinball_med=float(np.mean([r["pinball_med"] for r in fold_results])),
+        pinball_high=float(np.mean([r["pinball_high"] for r in fold_results])),
+        coverage_band=float(np.mean([r["coverage_band"] for r in fold_results])),
         n_samples=int(sum(r["n_test"] for r in fold_results)),
         n_folds=n,
         fold_metrics=fold_results,
@@ -196,9 +199,9 @@ def is_model_promotable(
         return False, reasons
     if metrics.mape > mape_threshold:
         reasons.append(f"MAPE trop eleve ({metrics.mape:.2%} > {mape_threshold:.0%})")
-    if abs(metrics.coverage_p10_p90 - coverage_target) > coverage_tolerance:
+    if abs(metrics.coverage_band - coverage_target) > coverage_tolerance:
         reasons.append(
-            f"Coverage hors cible ({metrics.coverage_p10_p90:.0%} vs "
+            f"Coverage hors cible ({metrics.coverage_band:.0%} vs "
             f"{coverage_target:.0%}±{coverage_tolerance:.0%})"
         )
     if baseline_mape is not None and not np.isnan(baseline_mape):

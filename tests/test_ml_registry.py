@@ -66,8 +66,8 @@ def test_load_current_returns_none_when_absent():
 
 def test_promote_if_better_records_history(trained_model):
     metrics = EvaluationMetrics(
-        mae=1.0, mape=0.25, pinball_q10=0.5, pinball_q50=0.5, pinball_q90=0.5,
-        coverage_p10_p90=0.80, n_samples=100, n_folds=5,
+        mae=1.0, mape=0.25, pinball_low=0.5, pinball_med=0.5, pinball_high=0.5,
+        coverage_band=0.80, n_samples=100, n_folds=5,
     )
     promoted, archive_path = reg.promote_if_better(
         model=trained_model,
@@ -89,8 +89,8 @@ def test_promote_if_better_records_history(trained_model):
 
 def test_promote_if_better_archives_even_when_not_promotable(trained_model):
     metrics = EvaluationMetrics(
-        mae=10.0, mape=0.60, pinball_q10=2.0, pinball_q50=3.0, pinball_q90=2.0,
-        coverage_p10_p90=0.50, n_samples=100, n_folds=5,
+        mae=10.0, mape=0.60, pinball_low=2.0, pinball_med=3.0, pinball_high=2.0,
+        coverage_band=0.50, n_samples=100, n_folds=5,
     )
     promoted, archive_path = reg.promote_if_better(
         model=trained_model,
@@ -109,7 +109,7 @@ def test_promote_if_better_archives_even_when_not_promotable(trained_model):
 
 
 def test_history_csv_has_correct_header(trained_model):
-    metrics = EvaluationMetrics(n_folds=5, mape=0.2, coverage_p10_p90=0.8)
+    metrics = EvaluationMetrics(n_folds=5, mape=0.2, coverage_band=0.8)
     reg.promote_if_better(trained_model, metrics, True, [], 0.3, "2026-W18")
     with open(reg.HISTORY_CSV, "r", encoding="utf-8") as f:
         reader = csv.reader(f)
@@ -127,7 +127,7 @@ def test_detect_drift_no_history():
 
 
 def test_detect_drift_triggers_after_3_bad_weeks(trained_model):
-    bad = EvaluationMetrics(n_folds=5, mape=0.6, coverage_p10_p90=0.5)
+    bad = EvaluationMetrics(n_folds=5, mape=0.6, coverage_band=0.5)
     for week in ("2026-W16", "2026-W17", "2026-W18"):
         reg.promote_if_better(trained_model, bad, False, ["MAPE trop eleve"], None, week)
     drifted, msg = reg.detect_drift(n=3, mape_threshold=0.45)
@@ -136,8 +136,8 @@ def test_detect_drift_triggers_after_3_bad_weeks(trained_model):
 
 
 def test_detect_drift_silent_when_only_2_bad(trained_model):
-    bad = EvaluationMetrics(n_folds=5, mape=0.6, coverage_p10_p90=0.5)
-    good = EvaluationMetrics(n_folds=5, mape=0.2, coverage_p10_p90=0.8)
+    bad = EvaluationMetrics(n_folds=5, mape=0.6, coverage_band=0.5)
+    good = EvaluationMetrics(n_folds=5, mape=0.2, coverage_band=0.8)
     reg.promote_if_better(trained_model, bad, False, [], None, "2026-W16")
     reg.promote_if_better(trained_model, good, True, [], None, "2026-W17")
     reg.promote_if_better(trained_model, bad, False, [], None, "2026-W18")

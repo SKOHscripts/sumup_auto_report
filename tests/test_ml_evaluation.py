@@ -69,7 +69,7 @@ def test_walk_forward_backtest_runs(long_history):
     metrics = ev.walk_forward_backtest(long_history, n_folds=3, max_iter=30, min_train_size=80)
     assert metrics.n_folds > 0
     assert 0.0 <= metrics.mape <= 5.0
-    assert 0.0 <= metrics.coverage_p10_p90 <= 1.0
+    assert 0.0 <= metrics.coverage_band <= 1.0
     assert len(metrics.fold_metrics) == metrics.n_folds
 
 
@@ -95,8 +95,8 @@ def test_baseline_avg_rolling4(long_history):
 
 def test_is_model_promotable_passes():
     metrics = ev.EvaluationMetrics(
-        mae=1.0, mape=0.20, pinball_q10=0.5, pinball_q50=0.5, pinball_q90=0.5,
-        coverage_p10_p90=0.78, n_samples=100, n_folds=5,
+        mae=1.0, mape=0.20, pinball_low=0.5, pinball_med=0.5, pinball_high=0.5,
+        coverage_band=0.78, n_samples=100, n_folds=5,
     )
     promotable, reasons = ev.is_model_promotable(metrics, baseline_mape=0.30)
     assert promotable is True
@@ -105,8 +105,8 @@ def test_is_model_promotable_passes():
 
 def test_is_model_promotable_rejects_high_mape():
     metrics = ev.EvaluationMetrics(
-        mae=10.0, mape=0.60, pinball_q10=2.0, pinball_q50=3.0, pinball_q90=2.0,
-        coverage_p10_p90=0.80, n_samples=100, n_folds=5,
+        mae=10.0, mape=0.60, pinball_low=2.0, pinball_med=3.0, pinball_high=2.0,
+        coverage_band=0.80, n_samples=100, n_folds=5,
     )
     promotable, reasons = ev.is_model_promotable(metrics, baseline_mape=0.50)
     assert promotable is False
@@ -115,8 +115,8 @@ def test_is_model_promotable_rejects_high_mape():
 
 def test_is_model_promotable_rejects_bad_coverage():
     metrics = ev.EvaluationMetrics(
-        mae=1.0, mape=0.20, pinball_q10=0.5, pinball_q50=0.5, pinball_q90=0.5,
-        coverage_p10_p90=0.50, n_samples=100, n_folds=5,
+        mae=1.0, mape=0.20, pinball_low=0.5, pinball_med=0.5, pinball_high=0.5,
+        coverage_band=0.50, n_samples=100, n_folds=5,
     )
     promotable, reasons = ev.is_model_promotable(metrics, baseline_mape=0.30)
     assert promotable is False
@@ -125,8 +125,8 @@ def test_is_model_promotable_rejects_bad_coverage():
 
 def test_is_model_promotable_rejects_when_worse_than_baseline():
     metrics = ev.EvaluationMetrics(
-        mae=1.0, mape=0.30, pinball_q10=0.5, pinball_q50=0.5, pinball_q90=0.5,
-        coverage_p10_p90=0.80, n_samples=100, n_folds=5,
+        mae=1.0, mape=0.30, pinball_low=0.5, pinball_med=0.5, pinball_high=0.5,
+        coverage_band=0.80, n_samples=100, n_folds=5,
     )
     promotable, reasons = ev.is_model_promotable(metrics, baseline_mape=0.20)
     assert promotable is False

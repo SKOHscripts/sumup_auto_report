@@ -42,10 +42,10 @@ HISTORY_HEADER = [
     "promoted",
     "mae",
     "mape",
-    "pinball_q10",
-    "pinball_q50",
-    "pinball_q90",
-    "coverage_p10_p90",
+    "pinball_low",
+    "pinball_med",
+    "pinball_high",
+    "coverage_band",
     "baseline_mape",
     "n_samples",
     "n_folds",
@@ -123,10 +123,10 @@ def append_history(
         "promoted": int(promoted),
         "mae": f"{metrics.mae:.4f}",
         "mape": f"{metrics.mape:.4f}",
-        "pinball_q10": f"{metrics.pinball_q10:.4f}",
-        "pinball_q50": f"{metrics.pinball_q50:.4f}",
-        "pinball_q90": f"{metrics.pinball_q90:.4f}",
-        "coverage_p10_p90": f"{metrics.coverage_p10_p90:.4f}",
+        "pinball_low": f"{metrics.pinball_low:.4f}",
+        "pinball_med": f"{metrics.pinball_med:.4f}",
+        "pinball_high": f"{metrics.pinball_high:.4f}",
+        "coverage_band": f"{metrics.coverage_band:.4f}",
         "baseline_mape": "" if baseline_mape is None else f"{baseline_mape:.4f}",
         "n_samples": metrics.n_samples,
         "n_folds": metrics.n_folds,
@@ -159,12 +159,12 @@ def promote_if_better(
         set_current(archive_path)
         log.info(
             "ML : modele %s promu (MAPE=%.2f%%, coverage=%.0f%%)",
-            version, metrics.mape * 100, metrics.coverage_p10_p90 * 100,
+            version, metrics.mape * 100, metrics.coverage_band * 100,
         )
     else:
         log.warning(
             "ML : modele %s NON promu : %s (MAPE=%.2f%%, coverage=%.0f%%)",
-            version, " | ".join(reasons), metrics.mape * 100, metrics.coverage_p10_p90 * 100,
+            version, " | ".join(reasons), metrics.mape * 100, metrics.coverage_band * 100,
         )
     append_history(
         metrics=metrics,

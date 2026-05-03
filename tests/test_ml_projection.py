@@ -46,10 +46,10 @@ def test_qgbf_predict_quantiles_shape(history_df):
     X, y, _ = ft.prepare_training_table(history_df)
     model = QuantileGradientBoostingForecaster(max_iter=50).fit(X, y)
     out = model.predict_quantiles(X)
-    assert set(out.columns) == {"q10", "q50", "q90"}
-    assert (out["q10"] <= out["q50"]).all()
-    assert (out["q50"] <= out["q90"]).all()
-    assert (out["q10"] >= 0).all()
+    assert set(out.columns) == {"q_low", "q_med", "q_high"}
+    assert (out["q_low"] <= out["q_med"]).all()
+    assert (out["q_med"] <= out["q_high"]).all()
+    assert (out["q_low"] >= 0).all()
 
 
 def test_qgbf_save_load_roundtrip(tmp_path, history_df):
@@ -76,12 +76,14 @@ def test_qgbf_predict_returns_q50_array(history_df):
 
 
 def test_sample_quantiles_distribution_is_centered():
+    """Avec les fractions par défaut (0.05, 0.95) et q_low=5/q_med=10/q_high=15,
+    le 5e percentile des échantillons doit ≈ q_low et le 95e ≈ q_high."""
     rng = np.random.default_rng(0)
     samples = [_sample_from_quantiles(5.0, 10.0, 15.0, rng) for _ in range(5000)]
     arr = np.asarray(samples)
     assert 9.0 < np.median(arr) < 11.0
-    assert np.percentile(arr, 10) == pytest.approx(5.0, abs=2.0)
-    assert np.percentile(arr, 90) == pytest.approx(15.0, abs=2.0)
+    assert np.percentile(arr, 5) == pytest.approx(5.0, abs=2.0)
+    assert np.percentile(arr, 95) == pytest.approx(15.0, abs=2.0)
 
 
 def test_sample_quantiles_non_negative():
@@ -99,9 +101,9 @@ def test_forecast_horizon_shape(history_df):
     chips_hist = history_df[history_df["stock_sku"] == "chips"]
     fc = forecast_horizon(model, chips_hist, horizon_weeks=8)
     assert len(fc) == 8
-    assert set(fc.columns) >= {"q10", "q50", "q90", "week_start", "stock_sku"}
-    assert (fc["q10"] <= fc["q50"]).all()
-    assert (fc["q50"] <= fc["q90"]).all()
+    assert set(fc.columns) >= {"q_low", "q_med", "q_high", "week_start", "stock_sku"}
+    assert (fc["q_low"] <= fc["q_med"]).all()
+    assert (fc["q_med"] <= fc["q_high"]).all()
 
 
 def test_forecast_horizon_rejects_multi_sku(history_df):
@@ -128,7 +130,7 @@ def quantiles_df():
     """8 semaines de prévisions avec consommation ~10/semaine."""
     base = date(2026, 5, 4)
     return pd.DataFrame([
-        {"week_start": base + timedelta(weeks=i), "q10": 8.0, "q50": 10.0, "q90": 12.0}
+        {"week_start": base + timedelta(weeks=i), "q_low": 8.0, "q_med": 10.0, "q_high": 12.0}
         for i in range(8)
     ])
 

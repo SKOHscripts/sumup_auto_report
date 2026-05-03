@@ -64,7 +64,7 @@ def _fake_kpi(with_ml: bool) -> dict:
             "weekly_forecast": [
                 {
                     "week_start": (today + timedelta(weeks=i)).isoformat(),
-                    "q10": 9.0, "q50": 10.0, "q90": 11.5,
+                    "q_low": 9.0, "q_med": 10.0, "q_high": 11.5,
                 }
                 for i in range(8)
             ],
