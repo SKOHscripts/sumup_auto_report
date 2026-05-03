@@ -172,11 +172,9 @@ def show_report(n: int = 10) -> int:
     for row in rows:
         promoted = "OUI" if row["promoted"] == "1" else "NON"
         baseline = row["baseline_mape"] or "-"
-        cov_raw = row.get("coverage_band") or row.get("coverage_p10_p90")
-        cov_str = f"{float(cov_raw):.0%}" if cov_raw else "-"
         print(
             f"{row['promoted_at']:<20} {row['week_label']:<10} {promoted:<6} "
-            f"{float(row['mape']):.2%}   {cov_str:<10} {baseline}"
+            f"{float(row['mape']):.2%}   {float(row['coverage_band']):.0%}      {baseline}"
         )
     return 0
 
