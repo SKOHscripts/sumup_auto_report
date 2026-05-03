@@ -106,7 +106,7 @@ case "$MODULE" in
             START="${LAST_RUN:-$(date -d '7 days ago' +%F)}"
             END="$TODAY"
             echo "[$(date)] Lancement adhésions $START → $END"
-            "$PYTHON" -m adhesions.sumup_adhesions --start "$START" --end "$END" "$@"
+            "$PYTHON" -m adhesions.sumup_adhesions --filtres "adhesion" --start "$START" --end "$END" "$@"
             echo "$TODAY" > "$STATE_FILE"
         else
             echo "[$(date)] Skip — dernier run il y a $DAYS_SINCE j ($LAST_RUN)"
