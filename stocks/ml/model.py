@@ -81,10 +81,12 @@ class RidgeForecaster:
             ],
             remainder="drop",
         )
+
         return Pipeline([("pre", pre), ("ridge", Ridge(alpha=self.alpha))])
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> "RidgeForecaster":
         """Entraîne le modèle sur (X, y). Retourne self."""
+
         if self.sku_col not in X.columns:
             raise ValueError(f"Colonne `{self.sku_col}` absente de X")
         self.pipeline_ = self._build_pipeline(list(X.columns))
@@ -97,18 +99,22 @@ class RidgeForecaster:
             n_features=int(X.shape[1]),
             config_hash=_config_hash({"alpha": self.alpha, "model": "ridge"}),
         )
+
         return self
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Prédit la consommation hebdomadaire pour chaque ligne de X."""
+
         if self.pipeline_ is None:
             raise RuntimeError("Le modèle n'a pas encore été entraîné. Appelez `.fit` d'abord.")
         preds = self.pipeline_.predict(X)
         # Une consommation ne peut pas être négative.
+
         return np.clip(preds, a_min=0.0, a_max=None)
 
     def save(self, path: Path | str) -> Path:
         """Sérialise le pipeline + un fichier `<path>.meta.json` à côté."""
+
         if self.pipeline_ is None:
             raise RuntimeError("Rien à sauvegarder : modèle non entraîné.")
         target = Path(path)
@@ -117,6 +123,7 @@ class RidgeForecaster:
         meta_path = target.with_suffix(target.suffix + ".meta.json")
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(asdict(self.metadata), f, indent=2, ensure_ascii=False)
+
         return target
 
     @classmethod
@@ -126,9 +133,11 @@ class RidgeForecaster:
         instance = cls()
         instance.pipeline_ = joblib.load(target)
         meta_path = target.with_suffix(target.suffix + ".meta.json")
+
         if meta_path.exists():
             with open(meta_path, "r", encoding="utf-8") as f:
                 instance.metadata = ModelMetadata(**json.load(f))
+
         return instance
 
 
@@ -152,6 +161,8 @@ class QuantileGradientBoostingForecaster:
         max_depth: int | None = 6,
         learning_rate: float = 0.05,
         min_samples_leaf: int = 5,
+        l2_regularization: float = 0.0,   # NOUVEAU
+        max_leaf_nodes: int = 31,        # NOUVEAU
         random_state: int = 0,
         sku_col: str = "stock_sku",
     ):
@@ -165,6 +176,8 @@ class QuantileGradientBoostingForecaster:
         self.models_: dict[float, HistGradientBoostingRegressor] = {}
         self.feature_cols_: list[str] = []
         self.metadata = ModelMetadata()
+        self.l2_regularization = l2_regularization
+        self.max_leaf_nodes = max_leaf_nodes
 
     def _make_estimator(self, q: float) -> HistGradientBoostingRegressor:
         return HistGradientBoostingRegressor(
@@ -174,23 +187,29 @@ class QuantileGradientBoostingForecaster:
             max_depth=self.max_depth,
             learning_rate=self.learning_rate,
             min_samples_leaf=self.min_samples_leaf,
+            l2_regularization=getattr(self, "l2_regularization", 0.0),
+            max_leaf_nodes=getattr(self, "max_leaf_nodes", 31),
             random_state=self.random_state,
             categorical_features=[self.sku_col],
         )
 
     def _prepare_features(self, X: pd.DataFrame) -> pd.DataFrame:
         out = X.copy()
+
         if self.sku_col in out.columns:
             out[self.sku_col] = out[self.sku_col].astype("category")
+
         return out
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> "QuantileGradientBoostingForecaster":
         """Entraîne un HGB par quantile."""
+
         if self.sku_col not in X.columns:
             raise ValueError(f"Colonne `{self.sku_col}` absente de X")
         prepared = self._prepare_features(X)
         self.feature_cols_ = list(prepared.columns)
         y_arr = y.astype("float64").to_numpy()
+
         for q in self.quantiles:
             est = self._make_estimator(q)
             est.fit(prepared, y_arr)
@@ -210,6 +229,7 @@ class QuantileGradientBoostingForecaster:
                 "min_samples_leaf": self.min_samples_leaf,
             }),
         )
+
         return self
 
     def predict_quantiles(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -219,29 +239,35 @@ class QuantileGradientBoostingForecaster:
         numérique du quantile, ce qui permet de changer la config (ex. 5/95
         au lieu de 10/90) sans casser le code en aval.
         """
+
         if not self.models_:
             raise RuntimeError("Le modèle n'a pas encore été entraîné. Appelez `.fit` d'abord.")
         prepared = self._prepare_features(X)
         sorted_q = sorted(self.models_.keys())
+
         if len(sorted_q) != 3:
             raise RuntimeError(
                 "predict_quantiles() suppose exactement 3 quantiles (low, med, high). "
                 f"Configuration actuelle : {sorted_q}"
             )
         out = pd.DataFrame(index=X.index)
+
         for label, q in zip(QUANTILE_LABELS, sorted_q):
             preds = np.clip(self.models_[q].predict(prepared), a_min=0.0, a_max=None)
             out[label] = preds
         # Garantit la monotonie q_low <= q_med <= q_high (peut etre violee par 3 modeles independants)
         out[list(QUANTILE_LABELS)] = np.sort(out[list(QUANTILE_LABELS)].to_numpy(), axis=1)
+
         return out
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """Raccourci : retourne la prédiction médiane (q_med) sous forme de tableau."""
+
         return self.predict_quantiles(X)["q_med"].to_numpy()
 
     def save(self, path: Path | str) -> Path:
         """Sérialise les 3 modèles + un fichier `<path>.meta.json` à côté."""
+
         if not self.models_:
             raise RuntimeError("Rien à sauvegarder : modèle non entraîné.")
         target = Path(path)
@@ -253,6 +279,7 @@ class QuantileGradientBoostingForecaster:
         meta_path = target.with_suffix(target.suffix + ".meta.json")
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(asdict(self.metadata), f, indent=2, ensure_ascii=False)
+
         return target
 
     @classmethod
@@ -264,9 +291,11 @@ class QuantileGradientBoostingForecaster:
         instance.models_ = bundle["models"]
         instance.feature_cols_ = bundle["feature_cols"]
         meta_path = target.with_suffix(target.suffix + ".meta.json")
+
         if meta_path.exists():
             with open(meta_path, "r", encoding="utf-8") as f:
                 instance.metadata = ModelMetadata(**json.load(f))
+
         return instance
 
 

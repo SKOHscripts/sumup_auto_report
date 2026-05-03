@@ -3,16 +3,18 @@
   "coverage_tolerance": 0.1,
   "mape_threshold": 0.45,
   "quantiles": [
-    0.05,
+    0.1,
     0.5,
-    0.95
+    0.9
   ],
-  "tuned_at": "2026-05-03T15:04:03+00:00",
+  "tuned_at": "2026-05-03T18:56:35+00:00",
   "tuned_params": {
-    "learning_rate": 0.02,
-    "max_depth": 4,
-    "max_iter": 500,
-    "min_samples_leaf": 5
+    "l2_regularization": 5.0,
+    "learning_rate": 0.024,
+    "max_depth": 2,
+    "max_iter": 350,
+    "max_leaf_nodes": 55,
+    "min_samples_leaf": 8
   },
-  "tuning_score": 1.5934043716163255
+  "tuning_score": 1.271958843506031
 }

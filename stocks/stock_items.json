@@ -183,7 +183,7 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-02",
+      "last_auto_update": "2026-05-03",
       "stock_history": [
         {
           "type": "purchase",
@@ -274,7 +274,7 @@
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
-      "last_inventory_date": "2026-04-16",
+      "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual"
     },
     "stock_sku": "vin_blanc"
@@ -600,7 +600,7 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-02",
+      "last_auto_update": "2026-05-03",
       "stock_history": [
         {
           "type": "purchase",
@@ -1085,7 +1085,7 @@
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-02",
+      "last_auto_update": "2026-05-03",
       "stock_history": [
         {
           "type": "purchase",
@@ -1435,7 +1435,7 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 0.90,
+      "stock_on_hand": 0.9,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",

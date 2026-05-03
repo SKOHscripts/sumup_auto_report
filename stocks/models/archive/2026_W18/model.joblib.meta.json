@@ -1,10 +1,10 @@
 {
-  "trained_at": "2026-05-03T15:04:13+00:00",
+  "trained_at": "2026-05-03T18:56:46+00:00",
   "sklearn_version": "1.8.0",
   "n_samples": 147,
   "n_skus": 17,
   "n_features": 17,
-  "config_hash": "308ed94e7fdd",
+  "config_hash": "be86dfed501b",
   "metrics": {},
   "notes": ""
 }

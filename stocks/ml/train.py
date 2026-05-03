@@ -59,6 +59,7 @@ log = logging.getLogger("stocks.ml.train")
 
 def _build_model(cfg: MLConfig, random_state: int = 0) -> QuantileGradientBoostingForecaster:
     """Instancie un modèle quantile à partir de la config (paramètres tunés inclus)."""
+
     return QuantileGradientBoostingForecaster(
         quantiles=cfg.quantiles,
         random_state=random_state,
@@ -73,8 +74,10 @@ def run_train(
 ) -> int:
     """Pipeline complet : load → backtest → train final → promote → log."""
     history = load_weekly_usage()
+
     if len(history) == 0:
         log.error("Aucun historique persistant. Lancer 'python -m stocks.ml.bootstrap' avant.")
+
         return 1
 
     log.info("Backtest walk-forward (5 plis) avec quantiles=%s...", cfg.quantiles)
@@ -84,8 +87,10 @@ def run_train(
         quantiles=cfg.quantiles,
         max_iter=cfg.tuned_params.get("max_iter", 200),
     )
+
     if metrics.n_folds == 0:
         log.error("Pas assez de donnees pour evaluer. Continuez d'accumuler l'historique.")
+
         return 2
 
     baseline = baseline_avg_rolling4(history)
@@ -101,6 +106,7 @@ def run_train(
         "Metriques agregees : MAPE=%.2f%% MAE=%.2f coverage=%.0f%% (baseline_mape=%.2f%%)",
         metrics.mape * 100, metrics.mae, metrics.coverage_band * 100, baseline_pct,
     )
+
     if reasons:
         log.warning("Raisons de non-promotion : %s", " | ".join(reasons))
 
@@ -111,6 +117,7 @@ def run_train(
 
     if not do_promote:
         log.info("--no-promote : pas d'ecriture en archive ni de mise a jour de current.")
+
         return 0
 
     week = iso_week_label(datetime.now(timezone.utc))
@@ -124,51 +131,63 @@ def run_train(
     )
 
     drifted, drift_msg = detect_drift(n=3, mape_threshold=cfg.mape_threshold)
+
     if drifted:
         log.error("ALERTE DRIFT : %s", drift_msg)
+
         return 3
 
     return 0 if promoted else 4
 
 
-def run_tune(n_iter: int = 20) -> int:
+def run_tune(n_iter_coarse: int = 3000) -> int:
     """Tuning RandomizedSearchCV puis sauvegarde de la config + train final."""
     history = load_weekly_usage()
+
     if len(history) == 0:
         log.error("Aucun historique persistant. Lancer 'python -m stocks.ml.bootstrap' avant.")
+
         return 1
-    log.info("Tuning des hyperparametres (n_iter=%d)...", n_iter)
-    new_cfg = tune_and_save(history, n_iter=n_iter)
+    log.info("Tuning des hyperparametres (n_iter_coarse=%d)...", n_iter_coarse)
+    new_cfg = tune_and_save(history, n_iter_coarse=n_iter_coarse)
     log.info(
         "Config sauvegardee : %s (params=%s, score_pinball=%.4f)",
         "stocks/models/config.json", new_cfg.tuned_params, new_cfg.tuning_score or 0.0,
     )
     # On lance ensuite un train normal pour valider la config tunee.
+
     return run_train(new_cfg, force=False, do_promote=True)
 
 
 def run_diagnose(output_csv: Path | None = None) -> int:
     """Affiche un rapport par SKU (et écrit éventuellement en CSV)."""
     history = load_weekly_usage()
+
     if len(history) == 0:
         log.error("Aucun historique persistant. Lancer 'python -m stocks.ml.bootstrap' avant.")
+
         return 1
     df = diagnose(history)
     print(format_table(df))
+
     if output_csv:
         path = save_csv(df, output_csv)
         log.info("Rapport CSV ecrit : %s", path)
+
     return 0
 
 
 def show_report(n: int = 10) -> int:
     """Affiche les ``n`` dernières lignes du journal de promotion."""
     rows = recent_history(n=n)
+
     if not rows:
         log.info("Aucun historique de promotion (lancer 'train' une fois).")
+
         return 0
     print("Dernières évaluations :")
     print(f"{'date':<20} {'week':<10} {'promu':<6} {'MAPE':<8} {'coverage':<10} {'baseline':<10}")
+
     for row in rows:
         promoted = "OUI" if row["promoted"] == "1" else "NON"
         baseline = row["baseline_mape"] or "-"
@@ -176,38 +195,48 @@ def show_report(n: int = 10) -> int:
             f"{row['promoted_at']:<20} {row['week_label']:<10} {promoted:<6} "
             f"{float(row['mape']):.2%}   {float(row['coverage_band']):.0%}      {baseline}"
         )
+
     return 0
 
 
 def _parse_quantiles(raw: str) -> tuple[float, float, float]:
     """Parse une chaîne '0.05,0.5,0.95' en tuple ordonné."""
     parts = [float(p.strip()) for p in raw.split(",")]
+
     if len(parts) != 3:
         raise argparse.ArgumentTypeError(f"--quantiles doit avoir 3 valeurs, recu : {raw}")
     parts.sort()
+
     if abs(parts[1] - 0.5) > 1e-6:
         raise argparse.ArgumentTypeError("Le quantile median doit valoir 0.5")
+
     return (parts[0], parts[1], parts[2])
 
 
 def _apply_overrides(cfg: MLConfig, args) -> MLConfig:
     """Applique les flags de seuil/quantiles sur la config et la persiste si modifiée."""
     changed = False
+
     if args.quantiles is not None:
         cfg.quantiles = args.quantiles
         changed = True
+
     if args.mape_threshold is not None:
         cfg.mape_threshold = args.mape_threshold
         changed = True
+
     if args.coverage_target is not None:
         cfg.coverage_target = args.coverage_target
         changed = True
+
     if args.coverage_tolerance is not None:
         cfg.coverage_tolerance = args.coverage_tolerance
         changed = True
+
     if changed:
         save_config(cfg)
         log.info("Config mise a jour et persistee : %s", cfg.as_dict())
+
     return cfg
 
 
@@ -226,7 +255,7 @@ def main():
     parser.add_argument("--no-promote", action="store_true", help="N'archive pas et ne met pas a jour current")
 
     # Tuning.
-    parser.add_argument("--n-iter", type=int, default=200, help="Iterations de RandomizedSearchCV (defaut : 200)")
+    parser.add_argument("--n_iter_coarse", type=int, default=3000, help="Iterations de RandomizedSearchCV (defaut : 3000)")
 
     # Configurables (persistes dans config.json).
     parser.add_argument("--quantiles", type=_parse_quantiles, default=None,
@@ -249,8 +278,9 @@ def main():
 
     if args.diagnose:
         sys.exit(run_diagnose(args.diagnose_csv))
+
     if args.tune:
-        sys.exit(run_tune(n_iter=args.n_iter))
+        sys.exit(run_tune(n_iter_coarse=args.n_iter_coarse))
     sys.exit(run_train(cfg, force=args.force, do_promote=not args.no_promote))
 
 
