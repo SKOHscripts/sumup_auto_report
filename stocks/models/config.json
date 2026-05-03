@@ -7,14 +7,14 @@
     0.5,
     0.9
   ],
-  "tuned_at": "2026-05-03T18:56:35+00:00",
+  "tuned_at": "2026-05-03T19:19:41+00:00",
   "tuned_params": {
-    "l2_regularization": 5.0,
-    "learning_rate": 0.024,
-    "max_depth": 2,
-    "max_iter": 350,
-    "max_leaf_nodes": 55,
-    "min_samples_leaf": 8
+    "l2_regularization": 1.0,
+    "learning_rate": 0.05,
+    "max_depth": 5,
+    "max_iter": 125,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 10
   },
-  "tuning_score": 1.271958843506031
+  "tuning_score": 1.2792841879745378
 }
