@@ -20,10 +20,14 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ── brand CSS ─────────────────────────────────────────────────────────────────
 
+_FONT_IMPORT = (
+    "@import url('https://fonts.googleapis.com/css2"
+    "?family=Nunito:wght@400;600;700;800;900"
+    "&family=Caveat:wght@500;600&display=swap');"
+)
+
 st.markdown(
-    """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Caveat:wght@500;600&display=swap');
+    "<style>\n" + _FONT_IMPORT + """
 
 html, body, [class*="css"], .stMarkdown, .stText {
     font-family: 'Nunito', sans-serif !important;
@@ -349,7 +353,9 @@ def run_script(
     st.session_state[f"running_{script_id}"] = False
 
 
-def _show_result(script_id: str, no_mail: bool = False, success_label: str = "Rapport") -> None:
+def _show_result(
+    script_id: str, skip_email: bool = False, success_label: str = "Rapport"
+) -> None:
     """Affiche les logs et le statut après exécution."""
     logs = st.session_state[f"logs_{script_id}"]
     rc = st.session_state[f"rc_{script_id}"]
@@ -357,7 +363,10 @@ def _show_result(script_id: str, no_mail: bool = False, success_label: str = "Ra
         st.code("".join(logs))
     if rc is not None:
         if rc == 0:
-            msg = f"{success_label} généré avec succès (sans envoi email)." if no_mail else f"{success_label} généré et email envoyé."
+            if skip_email:
+                msg = f"{success_label} généré avec succès (sans envoi email)."
+            else:
+                msg = f"{success_label} généré et email envoyé."
             st.success(msg)
         else:
             st.error("Une erreur s'est produite — consultez les logs ci-dessus.")
@@ -536,7 +545,7 @@ if sid == "stocks":
             run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input,
                        extra_env=stocks_env)
 
-        _show_result(sid, no_mail=st.session_state.get(f"no_mail_{sid}", False), success_label="Rapport Stocks")
+        _show_result(sid, skip_email=st.session_state.get(f"no_mail_{sid}", False), success_label="Rapport Stocks")
 
 # ── Adhésions ─────────────────────────────────────────────────────────────────
 
@@ -605,7 +614,7 @@ elif sid == "adhesions":
         run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input,
                    extra_env=adhesion_env)
 
-    _show_result(sid, no_mail=st.session_state.get(f"no_mail_{sid}", False), success_label="Rapport Adhésions")
+    _show_result(sid, skip_email=st.session_state.get(f"no_mail_{sid}", False), success_label="Rapport Adhésions")
 
 # ── Membres (Paheko) ──────────────────────────────────────────────────────────
 
@@ -633,7 +642,7 @@ elif sid == "paheko":
         cmd = build_cmd(cfg, paheko_args)
         run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input)
 
-    _show_result(sid, no_mail=st.session_state.get(f"no_mail_{sid}", False), success_label="Tableau de bord")
+    _show_result(sid, skip_email=st.session_state.get(f"no_mail_{sid}", False), success_label="Tableau de bord")
 
 # ── Statistiques ──────────────────────────────────────────────────────────────
 
@@ -703,4 +712,4 @@ elif sid == "stats":
         run_script(sid, cmd, mail_env_var=email_env_var, email_override=email_input,
                    extra_env=stats_env)
 
-    _show_result(sid, no_mail=st.session_state.get(f"no_mail_{sid}", False), success_label="Rapport Statistiques")
+    _show_result(sid, skip_email=st.session_state.get(f"no_mail_{sid}", False), success_label="Rapport Statistiques")
