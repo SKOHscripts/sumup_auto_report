@@ -1189,7 +1189,18 @@ class StockPDF(FPDF):
         if avg_week > 0 and trend_start_stock > 0:
             weeks_to_rupture = trend_start_stock / avg_week
             rupture_dt = trend_start_dt + timedelta(weeks=weeks_to_rupture)
-            rupture_label = rupture_dt.strftime("%d/%m/%Y")
+            # Privilege la date stockee dans le KPI pour coherence avec le bloc indicateurs.
+            # La date du KPI (rupture_date_linear si override ML, sinon rupture_date) est la
+            # reference canonique ; on la re-formate ici pour que l'annotation corresponde.
+            _kpi_linear_iso = (
+                kpi.get("rupture_date_linear") if kpi.get("rupture_date_linear")
+                else kpi.get("rupture_date")
+            )
+            rupture_label = (
+                _format_iso_date_dmy(_kpi_linear_iso)
+                if _kpi_linear_iso
+                else rupture_dt.strftime("%d/%m/%Y")
+            )
 
             n_future = max(4, int(math.floor(weeks_to_rupture)) + 2)
 
@@ -1588,25 +1599,33 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     pdf.section_title("Indicateurs cles")
     # var = f"{kpi['variation_pct']:+.1f}%" if kpi["variation_pct"] is not None else "N/A"
     ml_replaced = kpi.get("rupture_date_linear") is not None
+    ml_proj = kpi.get("ml_projection") or {}
+    ml_has_proj = bool(ml_proj.get("rupture_date_med"))
+
     cov_raw = kpi.get("coverage_weeks")
     cov = f"{cov_raw:.1f} sem." if cov_raw is not None else "N/A"
     cov_label = "Couverture (ML q50)" if ml_replaced else "Couverture estimee"
-    rupture_label = "Date rupture (ML q50)" if ml_replaced else "Date rupture estimee"
-    rupture_val = _format_iso_date_dmy(kpi.get("rupture_date") or "")
+
+    # Date simple : valeur lineaire d'origine (sauvegardee si override ML, sinon rupture_date)
+    date_simple = _format_iso_date_dmy(
+        (kpi.get("rupture_date_linear") if ml_replaced else kpi.get("rupture_date")) or ""
+    )
 
     kpi_rows = [
         (f"Conso 28 jours [{kpi['unit']}]", kpi["usage_28d"]),
         (f"Moyenne hebdo conso [{kpi['unit']}]", kpi["avg_weekly"]),
         (f"Moy. glissante 4 sem. [{kpi['unit']}]", kpi["avg_rolling4"]),
         (cov_label, cov),
-        (rupture_label, rupture_val),
+        ("Rupture simple", date_simple),
     ]
-    if ml_replaced:
-        kpi_rows.append(("Rupture simple", _format_iso_date_dmy(kpi.get("rupture_date_linear") or "")))
-    else:
-        kpi_rows.append((f"Rupture ML ({_ml_quantile_labels(kpi)[1]})", _ml_rupture_label(kpi)))
+    if ml_has_proj:
+        ql = _ml_quantile_labels(kpi)
+        kpi_rows.append(("Rupture P50 (ML)", _ml_rupture_label(kpi)))
+        kpi_rows.append((f"Plage ML ({ql[0]}..{ql[2]})", _ml_rupture_range(kpi)))
+        date_retenue = _format_iso_date_dmy(kpi.get("rupture_date") or "")
+        retenue_suffix = "ML q50" if ml_replaced else "simple, hors plage ML"
+        kpi_rows.append(("Date retenue", f"{date_retenue} ({retenue_suffix})"))
     kpi_rows += [
-        (f"Intervalle ML ({_ml_quantile_labels(kpi)[0]}..{_ml_quantile_labels(kpi)[2]})", _ml_rupture_range(kpi)),
         (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
         (f"Total consomme (periode) [{kpi['unit']}]", kpi["total_used"]),
     ]
