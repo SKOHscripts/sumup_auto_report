@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pylint: disable=too-many-lines
 """
 SumUp - Rapport hebdomadaire de gestion des stocks
 ───────────────────────────────────────────────────
@@ -1687,9 +1688,9 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
 
 def render_ml_disclaimer(pdf: StockPDF) -> None:
     """Encart de vulgarisation ML insere apres le tableau de synthese (mode --ml)."""
-    _ORANGE = (255, 167, 11)
-    _ORANGE_LIGHT = (255, 248, 230)
-    _WHITE = (255, 255, 255)
+    col_orange = (255, 167, 11)
+    col_orange_light = (255, 248, 230)
+    col_white = (255, 255, 255)
     pw = pdf.usable_width()
 
     pdf.ln(5)
@@ -1697,25 +1698,25 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     # ── En-tete orange ───────────────────────────────────────────────────────
     hdr_h = 8.0
     y0 = pdf.get_y()
-    pdf.set_fill_color(*_ORANGE)
-    pdf.set_draw_color(*_ORANGE)
+    pdf.set_fill_color(*col_orange)
+    pdf.set_draw_color(*col_orange)
     pdf.rect(pdf.l_margin, y0, pw, hdr_h, style="F")
 
     # Icone : petit carre blanc avec "ML" en orange a l'interieur
     icon_sz = 5.5
     ix = pdf.l_margin + 2.5
     iy = y0 + (hdr_h - icon_sz) / 2.0
-    pdf.set_fill_color(*_WHITE)
-    pdf.set_draw_color(*_WHITE)
+    pdf.set_fill_color(*col_white)
+    pdf.set_draw_color(*col_white)
     pdf.rect(ix, iy, icon_sz, icon_sz, style="F")
     pdf.set_font("Helvetica", "B", 5.5)
-    pdf.set_text_color(*_ORANGE)
+    pdf.set_text_color(*col_orange)
     pdf.set_xy(ix, iy + 0.8)
     pdf.cell(icon_sz, icon_sz - 1.5, "ML", border=0, align="C")
 
     # Titre
     pdf.set_font("Helvetica", "B", 8.0)
-    pdf.set_text_color(*_WHITE)
+    pdf.set_text_color(*col_white)
     tx = ix + icon_sz + 2.5
     pdf.set_xy(tx, y0 + 1.5)
     pdf.cell(
@@ -1726,8 +1727,8 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     pdf.set_xy(pdf.l_margin, y0 + hdr_h)
 
     # ── Corps ────────────────────────────────────────────────────────────────
-    INDENT = 5.0
-    LH = 4.5
+    indent = 5.0
+    lh = 4.5
     body_y = pdf.get_y()
 
     blocs = [
@@ -1754,20 +1755,20 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
         )),
     ]
 
-    pdf.set_fill_color(*_ORANGE_LIGHT)
+    pdf.set_fill_color(*col_orange_light)
     pdf.set_text_color(*PALETTE["text_dark"])
     for style, text in blocs:
         pdf.set_font("Helvetica", style, 7.5)
-        pdf.set_x(pdf.l_margin + INDENT)
-        pdf.multi_cell(pw - INDENT, LH, text, border=0, fill=True, align="L")
+        pdf.set_x(pdf.l_margin + indent)
+        pdf.multi_cell(pw - indent, lh, text, border=0, fill=True, align="L")
         pdf.ln(0.5 if style == "B" else 2.0)
 
     pdf.ln(1.5)
     body_end_y = pdf.get_y()
 
     # Bordure gauche orange (tracee apres le texte pour connaitre la hauteur exacte)
-    pdf.set_fill_color(*_ORANGE)
-    pdf.set_draw_color(*_ORANGE)
+    pdf.set_fill_color(*col_orange)
+    pdf.set_draw_color(*col_orange)
     pdf.rect(pdf.l_margin, body_y, 3.0, body_end_y - body_y, style="F")
 
     pdf.set_text_color(*PALETTE["text_dark"])
