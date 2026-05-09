@@ -1189,7 +1189,15 @@ class StockPDF(FPDF):
         if avg_week > 0 and trend_start_stock > 0:
             weeks_to_rupture = trend_start_stock / avg_week
             rupture_dt = trend_start_dt + timedelta(weeks=weeks_to_rupture)
-            rupture_label = rupture_dt.strftime("%d/%m/%Y")
+            # Privilege la date stockee dans le KPI pour coherence avec le bloc indicateurs.
+            # La date du KPI (rupture_date_linear si override ML, sinon rupture_date) est la
+            # reference canonique ; on la re-formate ici pour que l'annotation corresponde.
+            _kpi_linear_iso = kpi.get("rupture_date_linear") or kpi.get("rupture_date")
+            rupture_label = (
+                _format_iso_date_dmy(_kpi_linear_iso)
+                if _kpi_linear_iso
+                else rupture_dt.strftime("%d/%m/%Y")
+            )
 
             n_future = max(4, int(math.floor(weeks_to_rupture)) + 2)
 
@@ -1588,25 +1596,33 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     pdf.section_title("Indicateurs cles")
     # var = f"{kpi['variation_pct']:+.1f}%" if kpi["variation_pct"] is not None else "N/A"
     ml_replaced = kpi.get("rupture_date_linear") is not None
+    ml_proj = kpi.get("ml_projection") or {}
+    ml_has_proj = bool(ml_proj.get("rupture_date_med"))
+
     cov_raw = kpi.get("coverage_weeks")
     cov = f"{cov_raw:.1f} sem." if cov_raw is not None else "N/A"
     cov_label = "Couverture (ML q50)" if ml_replaced else "Couverture estimee"
-    rupture_label = "Date rupture (ML q50)" if ml_replaced else "Date rupture estimee"
-    rupture_val = _format_iso_date_dmy(kpi.get("rupture_date") or "")
+
+    # Date simple : valeur lineaire d'origine (sauvegardee si override ML, sinon rupture_date)
+    date_simple = _format_iso_date_dmy(
+        (kpi.get("rupture_date_linear") if ml_replaced else kpi.get("rupture_date")) or ""
+    )
 
     kpi_rows = [
         (f"Conso 28 jours [{kpi['unit']}]", kpi["usage_28d"]),
         (f"Moyenne hebdo conso [{kpi['unit']}]", kpi["avg_weekly"]),
         (f"Moy. glissante 4 sem. [{kpi['unit']}]", kpi["avg_rolling4"]),
         (cov_label, cov),
-        (rupture_label, rupture_val),
+        ("Rupture simple", date_simple),
     ]
-    if ml_replaced:
-        kpi_rows.append(("Rupture simple", _format_iso_date_dmy(kpi.get("rupture_date_linear") or "")))
-    else:
-        kpi_rows.append((f"Rupture ML ({_ml_quantile_labels(kpi)[1]})", _ml_rupture_label(kpi)))
+    if ml_has_proj:
+        ql = _ml_quantile_labels(kpi)
+        kpi_rows.append(("Rupture P50 (ML)", _ml_rupture_label(kpi)))
+        kpi_rows.append((f"Plage ML ({ql[0]}..{ql[2]})", _ml_rupture_range(kpi)))
+        date_retenue = _format_iso_date_dmy(kpi.get("rupture_date") or "")
+        retenue_suffix = "ML q50" if ml_replaced else "simple, hors plage ML"
+        kpi_rows.append(("Date retenue", f"{date_retenue} ({retenue_suffix})"))
     kpi_rows += [
-        (f"Intervalle ML ({_ml_quantile_labels(kpi)[0]}..{_ml_quantile_labels(kpi)[2]})", _ml_rupture_range(kpi)),
         (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
         (f"Total consomme (periode) [{kpi['unit']}]", kpi["total_used"]),
     ]
@@ -1693,33 +1709,30 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
 
 # ─── Encart vulgarisation ML ──────────────────────────────────────────────────
 
-def _ml_disclaimer_point(pdf: StockPDF, col_orange: tuple, col_orange_light: tuple,
+def _ml_disclaimer_point(pdf: StockPDF, col_orange: tuple,
                           title: str, body: str, pw: float, lh: float = 4.5) -> None:
-    """Affiche un point de l'encart ML : puce coloree + titre gras + corps indente."""
+    """Affiche un point de l'encart ML : puce + titre + corps, sans fill (fond pre-dessine)."""
     bullet_sz = 3.5
-    text_indent = bullet_sz + 3.0
+    text_indent = bullet_sz + 5.0
     body_w = pw - text_indent - 2.0
 
-    # Puce : petit carre orange
-    bx = pdf.l_margin + 1.5
-    by = pdf.get_y() + 1.0
+    # Puce : petit carre orange plein
     pdf.set_fill_color(*col_orange)
     pdf.set_draw_color(*col_orange)
-    pdf.rect(bx, by, bullet_sz, bullet_sz, style="F")
+    pdf.rect(pdf.l_margin + 2.5, pdf.get_y() + 1.5, bullet_sz, bullet_sz, style="F")
 
-    # Titre gras sur la meme ligne que la puce
+    # Titre gras en orange, aligne sur la puce
     pdf.set_font("Helvetica", "B", 8.0)
     pdf.set_text_color(*col_orange)
     pdf.set_xy(pdf.l_margin + text_indent, pdf.get_y())
-    pdf.cell(body_w, lh + 1.0, pdf.safe_str(title), border=0, align="L",
+    pdf.cell(body_w, lh + 1.5, pdf.safe_str(title), border=0, fill=False, align="L",
              new_x="LMARGIN", new_y="NEXT")
 
-    # Corps du texte indente
+    # Corps du texte
     pdf.set_font("Helvetica", "", 7.5)
-    pdf.set_text_color(*PALETTE["text_mid"])
-    pdf.set_fill_color(*col_orange_light)
+    pdf.set_text_color(*PALETTE["text_dark"])
     pdf.set_x(pdf.l_margin + text_indent)
-    pdf.multi_cell(body_w, lh, pdf.safe_str(body), border=0, fill=True, align="L")
+    pdf.multi_cell(body_w, lh, pdf.safe_str(body), border=0, fill=False, align="L")
 
 
 def render_ml_disclaimer(pdf: StockPDF) -> None:
@@ -1731,9 +1744,7 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     lh = 4.5
 
     pdf.ln(6)
-
-    # Si l'espace restant est insuffisant, commencer sur une nouvelle page
-    if pdf.get_y() + 62 > pdf.h - pdf.b_margin:
+    if pdf.get_y() + 82 > pdf.h - pdf.b_margin:
         pdf.add_page()
 
     # ── En-tete orange ───────────────────────────────────────────────────────
@@ -1755,10 +1766,10 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     pdf.set_xy(ix, iy + 1.0)
     pdf.cell(icon_sz, icon_sz - 2.0, "ML", border=0, align="C")
 
-    # Titre principal + sous-titre version beta
+    # Titre + sous-titre en blanc
+    tx = ix + icon_sz + 3.0
     pdf.set_font("Helvetica", "B", 9.0)
     pdf.set_text_color(*col_white)
-    tx = ix + icon_sz + 3.0
     pdf.set_xy(tx, y0 + 1.2)
     pdf.cell(pw - (tx - pdf.l_margin) - 2, 5.0,
              pdf.safe_str("Projections par apprentissage automatique"), border=0, align="L")
@@ -1770,64 +1781,71 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     pdf.set_xy(pdf.l_margin, y0 + hdr_h)
     body_start_page = pdf.page
 
-    # ── Phrase d'intro ────────────────────────────────────────────────────────
-    pdf.ln(2.5)
+    # ── Corps : fond unique pre-dessine, texte ecrit par-dessus sans fill ────
+    # Le fond couvre le reste de la page ; l'exces est efface par un rect blanc apres
+    # l'ecriture. Cela evite toute zone blanche inter-cellules et tout debordement.
+    body_y = pdf.get_y()
+    body_bg_h = pdf.h - pdf.b_margin - body_y
+    pdf.set_fill_color(*col_orange_light)
+    pdf.rect(pdf.l_margin, body_y, pw, body_bg_h, style="F")
+    pdf.set_y(body_y)
+
+    # Intro
+    pdf.ln(3.0)
     pdf.set_font("Helvetica", "", 7.5)
     pdf.set_text_color(*PALETTE["text_dark"])
-    pdf.set_x(pdf.l_margin + 1.5)
+    pdf.set_x(pdf.l_margin + 3.0)
     pdf.multi_cell(
-        pw - 3.0, lh,
+        pw - 6.0, lh,
         pdf.safe_str(
             "Ce rapport inclut des projections de rupture de stock calculees par un modele "
             "d'apprentissage automatique (machine learning), en complement de la tendance lineaire."
         ),
         border=0, fill=False, align="L",
     )
+    pdf.ln(4.0)
 
-    # ── Separateur fin ────────────────────────────────────────────────────────
-    pdf.ln(2.0)
-    y_sep = pdf.get_y()
-    pdf.set_draw_color(*PALETTE["divider"])
-    pdf.set_line_width(0.2)
-    pdf.line(pdf.l_margin, y_sep, pdf.w - pdf.r_margin, y_sep)
-    pdf.ln(2.5)
-
-    # ── 3 points structures ──────────────────────────────────────────────────
+    # 3 points structures
     _ml_disclaimer_point(
-        pdf, col_orange, col_orange_light,
+        pdf, col_orange,
         "Apprentissage progressif",
         ("Le modele se reentraine automatiquement chaque semaine sur les nouvelles donnees. "
-         "Etant en version beta, ses projections s'affinent avec le temps — "
+         "Etant en version beta, ses projections s'affinent avec le temps - "
          "plus l'historique est long, plus les estimations sont fiables."),
         pw, lh,
     )
-    pdf.ln(3.5)
+    pdf.ln(4.0)
 
     _ml_disclaimer_point(
-        pdf, col_orange, col_orange_light,
+        pdf, col_orange,
         "Pas de projection pour tous les articles",
         ("Il faut au minimum 17 semaines de consommation enregistrees par article. "
          "En dessous de ce seuil, seule la tendance lineaire classique est utilisee."),
         pw, lh,
     )
-    pdf.ln(3.5)
+    pdf.ln(4.0)
 
     _ml_disclaimer_point(
-        pdf, col_orange, col_orange_light,
+        pdf, col_orange,
         "3 scenarios par article",
         ("Optimiste (q5), median (q50) et pessimiste (q95), issus de 1 000 simulations "
          "Monte-Carlo. La date affichee comme rupture est le scenario median (q50)."),
         pw, lh,
     )
 
-    pdf.ln(3.0)
+    pdf.ln(4.0)
     body_end_y = pdf.get_y()
 
-    # Bordure gauche orange — uniquement si le corps n'a pas cause de saut de page
+    # Masque l'exces de fond orange-clair (aucun contenu ne suit sur cette page)
+    if pdf.page == body_start_page and body_end_y < body_y + body_bg_h:
+        pdf.set_fill_color(255, 255, 255)
+        pdf.rect(pdf.l_margin, body_end_y, pw, (body_y + body_bg_h) - body_end_y, style="F")
+
+    # Bordure gauche orange (uniquement si pas de saut de page)
     if pdf.page == body_start_page:
         pdf.set_fill_color(*col_orange)
         pdf.set_draw_color(*col_orange)
-        pdf.rect(pdf.l_margin, y0 + hdr_h, 2.0, body_end_y - (y0 + hdr_h), style="F")
+        pdf.rect(pdf.l_margin, body_y, 2.0, body_end_y - body_y, style="F")
 
     pdf.set_text_color(*PALETTE["text_dark"])
     pdf.set_line_width(0.2)

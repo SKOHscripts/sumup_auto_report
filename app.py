@@ -436,7 +436,7 @@ if sid == "stocks":
         with col_p1:
             _dry_run = st.checkbox(
                 "Mode simulation",
-                value=True,
+                value=False,
                 key="dry_run_purchases",
                 disabled=_purch_running,
                 help="Affiche les mises à jour prévues sans modifier stock_items.json.",
