@@ -1683,13 +1683,106 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
     pdf.set_text_color(*PALETTE["text_dark"])
 
 
+# ─── Encart vulgarisation ML ──────────────────────────────────────────────────
+
+def render_ml_disclaimer(pdf: StockPDF, all_kpis: list) -> None:
+    """Encart de vulgarisation ML insere apres le tableau de synthese (mode --ml)."""
+    _ORANGE = (255, 167, 11)
+    _ORANGE_LIGHT = (255, 248, 230)
+    _WHITE = (255, 255, 255)
+    pw = pdf.usable_width()
+
+    pdf.ln(5)
+
+    # ── En-tete orange ───────────────────────────────────────────────────────
+    hdr_h = 8.0
+    y0 = pdf.get_y()
+    pdf.set_fill_color(*_ORANGE)
+    pdf.set_draw_color(*_ORANGE)
+    pdf.rect(pdf.l_margin, y0, pw, hdr_h, style="F")
+
+    # Icone : petit carre blanc avec "ML" en orange a l'interieur
+    icon_sz = 5.5
+    ix = pdf.l_margin + 2.5
+    iy = y0 + (hdr_h - icon_sz) / 2.0
+    pdf.set_fill_color(*_WHITE)
+    pdf.set_draw_color(*_WHITE)
+    pdf.rect(ix, iy, icon_sz, icon_sz, style="F")
+    pdf.set_font("Helvetica", "B", 5.5)
+    pdf.set_text_color(*_ORANGE)
+    pdf.set_xy(ix, iy + 0.8)
+    pdf.cell(icon_sz, icon_sz - 1.5, "ML", border=0, align="C")
+
+    # Titre
+    pdf.set_font("Helvetica", "B", 8.0)
+    pdf.set_text_color(*_WHITE)
+    tx = ix + icon_sz + 2.5
+    pdf.set_xy(tx, y0 + 1.5)
+    pdf.cell(
+        pw - (tx - pdf.l_margin), hdr_h - 3.0,
+        pdf.safe_str("Projections ML - apprentissage automatique (version beta)"),
+        border=0, align="L",
+    )
+    pdf.set_xy(pdf.l_margin, y0 + hdr_h)
+
+    # ── Corps ────────────────────────────────────────────────────────────────
+    INDENT = 5.0
+    LH = 4.5
+    body_y = pdf.get_y()
+
+    blocs = [
+        ("", pdf.safe_str(
+            "Ce rapport inclut des projections calculees par un modele d'apprentissage "
+            "automatique (machine learning). Il analyse l'historique de consommation "
+            "hebdomadaire de chaque article pour estimer la date probable de rupture de stock."
+        )),
+        ("B", pdf.safe_str("En cours d'apprentissage.")),
+        ("", pdf.safe_str(
+            "Le modele se reentraine chaque semaine sur les nouvelles donnees et affine ses "
+            "estimations. Il est en version beta - ses projections sont indicatives et non "
+            "definitives. Plus l'historique est long, plus les estimations sont fiables."
+        )),
+        ("B", pdf.safe_str("Pas de projection pour tous les articles.")),
+        ("", pdf.safe_str(
+            "Il faut au minimum 17 semaines de consommation enregistrees par article. En "
+            "dessous de ce seuil, la tendance lineaire classique est utilisee a la place."
+        )),
+        ("B", pdf.safe_str("3 scenarios par article :")),
+        ("", pdf.safe_str(
+            "optimiste (q5 - peu probable d'avoir moins), median (q50) et pessimiste "
+            "(q95 - peu probable d'avoir plus), calcules par 1 000 simulations Monte-Carlo."
+        )),
+    ]
+
+    pdf.set_fill_color(*_ORANGE_LIGHT)
+    pdf.set_text_color(*PALETTE["text_dark"])
+    for style, text in blocs:
+        pdf.set_font("Helvetica", style, 7.5)
+        pdf.set_x(pdf.l_margin + INDENT)
+        pdf.multi_cell(pw - INDENT, LH, text, border=0, fill=True, align="L")
+        pdf.ln(0.5 if style == "B" else 2.0)
+
+    pdf.ln(1.5)
+    body_end_y = pdf.get_y()
+
+    # Bordure gauche orange (tracee apres le texte pour connaitre la hauteur exacte)
+    pdf.set_fill_color(*_ORANGE)
+    pdf.set_draw_color(*_ORANGE)
+    pdf.rect(pdf.l_margin, body_y, 3.0, body_end_y - body_y, style="F")
+
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.ln(2)
+
+
 # ─── Génération complète du PDF ───────────────────────────────────────────────
 
 def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: list,
-                 path: str) -> str:
+                 path: str, use_ml: bool = False) -> str:
     """Génère le PDF complet (synthèse + pages articles + qualité) et le sauvegarde."""
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
+    if use_ml:
+        render_ml_disclaimer(pdf, all_kpis)
 
     for kpi in all_kpis:
         render_article_page(pdf, kpi)
@@ -1938,7 +2031,7 @@ def run_stock_report(
     csv_path = str(BASE_DIR / f"rapport_stocks_{safe_week}.csv")
     hist_path = str(BASE_DIR / f"rapport_stocks_history_{safe_week}.csv")
 
-    generate_pdf(all_kpis, unmapped, current_week, weeks_range, pdf_path)
+    generate_pdf(all_kpis, unmapped, current_week, weeks_range, pdf_path, use_ml=use_ml)
     export_csv_summary(all_kpis, csv_path)
     export_csv_history(all_kpis, hist_path)
 
