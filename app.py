@@ -155,10 +155,6 @@ if not st.session_state["authenticated"]:
         login_logo = logo_teal if logo_teal.exists() else logo_orange
         if login_logo.exists():
             st.image(str(login_logo), use_container_width=True)
-        st.markdown(
-            '<span class="login-tagline">grand trou · moulin à vent · petite guille</span>',
-            unsafe_allow_html=True,
-        )
         st.markdown("### Tableau de bord")
         st.markdown("---")
         pwd = st.text_input("Mot de passe", type="password", placeholder="Saisir le mot de passe…")
@@ -521,10 +517,33 @@ if sid == "stocks":
             disabled=is_running,
         )
 
+        use_ml = st.checkbox(
+            "Activer les projections ML (apprentissage automatique)",
+            value=True,
+            key=f"use_ml_{sid}",
+            disabled=is_running,
+            help=(
+                "Ajoute au rapport des projections de rupture de stock basées sur un "
+                "modèle d'apprentissage automatique entraîné sur l'historique de consommation."
+            ),
+        )
+        if use_ml:
+            st.info(
+                "**Projections ML activées** — Le modèle s'entraîne progressivement chaque semaine "
+                "à partir de l'historique de consommation enregistré. "
+                "Il n'est **pas encore optimal** : les projections peuvent être imprécises, "
+                "notamment pour les articles avec peu d'historique (moins de 30 semaines de données). "
+                "Trois scénarios sont estimés pour chaque article : "
+                "optimiste (q5), médian (q50) et pessimiste (q95). "
+                "Plus l'historique est long, plus les prévisions seront fiables."
+            )
+
         stocks_args: list[str] = ["--weeks", str(int(weeks))]
         stocks_env: dict[str, str] = {}
         if no_mail:
             stocks_args.append("--no-mail")
+        if use_ml:
+            stocks_args.append("--ml")
         try:
             safe_mock = _sanitize_mock_file(mock_file)
             if safe_mock:
