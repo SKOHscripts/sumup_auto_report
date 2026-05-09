@@ -1192,10 +1192,7 @@ class StockPDF(FPDF):
             # Privilege la date stockee dans le KPI pour coherence avec le bloc indicateurs.
             # La date du KPI (rupture_date_linear si override ML, sinon rupture_date) est la
             # reference canonique ; on la re-formate ici pour que l'annotation corresponde.
-            _kpi_linear_iso = (
-                kpi.get("rupture_date_linear") if kpi.get("rupture_date_linear")
-                else kpi.get("rupture_date")
-            )
+            _kpi_linear_iso = kpi.get("rupture_date_linear") or kpi.get("rupture_date")
             rupture_label = (
                 _format_iso_date_dmy(_kpi_linear_iso)
                 if _kpi_linear_iso
@@ -1747,7 +1744,7 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     lh = 4.5
 
     pdf.ln(6)
-    if pdf.get_y() + 62 > pdf.h - pdf.b_margin:
+    if pdf.get_y() + 82 > pdf.h - pdf.b_margin:
         pdf.add_page()
 
     # ── En-tete orange ───────────────────────────────────────────────────────
@@ -1785,9 +1782,10 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     body_start_page = pdf.page
 
     # ── Corps : fond unique pre-dessine, texte ecrit par-dessus sans fill ────
-    # Le fond est trace en un seul rect pour eviter les zones blanches entre cellules.
-    body_bg_h = 72.0
+    # Le fond couvre le reste de la page ; l'exces est efface par un rect blanc apres
+    # l'ecriture. Cela evite toute zone blanche inter-cellules et tout debordement.
     body_y = pdf.get_y()
+    body_bg_h = pdf.h - pdf.b_margin - body_y
     pdf.set_fill_color(*col_orange_light)
     pdf.rect(pdf.l_margin, body_y, pw, body_bg_h, style="F")
     pdf.set_y(body_y)
