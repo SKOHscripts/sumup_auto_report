@@ -1310,7 +1310,7 @@ class StockPDF(FPDF):
             # ax.axvline(rupture_dt, color="#990000", linestyle="--", linewidth=1.2)
             label_y = ymax * 0.18 if ymax > 0 else 1.0
             ax.annotate(
-                f"Rupture estimee\n{rupture_label}",
+                f"Rupture simple\n{rupture_label}",
                 xy=(rupture_dt, 0.0),
                 xytext=(rupture_dt + timedelta(days=2), label_y),
                 fontsize=8,
@@ -1331,7 +1331,7 @@ class StockPDF(FPDF):
                 high_lbl = _format_iso_date_dmy(ml_proj.get("rupture_date_high") or "")
                 ml_label_y = ymax * 0.45 if ymax > 0 else 1.0
                 ax.annotate(
-                    f"Rupture ML {ml_med_lbl}\n{med_lbl}\n({low_lbl} - {high_lbl})",
+                    f"Rupture simulee par\nmachine learning\n{med_lbl}\n({low_lbl} - {high_lbl})",
                     xy=(ml_med_dt, 0.0),
                     xytext=(ml_med_dt + timedelta(days=2), ml_label_y),
                     fontsize=7.5,
@@ -1574,11 +1574,11 @@ def render_article_page(pdf: StockPDF, kpi: dict):
         ("Unite stock", kpi["unit"]),
         (f"Stock disponible [{kpi['unit']}]", kpi["available_stock"]),
         (f"Stock arrivant [{kpi['unit']}]", kpi["incoming_qty"]),
-        ("ETA reappro", kpi["incoming_eta"] or "N/A"),
+        ("ETA reappro", _format_iso_date_dmy(kpi["incoming_eta"] or "")),
         (f"Stock securite (calculé) [{kpi['unit']}]", kpi["safety_stock"]),
         (f"Point de commande (calculé) [{kpi['unit']}]", kpi["reorder_point"]),
         (f"Stock cible (calculé) [{kpi['unit']}]", kpi["target_stock"]),
-        ("Dernier inventaire", kpi["last_inventory_date"]),
+        ("Dernier inventaire", _format_iso_date_dmy(kpi["last_inventory_date"] or "")),
         ])
 
     # Badge statut
@@ -1587,23 +1587,30 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     # ── Bloc KPIs ──
     pdf.section_title("Indicateurs cles")
     # var = f"{kpi['variation_pct']:+.1f}%" if kpi["variation_pct"] is not None else "N/A"
-    cov = f"{kpi['coverage_weeks']:.1f} sem." if kpi["coverage_weeks"] is not None else "N/A"
-    pdf.kpi_block([
-        # ("Ventes 7 jours", kpi["sales_7d"]),
+    ml_replaced = kpi.get("rupture_date_linear") is not None
+    cov_raw = kpi.get("coverage_weeks")
+    cov = f"{cov_raw:.1f} sem." if cov_raw is not None else "N/A"
+    cov_label = "Couverture (ML q50)" if ml_replaced else "Couverture estimee"
+    rupture_label = "Date rupture (ML q50)" if ml_replaced else "Date rupture estimee"
+    rupture_val = _format_iso_date_dmy(kpi.get("rupture_date") or "")
+
+    kpi_rows = [
         (f"Conso 28 jours [{kpi['unit']}]", kpi["usage_28d"]),
         (f"Moyenne hebdo conso [{kpi['unit']}]", kpi["avg_weekly"]),
         (f"Moy. glissante 4 sem. [{kpi['unit']}]", kpi["avg_rolling4"]),
-        # ("Projection sem. suiv.", kpi["proj_next_week"]),
-        # ("Projection vente 4 sem.", kpi["proj_4_weeks"]),
-        ("Couverture estimee", cov),
-        ("Date rupture estimee", kpi["rupture_date"] or "N/A"),
-        (f"Rupture ML ({_ml_quantile_labels(kpi)[1]})", _ml_rupture_label(kpi)),
+        (cov_label, cov),
+        (rupture_label, rupture_val),
+    ]
+    if ml_replaced:
+        kpi_rows.append(("Rupture simple", _format_iso_date_dmy(kpi.get("rupture_date_linear") or "")))
+    else:
+        kpi_rows.append((f"Rupture ML ({_ml_quantile_labels(kpi)[1]})", _ml_rupture_label(kpi)))
+    kpi_rows += [
         (f"Intervalle ML ({_ml_quantile_labels(kpi)[0]}..{_ml_quantile_labels(kpi)[2]})", _ml_rupture_range(kpi)),
         (f"Qte a commander [{kpi['unit']}]", kpi["qty_to_order"]),
-        # ("Variation S vs S-1", var),
-        # ("Sem. sans vente", kpi["n_zero_weeks"]),
         (f"Total consomme (periode) [{kpi['unit']}]", kpi["total_used"]),
-        ])
+    ]
+    pdf.kpi_block(kpi_rows)
 
     # ── Tableau hebdomadaire ──
     pdf.section_title("Evolution du stock")
@@ -1686,92 +1693,138 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
 
 # ─── Encart vulgarisation ML ──────────────────────────────────────────────────
 
+def _ml_disclaimer_point(pdf: StockPDF, col_orange: tuple, col_orange_light: tuple,
+                          title: str, body: str, pw: float, lh: float = 4.5) -> None:
+    """Affiche un point de l'encart ML : puce coloree + titre gras + corps indente."""
+    bullet_sz = 3.5
+    text_indent = bullet_sz + 3.0
+    body_w = pw - text_indent - 2.0
+
+    # Puce : petit carre orange
+    bx = pdf.l_margin + 1.5
+    by = pdf.get_y() + 1.0
+    pdf.set_fill_color(*col_orange)
+    pdf.set_draw_color(*col_orange)
+    pdf.rect(bx, by, bullet_sz, bullet_sz, style="F")
+
+    # Titre gras sur la meme ligne que la puce
+    pdf.set_font("Helvetica", "B", 8.0)
+    pdf.set_text_color(*col_orange)
+    pdf.set_xy(pdf.l_margin + text_indent, pdf.get_y())
+    pdf.cell(body_w, lh + 1.0, pdf.safe_str(title), border=0, align="L",
+             new_x="LMARGIN", new_y="NEXT")
+
+    # Corps du texte indente
+    pdf.set_font("Helvetica", "", 7.5)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.set_fill_color(*col_orange_light)
+    pdf.set_x(pdf.l_margin + text_indent)
+    pdf.multi_cell(body_w, lh, pdf.safe_str(body), border=0, fill=True, align="L")
+
+
 def render_ml_disclaimer(pdf: StockPDF) -> None:
     """Encart de vulgarisation ML insere apres le tableau de synthese (mode --ml)."""
     col_orange = (255, 167, 11)
     col_orange_light = (255, 248, 230)
     col_white = (255, 255, 255)
     pw = pdf.usable_width()
+    lh = 4.5
 
-    pdf.ln(5)
+    pdf.ln(6)
 
     # ── En-tete orange ───────────────────────────────────────────────────────
-    hdr_h = 8.0
+    hdr_h = 9.0
     y0 = pdf.get_y()
     pdf.set_fill_color(*col_orange)
     pdf.set_draw_color(*col_orange)
     pdf.rect(pdf.l_margin, y0, pw, hdr_h, style="F")
 
-    # Icone : petit carre blanc avec "ML" en orange a l'interieur
-    icon_sz = 5.5
-    ix = pdf.l_margin + 2.5
+    # Icone : petit carre blanc avec "ML"
+    icon_sz = 6.0
+    ix = pdf.l_margin + 3.0
     iy = y0 + (hdr_h - icon_sz) / 2.0
     pdf.set_fill_color(*col_white)
     pdf.set_draw_color(*col_white)
     pdf.rect(ix, iy, icon_sz, icon_sz, style="F")
-    pdf.set_font("Helvetica", "B", 5.5)
+    pdf.set_font("Helvetica", "B", 6.0)
     pdf.set_text_color(*col_orange)
-    pdf.set_xy(ix, iy + 0.8)
-    pdf.cell(icon_sz, icon_sz - 1.5, "ML", border=0, align="C")
+    pdf.set_xy(ix, iy + 1.0)
+    pdf.cell(icon_sz, icon_sz - 2.0, "ML", border=0, align="C")
 
-    # Titre
-    pdf.set_font("Helvetica", "B", 8.0)
+    # Titre principal + sous-titre version beta
+    pdf.set_font("Helvetica", "B", 9.0)
     pdf.set_text_color(*col_white)
-    tx = ix + icon_sz + 2.5
-    pdf.set_xy(tx, y0 + 1.5)
-    pdf.cell(
-        pw - (tx - pdf.l_margin), hdr_h - 3.0,
-        pdf.safe_str("Projections ML - apprentissage automatique (version beta)"),
-        border=0, align="L",
-    )
+    tx = ix + icon_sz + 3.0
+    pdf.set_xy(tx, y0 + 1.2)
+    pdf.cell(pw - (tx - pdf.l_margin) - 2, 5.0,
+             pdf.safe_str("Projections par apprentissage automatique"), border=0, align="L")
+    pdf.set_font("Helvetica", "I", 7.0)
+    pdf.set_xy(tx, y0 + 1.2 + 5.0)
+    pdf.cell(pw - (tx - pdf.l_margin) - 2, 3.0,
+             pdf.safe_str("version beta - resultats indicatifs"), border=0, align="L")
+
     pdf.set_xy(pdf.l_margin, y0 + hdr_h)
 
-    # ── Corps ────────────────────────────────────────────────────────────────
-    indent = 5.0
-    lh = 4.5
-    body_y = pdf.get_y()
-
-    blocs = [
-        ("", pdf.safe_str(
-            "Ce rapport inclut des projections calculees par un modele d'apprentissage "
-            "automatique (machine learning). Il analyse l'historique de consommation "
-            "hebdomadaire de chaque article pour estimer la date probable de rupture de stock."
-        )),
-        ("B", pdf.safe_str("En cours d'apprentissage.")),
-        ("", pdf.safe_str(
-            "Le modele se reentraine chaque semaine sur les nouvelles donnees et affine ses "
-            "estimations. Il est en version beta - ses projections sont indicatives et non "
-            "definitives. Plus l'historique est long, plus les estimations sont fiables."
-        )),
-        ("B", pdf.safe_str("Pas de projection pour tous les articles.")),
-        ("", pdf.safe_str(
-            "Il faut au minimum 17 semaines de consommation enregistrees par article. En "
-            "dessous de ce seuil, la tendance lineaire classique est utilisee a la place."
-        )),
-        ("B", pdf.safe_str("3 scenarios par article :")),
-        ("", pdf.safe_str(
-            "optimiste (q5 - peu probable d'avoir moins), median (q50) et pessimiste "
-            "(q95 - peu probable d'avoir plus), calcules par 1 000 simulations Monte-Carlo."
-        )),
-    ]
-
-    pdf.set_fill_color(*col_orange_light)
+    # ── Phrase d'intro ────────────────────────────────────────────────────────
+    pdf.ln(2.5)
+    pdf.set_font("Helvetica", "", 7.5)
     pdf.set_text_color(*PALETTE["text_dark"])
-    for style, text in blocs:
-        pdf.set_font("Helvetica", style, 7.5)
-        pdf.set_x(pdf.l_margin + indent)
-        pdf.multi_cell(pw - indent, lh, text, border=0, fill=True, align="L")
-        pdf.ln(0.5 if style == "B" else 2.0)
+    pdf.set_x(pdf.l_margin + 1.5)
+    pdf.multi_cell(
+        pw - 3.0, lh,
+        pdf.safe_str(
+            "Ce rapport inclut des projections de rupture de stock calculees par un modele "
+            "d'apprentissage automatique (machine learning), en complement de la tendance lineaire."
+        ),
+        border=0, fill=False, align="L",
+    )
 
-    pdf.ln(1.5)
+    # ── Separateur fin ────────────────────────────────────────────────────────
+    pdf.ln(2.0)
+    y_sep = pdf.get_y()
+    pdf.set_draw_color(*PALETTE["divider"])
+    pdf.set_line_width(0.2)
+    pdf.line(pdf.l_margin, y_sep, pdf.w - pdf.r_margin, y_sep)
+    pdf.ln(2.5)
+
+    # ── 3 points structures ──────────────────────────────────────────────────
+    _ml_disclaimer_point(
+        pdf, col_orange, col_orange_light,
+        "Apprentissage progressif",
+        ("Le modele se reentraine automatiquement chaque semaine sur les nouvelles donnees. "
+         "Etant en version beta, ses projections s'affinent avec le temps — "
+         "plus l'historique est long, plus les estimations sont fiables."),
+        pw, lh,
+    )
+    pdf.ln(3.5)
+
+    _ml_disclaimer_point(
+        pdf, col_orange, col_orange_light,
+        "Pas de projection pour tous les articles",
+        ("Il faut au minimum 17 semaines de consommation enregistrees par article. "
+         "En dessous de ce seuil, seule la tendance lineaire classique est utilisee."),
+        pw, lh,
+    )
+    pdf.ln(3.5)
+
+    _ml_disclaimer_point(
+        pdf, col_orange, col_orange_light,
+        "3 scenarios par article",
+        ("Optimiste (q5), median (q50) et pessimiste (q95), issus de 1 000 simulations "
+         "Monte-Carlo. La date affichee comme rupture est le scenario median (q50)."),
+        pw, lh,
+    )
+
+    pdf.ln(3.0)
     body_end_y = pdf.get_y()
 
-    # Bordure gauche orange (tracee apres le texte pour connaitre la hauteur exacte)
+    # Bordure gauche orange sur toute la hauteur du corps
     pdf.set_fill_color(*col_orange)
     pdf.set_draw_color(*col_orange)
-    pdf.rect(pdf.l_margin, body_y, 3.0, body_end_y - body_y, style="F")
+    pdf.rect(pdf.l_margin, y0 + hdr_h, 2.0, body_end_y - (y0 + hdr_h), style="F")
 
     pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.set_line_width(0.2)
     pdf.ln(2)
 
 
@@ -1931,6 +1984,62 @@ def _attach_ml_if_enabled(all_kpis: list, enable: bool) -> list:
         return all_kpis
 
 
+def _recalculate_status(kpi: dict) -> str:
+    """Recalcule le statut stock apres remplacement de coverage_weeks par la projection ML."""
+    available = float(kpi.get("available_stock") or 0)
+    avg4 = float(kpi.get("avg_rolling4") or 0)
+    cov = kpi.get("coverage_weeks")
+    reorder = float(kpi.get("reorder_point") or 0)
+    safety = float(kpi.get("safety_stock") or 0)
+    # lead_time_weeks derive du point de commande : reorder = avg4 * lead_time_weeks
+    lead_weeks = (reorder / avg4) if avg4 > 0 else 0.0
+    if available <= 0:
+        return "RISQUE RUPTURE" if avg4 > 0 else "N/A"
+    if avg4 > 0 and cov is not None and cov < lead_weeks:
+        return "RISQUE RUPTURE"
+    if available <= reorder:
+        return "A COMMANDER"
+    if available <= max(safety, reorder * 1.15):
+        return "SURVEILLANCE"
+    return "OK"
+
+
+def _apply_ml_rupture_override(all_kpis: list) -> list:
+    """Remplace rupture_date/coverage_weeks par la projection ML q50 si la date lineaire
+    se situe dans la plage [rupture_date_low, rupture_date_high] du modele ML.
+    Sauvegarde la valeur lineaire d'origine dans rupture_date_linear / coverage_weeks_linear.
+    """
+    today = date.today()
+    for kpi in all_kpis:
+        proj = kpi.get("ml_projection")
+        if not proj:
+            continue
+        rd_linear = kpi.get("rupture_date")
+        rd_low = proj.get("rupture_date_low")
+        rd_high = proj.get("rupture_date_high")
+        rd_med = proj.get("rupture_date_med")
+        if not (rd_linear and rd_low and rd_high and rd_med):
+            continue
+        try:
+            dt_linear = date.fromisoformat(rd_linear)
+            dt_low = date.fromisoformat(rd_low)
+            dt_high = date.fromisoformat(rd_high)
+            dt_med = date.fromisoformat(rd_med)
+        except ValueError:
+            continue
+        if dt_low <= dt_linear <= dt_high:
+            kpi["rupture_date_linear"] = rd_linear
+            kpi["coverage_weeks_linear"] = kpi.get("coverage_weeks")
+            kpi["rupture_date"] = rd_med
+            kpi["coverage_weeks"] = max(0.0, (dt_med - today).days / 7.0)
+            kpi["status"] = _recalculate_status(kpi)
+            log.debug(
+                "ML override %s : rupture %s -> %s (couverture %.1f sem.)",
+                kpi["stock_sku"], rd_linear, rd_med, kpi["coverage_weeks"],
+            )
+    return all_kpis
+
+
 def run_stock_report(
     weeks: int = DEFAULT_WEEKS,
     send_mail: bool = True,
@@ -2025,6 +2134,7 @@ def run_stock_report(
     if use_ml:
         log.info("Etape 5b/6 - Projection ML quantile (--ml)...")
         all_kpis = _attach_ml_if_enabled(all_kpis, enable=True)
+        all_kpis = _apply_ml_rupture_override(all_kpis)
 
     log.info("Étape 6/6 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")
