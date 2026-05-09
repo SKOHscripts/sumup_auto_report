@@ -1684,7 +1684,7 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
         pdf.set_text_color(*PALETTE["text_mid"])
         pdf.cell(pw * 0.55, 5.5, pdf.safe_str(kpi["label"], 40), border=0, align="L")
         pdf.set_text_color(*PALETTE["text_dark"])
-        pdf.cell(pw * 0.30, 5.5, str(kpi["last_inventory_date"]), border=0, align="L")
+        pdf.cell(pw * 0.30, 5.5, _format_iso_date_dmy(kpi.get("last_inventory_date") or ""), border=0, align="L")
         pdf.cell(pw * 0.15, 5.5, kpi["inventory_method"], border=0, align="L",
                  new_x="LMARGIN", new_y="NEXT")
 
@@ -1732,6 +1732,10 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
 
     pdf.ln(6)
 
+    # Si l'espace restant est insuffisant, commencer sur une nouvelle page
+    if pdf.get_y() + 62 > pdf.h - pdf.b_margin:
+        pdf.add_page()
+
     # ── En-tete orange ───────────────────────────────────────────────────────
     hdr_h = 9.0
     y0 = pdf.get_y()
@@ -1764,6 +1768,7 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
              pdf.safe_str("version beta - resultats indicatifs"), border=0, align="L")
 
     pdf.set_xy(pdf.l_margin, y0 + hdr_h)
+    body_start_page = pdf.page
 
     # ── Phrase d'intro ────────────────────────────────────────────────────────
     pdf.ln(2.5)
@@ -1818,10 +1823,11 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     pdf.ln(3.0)
     body_end_y = pdf.get_y()
 
-    # Bordure gauche orange sur toute la hauteur du corps
-    pdf.set_fill_color(*col_orange)
-    pdf.set_draw_color(*col_orange)
-    pdf.rect(pdf.l_margin, y0 + hdr_h, 2.0, body_end_y - (y0 + hdr_h), style="F")
+    # Bordure gauche orange — uniquement si le corps n'a pas cause de saut de page
+    if pdf.page == body_start_page:
+        pdf.set_fill_color(*col_orange)
+        pdf.set_draw_color(*col_orange)
+        pdf.rect(pdf.l_margin, y0 + hdr_h, 2.0, body_end_y - (y0 + hdr_h), style="F")
 
     pdf.set_text_color(*PALETTE["text_dark"])
     pdf.set_line_width(0.2)
@@ -2004,12 +2010,16 @@ def _recalculate_status(kpi: dict) -> str:
     return "OK"
 
 
-def _apply_ml_rupture_override(all_kpis: list) -> list:
+def _apply_ml_rupture_override(all_kpis: list, ref_date: date | None = None) -> list:
     """Remplace rupture_date/coverage_weeks par la projection ML q50 si la date lineaire
     se situe dans la plage [rupture_date_low, rupture_date_high] du modele ML.
     Sauvegarde la valeur lineaire d'origine dans rupture_date_linear / coverage_weeks_linear.
+
+    ref_date : date de reference pour le calcul de coverage_weeks (defaut : date du jour UTC).
+    Passer explicitement now.date() depuis le pipeline pour garantir la coherence avec les
+    autres timestamps UTC et faciliter les tests unitaires.
     """
-    today = date.today()
+    today = ref_date if ref_date is not None else date.today()
     for kpi in all_kpis:
         proj = kpi.get("ml_projection")
         if not proj:
@@ -2021,11 +2031,11 @@ def _apply_ml_rupture_override(all_kpis: list) -> list:
         if not (rd_linear and rd_low and rd_high and rd_med):
             continue
         try:
-            dt_linear = date.fromisoformat(rd_linear)
-            dt_low = date.fromisoformat(rd_low)
-            dt_high = date.fromisoformat(rd_high)
-            dt_med = date.fromisoformat(rd_med)
-        except ValueError:
+            dt_linear = datetime.fromisoformat(rd_linear).date()
+            dt_low = datetime.fromisoformat(rd_low).date()
+            dt_high = datetime.fromisoformat(rd_high).date()
+            dt_med = datetime.fromisoformat(rd_med).date()
+        except (ValueError, TypeError):
             continue
         if dt_low <= dt_linear <= dt_high:
             kpi["rupture_date_linear"] = rd_linear
@@ -2134,7 +2144,7 @@ def run_stock_report(
     if use_ml:
         log.info("Etape 5b/6 - Projection ML quantile (--ml)...")
         all_kpis = _attach_ml_if_enabled(all_kpis, enable=True)
-        all_kpis = _apply_ml_rupture_override(all_kpis)
+        all_kpis = _apply_ml_rupture_override(all_kpis, ref_date=now.date())
 
     log.info("Étape 6/6 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")
