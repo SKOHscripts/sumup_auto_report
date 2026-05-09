@@ -1685,7 +1685,7 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
 
 # ─── Encart vulgarisation ML ──────────────────────────────────────────────────
 
-def render_ml_disclaimer(pdf: StockPDF, all_kpis: list) -> None:
+def render_ml_disclaimer(pdf: StockPDF) -> None:
     """Encart de vulgarisation ML insere apres le tableau de synthese (mode --ml)."""
     _ORANGE = (255, 167, 11)
     _ORANGE_LIGHT = (255, 248, 230)
@@ -1782,7 +1782,7 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
     if use_ml:
-        render_ml_disclaimer(pdf, all_kpis)
+        render_ml_disclaimer(pdf)
 
     for kpi in all_kpis:
         render_article_page(pdf, kpi)
