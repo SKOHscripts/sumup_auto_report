@@ -124,3 +124,9 @@ exclude_dirs = ["tests"]   # assert B101 et placeholders de test sont intentionn
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+
+[dependency-groups]
+dev = [
+    "pylint>=4.0.5",
+    "pytest>=9.0.3",
+]

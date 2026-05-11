@@ -276,11 +276,29 @@ def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
         for t in range(n_weeks)
     ]
 
+    # Probabilité de rupture cumulée semaine par semaine :
+    # pour chaque semaine t, fraction de simulations ayant atteint stock ≤ 0
+    # au moins une fois dans [0, t].
+    ever_ruptured = np.zeros((n_simulations, n_weeks), dtype=bool)
+    for t in range(n_weeks):
+        if t == 0:
+            ever_ruptured[:, 0] = rupture_weeks == 0
+        else:
+            ever_ruptured[:, t] = ever_ruptured[:, t - 1] | (rupture_weeks == t)
+    prob_rupture_by_week = [
+        {
+            "week_start": _to_date(week_starts[t]).isoformat(),
+            "prob_rupture_cumul": float(np.mean(ever_ruptured[:, t])),
+        }
+        for t in range(n_weeks)
+    ]
+
     return {
         "rupture_date_low": _percentile_date(low_pct),
         "rupture_date_med": _percentile_date(50.0),
         "rupture_date_high": _percentile_date(high_pct),
         "prob_rupture": prob_rupture,
+        "prob_rupture_by_week": prob_rupture_by_week,
         "quantiles": (quantile_fractions[0], 0.5, quantile_fractions[1]),
         "n_simulations": n_simulations,
         "stock_band": stock_band,

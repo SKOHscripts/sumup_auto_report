@@ -1348,6 +1348,14 @@ class StockPDF(FPDF):
                     bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#7B4FB8", "alpha": 0.9},
                 )
 
+        # Marqueurs d'anomalies sur l'historique (semaines aberrantes, z-score élevé)
+        anomaly_weeks_set = set(ml_proj.get("anomaly_weeks") or [])
+        if anomaly_weeks_set:
+            for lbl, x, y in zip(weeks, week_dates, stock_curve):
+                if lbl in anomaly_weeks_set:
+                    ax.scatter([x], [y], marker="X", color="#C00000", s=70, zorder=5,
+                               label="Anomalie" if "Anomalie" not in [ln.get_label() for ln in ax.lines] else "")
+
         # Etiquettes historique
 
         for x, y in zip(week_dates, stock_curve):
@@ -1416,6 +1424,41 @@ class StockPDF(FPDF):
 
         self.image(buf, x=self.l_margin, y=y0, w=chart_w, h=chart_h)
         self.set_y(y0 + chart_h + 4)
+
+        # ── Graphique 4 : probabilité de rupture cumulée semaine par semaine ──
+        prob_by_week = ml_proj.get("prob_rupture_by_week") or []
+        if prob_by_week:
+            try:
+                pw_dates = [datetime.fromisoformat(p["week_start"]) for p in prob_by_week]
+                pw_probs = [float(p["prob_rupture_cumul"]) for p in prob_by_week]
+                fig2, ax2 = plt.subplots(figsize=(8.6, 2.2), dpi=160)
+                ax2.fill_between(pw_dates, pw_probs, color="#C00000", alpha=0.20)
+                ax2.plot(pw_dates, pw_probs, color="#C00000", linewidth=2.0, marker="o", markersize=3)
+                ax2.axhline(0.5, color="#E05A2B", linestyle="--", linewidth=1.0, label="Seuil 50 %")
+                ax2.set_ylim(0, 1.05)
+                ax2.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+                ax2.set_yticklabels(["0 %", "25 %", "50 %", "75 %", "100 %"], fontsize=7)
+                ax2.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=4))
+                ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-W%W"))
+                plt.setp(ax2.get_xticklabels(), rotation=30, ha="right", fontsize=7)
+                ax2.set_title("Probabilite de rupture cumulee (ML)", fontsize=9)
+                ax2.set_ylabel("Prob. rupture", fontsize=8)
+                ax2.grid(axis="y", linestyle=":", linewidth=0.7, alpha=0.5)
+                ax2.legend(loc="upper left", fontsize=7)
+                fig2.tight_layout()
+                buf2 = io.BytesIO()
+                fig2.savefig(buf2, format="png", dpi=160)
+                plt.close(fig2)
+                buf2.seek(0)
+                chart2_h = 38
+                y0 = self.get_y()
+                if y0 + chart2_h > self.h - self.b_margin:
+                    self.add_page()
+                    y0 = self.get_y()
+                self.image(buf2, x=self.l_margin, y=y0, w=chart_w, h=chart2_h)
+                self.set_y(y0 + chart2_h + 4)
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                log.debug("Graphique prob_rupture_by_week ignore : %s", exc)
 
 # ─── Page 1 : Synthèse globale ────────────────────────────────────────────────
 
@@ -1628,6 +1671,32 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     ]
     pdf.kpi_block(kpi_rows)
 
+    # ── Commentaire d'explicabilité ML ──
+    ml_explanation = (kpi.get("ml_projection") or {}).get("explanation") or ""
+    if ml_explanation:
+        pdf.ln(2)
+        col_purple = (123, 79, 184)
+        col_purple_light = (245, 240, 255)
+        pw = pdf.usable_width()
+        box_h_estimate = 14
+        if pdf.get_y() + box_h_estimate > pdf.h - pdf.b_margin:
+            pdf.add_page()
+        y_box = pdf.get_y()
+        pdf.set_fill_color(*col_purple_light)
+        pdf.rect(pdf.l_margin, y_box, pw, box_h_estimate, style="F")
+        pdf.set_fill_color(*col_purple)
+        pdf.rect(pdf.l_margin, y_box, 2.0, box_h_estimate, style="F")
+        pdf.set_xy(pdf.l_margin + 5, y_box + 2.5)
+        pdf.set_font("Helvetica", "B", 7.5)
+        pdf.set_text_color(*col_purple)
+        pdf.cell(pw - 7, 4.5, pdf.safe_str("Analyse ML"), border=0, align="L",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_x(pdf.l_margin + 5)
+        pdf.set_font("Helvetica", "", 7.0)
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.multi_cell(pw - 7, 4.0, pdf.safe_str(ml_explanation), border=0, fill=False, align="L")
+        pdf.ln(3)
+
     # ── Tableau hebdomadaire ──
     pdf.section_title("Evolution du stock")
     pdf.weekly_graph(kpi)
@@ -1707,6 +1776,265 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
     pdf.set_text_color(*PALETTE["text_dark"])
 
 
+# ─── Page synthèse globale ML ─────────────────────────────────────────────────
+
+
+def _ml_model_quality_row() -> dict | None:
+    """Charge la dernière ligne de history.csv du registry, renvoie None si absent."""
+    try:
+        from stocks.ml.registry import recent_history  # pylint: disable=import-outside-toplevel
+        hist = recent_history(n=1)
+        if hist is not None and not hist.empty:
+            return hist.iloc[-1].to_dict()
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        log.debug("Lecture registry ML ignoree : %s", exc)
+    return None
+
+
+def _render_ml_kv_table(pdf: StockPDF, rows: list[tuple], col_widths: tuple) -> None:
+    """Affiche un mini-tableau clé/valeur à 2 colonnes."""
+    col_k, col_v = col_widths
+    row_h = 5.5
+    for i, (label, value) in enumerate(rows):
+        if i % 2 == 0:
+            pdf.set_fill_color(*PALETTE["row_even"])
+            pdf.rect(pdf.l_margin, pdf.get_y(), col_k + col_v, row_h, style="F")
+        pdf.set_font("Helvetica", "", 7.5)
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.cell(col_k, row_h, pdf.safe_str(str(label)), border="B", align="L")
+        pdf.set_font("Helvetica", "B", 7.5)
+        pdf.cell(col_v, row_h, pdf.safe_str(str(value)), border="B", align="R",
+                 new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*PALETTE["text_dark"])
+
+
+def render_ml_global_summary(pdf: StockPDF, all_kpis: list, week_label: str) -> None:
+    """Génère la page de synthèse globale ML (qualité modèle, top articles).
+
+    Contient :
+    - qualité du modèle (depuis le registry) ;
+    - top 5 articles à risque de rupture (prob_rupture élevée) ;
+    - top 5 articles à prévision incertaine (amplitude bande ML) ;
+    - graphique : comparaison date de rupture linéaire vs ML médiane par article.
+    """
+    kpis_with_ml = [k for k in all_kpis if k.get("ml_projection")]
+    if not kpis_with_ml:
+        return
+
+    pdf.add_page()
+    pw = pdf.usable_width()
+    col_orange = (255, 167, 11)
+
+    # ── Titre ──────────────────────────────────────────────────────────────────
+    pdf.section_title(f"Synthese ML — Semaine {week_label}", PALETTE["accent"])
+
+    # ── Disclaimer de vulgarisation en tête de page ────────────────────────────
+    render_ml_disclaimer(pdf)
+    pdf.ln(3)
+
+    # ── Qualité du modèle ──────────────────────────────────────────────────────
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.set_text_color(*PALETTE["accent"])
+    pdf.cell(0, 6, pdf.safe_str("Qualite du modele (derniere evaluation)"),
+             new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+
+    quality_row = _ml_model_quality_row()
+    if quality_row:
+        mape_val = quality_row.get("mape", "")
+        rmse_val = quality_row.get("rmse", "")
+        bias_val = quality_row.get("mean_bias", "")
+        cov_val = quality_row.get("coverage_band", "")
+        base_val = quality_row.get("baseline_mape", "")
+        promoted = quality_row.get("promoted", "")
+        week_lbl = quality_row.get("week_label", "")
+
+        def _fmt_pct(v):
+            try:
+                return f"{float(v):.1%}"
+            except (TypeError, ValueError):
+                return str(v) or "N/A"
+
+        def _fmt_f(v, decimals=3):
+            try:
+                return f"{float(v):.{decimals}f}"
+            except (TypeError, ValueError):
+                return str(v) or "N/A"
+
+        quality_rows = [
+            ("Semaine evaluation", str(week_lbl)),
+            ("MAPE (q50)", _fmt_pct(mape_val)),
+            ("RMSE", _fmt_f(rmse_val, 2)),
+            ("Biais moyen", _fmt_f(bias_val, 2)),
+            ("Coverage P5-P95", _fmt_pct(cov_val)),
+            ("Baseline MAPE (moy. 4 sem.)", _fmt_pct(base_val)),
+            ("Modele promu", "Oui" if str(promoted) == "1" else "Non"),
+        ]
+        _render_ml_kv_table(pdf, quality_rows, (pw * 0.55, pw * 0.45))
+    else:
+        pdf.set_font("Helvetica", "I", 7.5)
+        pdf.set_text_color(*PALETTE["text_mid"])
+        pdf.cell(0, 6, pdf.safe_str("Historique d'evaluation non disponible."),
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(*PALETTE["text_dark"])
+
+    pdf.ln(5)
+
+    # ── Top 5 articles à risque ────────────────────────────────────────────────
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.set_text_color(160, 38, 58)
+    pdf.cell(0, 6, pdf.safe_str("Top articles a risque de rupture (prob. ML > 40 %)"),
+             new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+
+    at_risk = sorted(
+        kpis_with_ml,
+        key=lambda k: float(k["ml_projection"].get("prob_rupture") or 0.0),
+        reverse=True,
+    )[:5]
+
+    col_lbl = pw * 0.38
+    col_prob = pw * 0.20
+    col_date = pw * 0.25
+    col_sta = pw * 0.17
+    row_h = 5.5
+
+    pdf.set_font("Helvetica", "B", 7.0)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.cell(col_lbl, row_h, "Article", border="B", align="L")
+    pdf.cell(col_prob, row_h, "Prob. rupture", border="B", align="R")
+    pdf.cell(col_date, row_h, "Rupture ML (P50)", border="B", align="R")
+    pdf.cell(col_sta, row_h, "Statut", border="B", align="C",
+             new_x="LMARGIN", new_y="NEXT")
+
+    for i, k in enumerate(at_risk):
+        prob = float(k["ml_projection"].get("prob_rupture") or 0.0)
+        if i % 2 == 0:
+            pdf.set_fill_color(*PALETTE["row_even"])
+            pdf.rect(pdf.l_margin, pdf.get_y(), pw, row_h, style="F")
+        pdf.set_font("Helvetica", "", 7.0)
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.cell(col_lbl, row_h, pdf.safe_str(k["label"], 60), border="B", align="L")
+        prob_color = (160, 38, 58) if prob >= 0.8 else (200, 134, 10) if prob >= 0.4 else PALETTE["text_dark"]
+        pdf.set_text_color(*prob_color)
+        pdf.cell(col_prob, row_h, f"{prob:.0%}", border="B", align="R")
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.cell(col_date, row_h, _format_iso_date_dmy(k["ml_projection"].get("rupture_date_med") or ""),
+                 border="B", align="R")
+        status_color = pdf.status_color_for(k["status"])
+        pdf.set_text_color(*status_color)
+        pdf.set_font("Helvetica", "B", 7.0)
+        pdf.cell(col_sta, row_h, k["status"], border="B", align="C",
+                 new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.ln(5)
+
+    # ── Top 5 articles incertains ──────────────────────────────────────────────
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.set_text_color(*col_orange)
+    pdf.cell(0, 6, pdf.safe_str("Top articles a prevision incertaine (grande bande ML)"),
+             new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+
+    def _band_amplitude(kpi_item: dict) -> float:
+        """Amplitude de la bande ML en semaine 1 (stock_high - stock_low)."""
+        band = (kpi_item.get("ml_projection") or {}).get("stock_band") or []
+        if not band:
+            return 0.0
+        first = band[0]
+        return float(first.get("stock_high", 0.0)) - float(first.get("stock_low", 0.0))
+
+    uncertain = sorted(kpis_with_ml, key=_band_amplitude, reverse=True)[:5]
+
+    col_lbl2 = pw * 0.42
+    col_amp = pw * 0.25
+    col_unit = pw * 0.16
+    col_sta2 = pw * 0.17
+
+    pdf.set_font("Helvetica", "B", 7.0)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.cell(col_lbl2, row_h, "Article", border="B", align="L")
+    pdf.cell(col_amp, row_h, "Amplitude bande S1", border="B", align="R")
+    pdf.cell(col_unit, row_h, "Unite", border="B", align="R")
+    pdf.cell(col_sta2, row_h, "Statut", border="B", align="C",
+             new_x="LMARGIN", new_y="NEXT")
+
+    for i, k in enumerate(uncertain):
+        amp = _band_amplitude(k)
+        if i % 2 == 0:
+            pdf.set_fill_color(*PALETTE["row_even"])
+            pdf.rect(pdf.l_margin, pdf.get_y(), pw, row_h, style="F")
+        pdf.set_font("Helvetica", "", 7.0)
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.cell(col_lbl2, row_h, pdf.safe_str(k["label"], 60), border="B", align="L")
+        pdf.cell(col_amp, row_h, f"{amp:.1f}", border="B", align="R")
+        pdf.cell(col_unit, row_h, str(k.get("unit", "")), border="B", align="R")
+        status_color = pdf.status_color_for(k["status"])
+        pdf.set_text_color(*status_color)
+        pdf.set_font("Helvetica", "B", 7.0)
+        pdf.cell(col_sta2, row_h, k["status"], border="B", align="C",
+                 new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.ln(5)
+
+    # ── Graphique : comparaison baseline vs ML (dates de rupture) ─────────────
+    comparison_data = []
+    for k in kpis_with_ml:
+        linear_iso = k.get("rupture_date_linear") or k.get("rupture_date")
+        ml_iso = (k.get("ml_projection") or {}).get("rupture_date_med")
+        if not linear_iso or not ml_iso:
+            continue
+        try:
+            linear_dt = date.fromisoformat(str(linear_iso)[:10])
+            ml_dt = date.fromisoformat(str(ml_iso)[:10])
+            comparison_data.append({
+                "label": k["label"],
+                "linear": (linear_dt - date.today()).days,
+                "ml": (ml_dt - date.today()).days,
+            })
+        except (ValueError, TypeError):
+            continue
+
+    if comparison_data and len(comparison_data) >= 2:
+        try:
+            import numpy as np  # pylint: disable=import-outside-toplevel
+            labels = [d["label"][:18] for d in comparison_data]
+            lin_days = [d["linear"] for d in comparison_data]
+            ml_days = [d["ml"] for d in comparison_data]
+            x = np.arange(len(labels))
+            width = 0.35
+            fig3, ax3 = plt.subplots(figsize=(8.6, max(2.5, len(labels) * 0.5 + 0.5)), dpi=140)
+            ax3.barh(x - width / 2, lin_days, width, label="Tendance lineaire",
+                     color="#E05A2B", alpha=0.80)
+            ax3.barh(x + width / 2, ml_days, width, label="ML median (P50)",
+                     color="#7B4FB8", alpha=0.80)
+            ax3.set_yticks(x)
+            ax3.set_yticklabels(labels, fontsize=7)
+            ax3.set_xlabel("Jours avant rupture (>0 = futur)", fontsize=8)
+            ax3.set_title("Comparaison : rupture lineaire vs ML par article", fontsize=9)
+            ax3.axvline(0, color="#403B3A", linewidth=0.8, linestyle="--")
+            ax3.legend(fontsize=7, loc="lower right")
+            ax3.grid(axis="x", linestyle=":", linewidth=0.7, alpha=0.5)
+            fig3.tight_layout()
+            buf3 = io.BytesIO()
+            fig3.savefig(buf3, format="png", dpi=140)
+            plt.close(fig3)
+            buf3.seek(0)
+            chart3_h = max(40, len(labels) * 9 + 12)
+            y0 = pdf.get_y()
+            if y0 + chart3_h > pdf.h - pdf.b_margin:
+                pdf.add_page()
+                y0 = pdf.get_y()
+            pdf.image(buf3, x=pdf.l_margin, y=y0, w=pw, h=chart3_h)
+            pdf.set_y(y0 + chart3_h + 4)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log.debug("Graphique comparaison baseline/ML ignore : %s", exc)
+
+    pdf.set_text_color(*PALETTE["text_dark"])
+
+
 # ─── Encart vulgarisation ML ──────────────────────────────────────────────────
 
 def _ml_disclaimer_point(pdf: StockPDF, col_orange: tuple,
@@ -1736,120 +2064,69 @@ def _ml_disclaimer_point(pdf: StockPDF, col_orange: tuple,
 
 
 def render_ml_disclaimer(pdf: StockPDF) -> None:
-    """Encart de vulgarisation ML insere apres le tableau de synthese (mode --ml)."""
-    col_orange = (255, 167, 11)
-    col_orange_light = (255, 248, 230)
-    col_white = (255, 255, 255)
-    pw = pdf.usable_width()
-    lh = 4.5
+    """Encart de vulgarisation ML : cadre orange simple avec icone ampoule.
 
-    pdf.ln(6)
-    if pdf.get_y() + 82 > pdf.h - pdf.b_margin:
+    Conçu pour les non-initiés : une seule phrase d'explication, pas de tableau,
+    pas de fioritures. S'insère en haut de la page de synthèse ML.
+    """
+    col_orange = (255, 167, 11)
+    pw = pdf.usable_width()
+    lh = 4.8
+    padding = 4.0
+    icon_d = 8.0   # diamètre du cercle icone
+
+    body_text = pdf.safe_str(
+        "Ce rapport contient des projections calculees par un algorithme d'apprentissage "
+        "automatique, en complement de la tendance lineaire classique. "
+        "L'algorithme analyse l'historique des consommations et propose trois scenarios "
+        "par article — optimiste, median et pessimiste — representes par les plages "
+        "colorees sur les graphiques. "
+        "Les resultats s'ameliorent au fil du temps : il faut au moins 17 semaines "
+        "d'historique par article pour qu'une projection ML soit disponible."
+    )
+
+    # Zone de texte : commence apres l'icone
+    text_x = pdf.l_margin + padding + icon_d + 3.0
+    text_w = pw - (text_x - pdf.l_margin) - padding
+
+    # Estimation conservative de la hauteur (≈ 2 mm par caractere / largeur)
+    chars_per_line = max(1, int(text_w / 1.95))
+    n_lines = -(-len(body_text) // chars_per_line)  # division entiere vers le haut
+    box_h = padding + max(n_lines, 4) * lh + padding
+
+    if pdf.get_y() + box_h > pdf.h - pdf.b_margin:
         pdf.add_page()
 
-    # ── En-tete orange ───────────────────────────────────────────────────────
-    hdr_h = 9.0
     y0 = pdf.get_y()
+
+    # ── Icone ampoule : cercle orange plein + « i » blanc ────────────────────
+    icon_x = pdf.l_margin + padding
+    icon_y = y0 + padding
     pdf.set_fill_color(*col_orange)
     pdf.set_draw_color(*col_orange)
-    pdf.rect(pdf.l_margin, y0, pw, hdr_h, style="F")
+    pdf.ellipse(icon_x, icon_y, icon_d, icon_d, style="F")
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_xy(icon_x, icon_y + (icon_d - 5.0) / 2.0)
+    pdf.cell(icon_d, 5.0, "i", align="C")
 
-    # Icone : petit carre blanc avec "ML"
-    icon_sz = 6.0
-    ix = pdf.l_margin + 3.0
-    iy = y0 + (hdr_h - icon_sz) / 2.0
-    pdf.set_fill_color(*col_white)
-    pdf.set_draw_color(*col_white)
-    pdf.rect(ix, iy, icon_sz, icon_sz, style="F")
-    pdf.set_font("Helvetica", "B", 6.0)
-    pdf.set_text_color(*col_orange)
-    pdf.set_xy(ix, iy + 1.0)
-    pdf.cell(icon_sz, icon_sz - 2.0, "ML", border=0, align="C")
-
-    # Titre + sous-titre en blanc
-    tx = ix + icon_sz + 3.0
-    pdf.set_font("Helvetica", "B", 9.0)
-    pdf.set_text_color(*col_white)
-    pdf.set_xy(tx, y0 + 1.2)
-    pdf.cell(pw - (tx - pdf.l_margin) - 2, 5.0,
-             pdf.safe_str("Projections par apprentissage automatique"), border=0, align="L")
-    pdf.set_font("Helvetica", "I", 7.0)
-    pdf.set_xy(tx, y0 + 1.2 + 5.0)
-    pdf.cell(pw - (tx - pdf.l_margin) - 2, 3.0,
-             pdf.safe_str("version beta - resultats indicatifs"), border=0, align="L")
-
-    pdf.set_xy(pdf.l_margin, y0 + hdr_h)
-    body_start_page = pdf.page
-
-    # ── Corps : fond unique pre-dessine, texte ecrit par-dessus sans fill ────
-    # Le fond couvre le reste de la page ; l'exces est efface par un rect blanc apres
-    # l'ecriture. Cela evite toute zone blanche inter-cellules et tout debordement.
-    body_y = pdf.get_y()
-    body_bg_h = pdf.h - pdf.b_margin - body_y
-    pdf.set_fill_color(*col_orange_light)
-    pdf.rect(pdf.l_margin, body_y, pw, body_bg_h, style="F")
-    pdf.set_y(body_y)
-
-    # Intro
-    pdf.ln(3.0)
+    # ── Texte de vulgarisation ────────────────────────────────────────────────
+    pdf.set_xy(text_x, y0 + padding)
     pdf.set_font("Helvetica", "", 7.5)
     pdf.set_text_color(*PALETTE["text_dark"])
-    pdf.set_x(pdf.l_margin + 3.0)
-    pdf.multi_cell(
-        pw - 6.0, lh,
-        pdf.safe_str(
-            "Ce rapport inclut des projections de rupture de stock calculees par un modele "
-            "d'apprentissage automatique (machine learning), en complement de la tendance lineaire."
-        ),
-        border=0, fill=False, align="L",
-    )
-    pdf.ln(4.0)
+    pdf.multi_cell(text_w, lh, body_text, border=0, align="L")
 
-    # 3 points structures
-    _ml_disclaimer_point(
-        pdf, col_orange,
-        "Apprentissage progressif",
-        ("Le modele se reentraine automatiquement chaque semaine sur les nouvelles donnees. "
-         "Etant en version beta, ses projections s'affinent avec le temps - "
-         "plus l'historique est long, plus les estimations sont fiables."),
-        pw, lh,
-    )
-    pdf.ln(4.0)
-
-    _ml_disclaimer_point(
-        pdf, col_orange,
-        "Pas de projection pour tous les articles",
-        ("Il faut au minimum 17 semaines de consommation enregistrees par article. "
-         "En dessous de ce seuil, seule la tendance lineaire classique est utilisee."),
-        pw, lh,
-    )
-    pdf.ln(4.0)
-
-    _ml_disclaimer_point(
-        pdf, col_orange,
-        "3 scenarios par article",
-        ("Optimiste (q5), median (q50) et pessimiste (q95), issus de 1 000 simulations "
-         "Monte-Carlo. La date affichee comme rupture est le scenario median (q50)."),
-        pw, lh,
-    )
-
-    pdf.ln(4.0)
-    body_end_y = pdf.get_y()
-
-    # Masque l'exces de fond orange-clair (aucun contenu ne suit sur cette page)
-    if pdf.page == body_start_page and body_end_y < body_y + body_bg_h:
-        pdf.set_fill_color(255, 255, 255)
-        pdf.rect(pdf.l_margin, body_end_y, pw, (body_y + body_bg_h) - body_end_y, style="F")
-
-    # Bordure gauche orange (uniquement si pas de saut de page)
-    if pdf.page == body_start_page:
-        pdf.set_fill_color(*col_orange)
-        pdf.set_draw_color(*col_orange)
-        pdf.rect(pdf.l_margin, body_y, 2.0, body_end_y - body_y, style="F")
-
-    pdf.set_text_color(*PALETTE["text_dark"])
+    # ── Cadre orange (dessiné en dernier pour ne pas couvrir le texte) ────────
+    actual_end_y = pdf.get_y() + padding / 2
+    actual_box_h = actual_end_y - y0
+    pdf.set_draw_color(*col_orange)
+    pdf.set_line_width(0.8)
+    pdf.rect(pdf.l_margin, y0, pw, actual_box_h, style="D")
     pdf.set_line_width(0.2)
-    pdf.ln(2)
+    pdf.set_draw_color(*PALETTE["divider"])
+
+    pdf.set_y(actual_end_y + 2)
+    pdf.set_text_color(*PALETTE["text_dark"])
 
 
 # ─── Génération complète du PDF ───────────────────────────────────────────────
@@ -1860,7 +2137,7 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
     if use_ml:
-        render_ml_disclaimer(pdf)
+        render_ml_global_summary(pdf, all_kpis, week_label)
 
     for kpi in all_kpis:
         render_article_page(pdf, kpi)
