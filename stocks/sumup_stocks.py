@@ -1457,8 +1457,8 @@ class StockPDF(FPDF):
                     y0 = self.get_y()
                 self.image(buf2, x=self.l_margin, y=y0, w=chart_w, h=chart2_h)
                 self.set_y(y0 + chart2_h + 4)
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                log.debug("Graphique prob_rupture_by_week ignore : %s", exc)
 
 # ─── Page 1 : Synthèse globale ────────────────────────────────────────────────
 
@@ -1786,8 +1786,8 @@ def _ml_model_quality_row() -> dict | None:
         hist = recent_history(n=1)
         if hist is not None and not hist.empty:
             return hist.iloc[-1].to_dict()
-    except Exception:  # pylint: disable=broad-exception-caught
-        pass
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        log.debug("Lecture registry ML ignoree : %s", exc)
     return None
 
 
@@ -1987,13 +1987,12 @@ def render_ml_global_summary(pdf: StockPDF, all_kpis: list, week_label: str) -> 
         if not linear_iso or not ml_iso:
             continue
         try:
-            from datetime import date as _date  # pylint: disable=import-outside-toplevel
-            linear_dt = _date.fromisoformat(str(linear_iso)[:10])
-            ml_dt = _date.fromisoformat(str(ml_iso)[:10])
+            linear_dt = date.fromisoformat(str(linear_iso)[:10])
+            ml_dt = date.fromisoformat(str(ml_iso)[:10])
             comparison_data.append({
                 "label": k["label"],
-                "linear": (linear_dt - _date.today()).days,
-                "ml": (ml_dt - _date.today()).days,
+                "linear": (linear_dt - date.today()).days,
+                "ml": (ml_dt - date.today()).days,
             })
         except (ValueError, TypeError):
             continue
@@ -2030,8 +2029,8 @@ def render_ml_global_summary(pdf: StockPDF, all_kpis: list, week_label: str) -> 
                 y0 = pdf.get_y()
             pdf.image(buf3, x=pdf.l_margin, y=y0, w=pw, h=chart3_h)
             pdf.set_y(y0 + chart3_h + 4)
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log.debug("Graphique comparaison baseline/ML ignore : %s", exc)
 
     pdf.set_text_color(*PALETTE["text_dark"])
 

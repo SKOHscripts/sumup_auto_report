@@ -42,7 +42,7 @@ def detect_anomalies(
     df["z_score"] = float("nan")
     df["is_anomaly"] = False
 
-    for sku, grp in df.groupby("stock_sku"):
+    for _, grp in df.groupby("stock_sku"):
         if len(grp) < MIN_WEEKS_FOR_ZSCORE:
             continue
         usage = grp["usage"].to_numpy(dtype=float)

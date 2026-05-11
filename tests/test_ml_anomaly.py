@@ -1,7 +1,5 @@
 """Tests unitaires pour stocks.ml.anomaly — détection d'anomalies."""
-import numpy as np
 import pandas as pd
-import pytest
 
 from stocks.ml.anomaly import (
     DEFAULT_Z_THRESHOLD,
