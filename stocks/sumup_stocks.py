@@ -1828,6 +1828,10 @@ def render_ml_global_summary(pdf: StockPDF, all_kpis: list, week_label: str) -> 
     # ── Titre ──────────────────────────────────────────────────────────────────
     pdf.section_title(f"Synthese ML — Semaine {week_label}", PALETTE["accent"])
 
+    # ── Disclaimer de vulgarisation en tête de page ────────────────────────────
+    render_ml_disclaimer(pdf)
+    pdf.ln(3)
+
     # ── Qualité du modèle ──────────────────────────────────────────────────────
     pdf.set_font("Helvetica", "B", 8.5)
     pdf.set_text_color(*PALETTE["accent"])
@@ -2061,120 +2065,69 @@ def _ml_disclaimer_point(pdf: StockPDF, col_orange: tuple,
 
 
 def render_ml_disclaimer(pdf: StockPDF) -> None:
-    """Encart de vulgarisation ML insere apres le tableau de synthese (mode --ml)."""
-    col_orange = (255, 167, 11)
-    col_orange_light = (255, 248, 230)
-    col_white = (255, 255, 255)
-    pw = pdf.usable_width()
-    lh = 4.5
+    """Encart de vulgarisation ML : cadre orange simple avec icone ampoule.
 
-    pdf.ln(6)
-    if pdf.get_y() + 82 > pdf.h - pdf.b_margin:
+    Conçu pour les non-initiés : une seule phrase d'explication, pas de tableau,
+    pas de fioritures. S'insère en haut de la page de synthèse ML.
+    """
+    col_orange = (255, 167, 11)
+    pw = pdf.usable_width()
+    lh = 4.8
+    padding = 4.0
+    icon_d = 8.0   # diamètre du cercle icone
+
+    body_text = pdf.safe_str(
+        "Ce rapport contient des projections calculees par un algorithme d'apprentissage "
+        "automatique, en complement de la tendance lineaire classique. "
+        "L'algorithme analyse l'historique des consommations et propose trois scenarios "
+        "par article — optimiste, median et pessimiste — representes par les plages "
+        "colorees sur les graphiques. "
+        "Les resultats s'ameliorent au fil du temps : il faut au moins 17 semaines "
+        "d'historique par article pour qu'une projection ML soit disponible."
+    )
+
+    # Zone de texte : commence apres l'icone
+    text_x = pdf.l_margin + padding + icon_d + 3.0
+    text_w = pw - (text_x - pdf.l_margin) - padding
+
+    # Estimation conservative de la hauteur (≈ 2 mm par caractere / largeur)
+    chars_per_line = max(1, int(text_w / 1.95))
+    n_lines = -(-len(body_text) // chars_per_line)  # division entiere vers le haut
+    box_h = padding + max(n_lines, 4) * lh + padding
+
+    if pdf.get_y() + box_h > pdf.h - pdf.b_margin:
         pdf.add_page()
 
-    # ── En-tete orange ───────────────────────────────────────────────────────
-    hdr_h = 9.0
     y0 = pdf.get_y()
+
+    # ── Icone ampoule : cercle orange plein + « i » blanc ────────────────────
+    icon_x = pdf.l_margin + padding
+    icon_y = y0 + padding
     pdf.set_fill_color(*col_orange)
     pdf.set_draw_color(*col_orange)
-    pdf.rect(pdf.l_margin, y0, pw, hdr_h, style="F")
+    pdf.ellipse(icon_x, icon_y, icon_d, icon_d, style="F")
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_xy(icon_x, icon_y + (icon_d - 5.0) / 2.0)
+    pdf.cell(icon_d, 5.0, "i", align="C")
 
-    # Icone : petit carre blanc avec "ML"
-    icon_sz = 6.0
-    ix = pdf.l_margin + 3.0
-    iy = y0 + (hdr_h - icon_sz) / 2.0
-    pdf.set_fill_color(*col_white)
-    pdf.set_draw_color(*col_white)
-    pdf.rect(ix, iy, icon_sz, icon_sz, style="F")
-    pdf.set_font("Helvetica", "B", 6.0)
-    pdf.set_text_color(*col_orange)
-    pdf.set_xy(ix, iy + 1.0)
-    pdf.cell(icon_sz, icon_sz - 2.0, "ML", border=0, align="C")
-
-    # Titre + sous-titre en blanc
-    tx = ix + icon_sz + 3.0
-    pdf.set_font("Helvetica", "B", 9.0)
-    pdf.set_text_color(*col_white)
-    pdf.set_xy(tx, y0 + 1.2)
-    pdf.cell(pw - (tx - pdf.l_margin) - 2, 5.0,
-             pdf.safe_str("Projections par apprentissage automatique"), border=0, align="L")
-    pdf.set_font("Helvetica", "I", 7.0)
-    pdf.set_xy(tx, y0 + 1.2 + 5.0)
-    pdf.cell(pw - (tx - pdf.l_margin) - 2, 3.0,
-             pdf.safe_str("version beta - resultats indicatifs"), border=0, align="L")
-
-    pdf.set_xy(pdf.l_margin, y0 + hdr_h)
-    body_start_page = pdf.page
-
-    # ── Corps : fond unique pre-dessine, texte ecrit par-dessus sans fill ────
-    # Le fond couvre le reste de la page ; l'exces est efface par un rect blanc apres
-    # l'ecriture. Cela evite toute zone blanche inter-cellules et tout debordement.
-    body_y = pdf.get_y()
-    body_bg_h = pdf.h - pdf.b_margin - body_y
-    pdf.set_fill_color(*col_orange_light)
-    pdf.rect(pdf.l_margin, body_y, pw, body_bg_h, style="F")
-    pdf.set_y(body_y)
-
-    # Intro
-    pdf.ln(3.0)
+    # ── Texte de vulgarisation ────────────────────────────────────────────────
+    pdf.set_xy(text_x, y0 + padding)
     pdf.set_font("Helvetica", "", 7.5)
     pdf.set_text_color(*PALETTE["text_dark"])
-    pdf.set_x(pdf.l_margin + 3.0)
-    pdf.multi_cell(
-        pw - 6.0, lh,
-        pdf.safe_str(
-            "Ce rapport inclut des projections de rupture de stock calculees par un modele "
-            "d'apprentissage automatique (machine learning), en complement de la tendance lineaire."
-        ),
-        border=0, fill=False, align="L",
-    )
-    pdf.ln(4.0)
+    pdf.multi_cell(text_w, lh, body_text, border=0, align="L")
 
-    # 3 points structures
-    _ml_disclaimer_point(
-        pdf, col_orange,
-        "Apprentissage progressif",
-        ("Le modele se reentraine automatiquement chaque semaine sur les nouvelles donnees. "
-         "Etant en version beta, ses projections s'affinent avec le temps - "
-         "plus l'historique est long, plus les estimations sont fiables."),
-        pw, lh,
-    )
-    pdf.ln(4.0)
-
-    _ml_disclaimer_point(
-        pdf, col_orange,
-        "Pas de projection pour tous les articles",
-        ("Il faut au minimum 17 semaines de consommation enregistrees par article. "
-         "En dessous de ce seuil, seule la tendance lineaire classique est utilisee."),
-        pw, lh,
-    )
-    pdf.ln(4.0)
-
-    _ml_disclaimer_point(
-        pdf, col_orange,
-        "3 scenarios par article",
-        ("Optimiste (q5), median (q50) et pessimiste (q95), issus de 1 000 simulations "
-         "Monte-Carlo. La date affichee comme rupture est le scenario median (q50)."),
-        pw, lh,
-    )
-
-    pdf.ln(4.0)
-    body_end_y = pdf.get_y()
-
-    # Masque l'exces de fond orange-clair (aucun contenu ne suit sur cette page)
-    if pdf.page == body_start_page and body_end_y < body_y + body_bg_h:
-        pdf.set_fill_color(255, 255, 255)
-        pdf.rect(pdf.l_margin, body_end_y, pw, (body_y + body_bg_h) - body_end_y, style="F")
-
-    # Bordure gauche orange (uniquement si pas de saut de page)
-    if pdf.page == body_start_page:
-        pdf.set_fill_color(*col_orange)
-        pdf.set_draw_color(*col_orange)
-        pdf.rect(pdf.l_margin, body_y, 2.0, body_end_y - body_y, style="F")
-
-    pdf.set_text_color(*PALETTE["text_dark"])
+    # ── Cadre orange (dessiné en dernier pour ne pas couvrir le texte) ────────
+    actual_end_y = pdf.get_y() + padding / 2
+    actual_box_h = actual_end_y - y0
+    pdf.set_draw_color(*col_orange)
+    pdf.set_line_width(0.8)
+    pdf.rect(pdf.l_margin, y0, pw, actual_box_h, style="D")
     pdf.set_line_width(0.2)
-    pdf.ln(2)
+    pdf.set_draw_color(*PALETTE["divider"])
+
+    pdf.set_y(actual_end_y + 2)
+    pdf.set_text_color(*PALETTE["text_dark"])
 
 
 # ─── Génération complète du PDF ───────────────────────────────────────────────
@@ -2185,7 +2138,6 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
     if use_ml:
-        render_ml_disclaimer(pdf)
         render_ml_global_summary(pdf, all_kpis, week_label)
 
     for kpi in all_kpis:
