@@ -489,7 +489,7 @@ if sid == "stocks":
         with col1:
             weeks = st.number_input(
                 "Semaines d'historique",
-                min_value=1, max_value=52, value=4,
+                min_value=1, max_value=52, value=8,
                 key=f"weeks_{sid}",
                 disabled=is_running,
                 help=(
