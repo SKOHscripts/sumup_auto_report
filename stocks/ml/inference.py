@@ -26,6 +26,7 @@ from typing import Iterable
 
 import pandas as pd
 
+from stocks.ml.anomaly import detect_anomalies
 from stocks.ml.dataset import filter_skus, load_weekly_usage
 from stocks.ml.features import DEFAULT_LAGS, prepare_training_table
 from stocks.ml.model import QuantileGradientBoostingForecaster
@@ -140,6 +141,7 @@ def project_for_sku(  # pylint: disable=too-many-arguments
         "rupture_date_med": sim["rupture_date_med"].isoformat() if sim["rupture_date_med"] else None,
         "rupture_date_high": sim["rupture_date_high"].isoformat() if sim["rupture_date_high"] else None,
         "prob_rupture": sim["prob_rupture"],
+        "prob_rupture_by_week": sim.get("prob_rupture_by_week", []),
         "quantiles": list(sim["quantiles"]),
         "stock_band": stock_band,
         "stock_initial": sim.get("stock_initial", float(stock_initial)),
@@ -149,6 +151,64 @@ def project_for_sku(  # pylint: disable=too-many-arguments
         "model_version": model.metadata.config_hash,
         "model_trained_at": model.metadata.trained_at,
     }
+
+
+def explain_projection(ml_projection: dict, kpi: dict) -> str:
+    """Génère un commentaire d'explicabilité court pour une projection ML.
+
+    Le texte est basé sur les valeurs KPI disponibles (probabilité de rupture,
+    amplitude de l'intervalle, tendance sur l'horizon).
+
+    Args:
+        ml_projection: dict retourné par ``project_for_sku``.
+        kpi: dict KPI de l'article (pour l'unité, la consommation, etc.).
+
+    Returns:
+        Chaîne de 1-2 phrases en français prête à afficher dans le PDF.
+    """
+    prob = ml_projection.get("prob_rupture", 0.0) or 0.0
+    unit = kpi.get("unit", "")
+    forecast = ml_projection.get("weekly_forecast") or []
+    stock_band = ml_projection.get("stock_band") or []
+
+    # Tendance : comparer la médiane prévue semaine 1 vs semaine 8
+    trend_phrase = ""
+    if len(forecast) >= 8:
+        q_med_w1 = float(forecast[0].get("q_med", 0.0))
+        q_med_w8 = float(forecast[7].get("q_med", 0.0))
+        if q_med_w1 > 0:
+            ratio = q_med_w8 / q_med_w1
+            if ratio > 1.15:
+                trend_phrase = "La consommation prevue est en hausse sur les 8 prochaines semaines."
+            elif ratio < 0.85:
+                trend_phrase = "La consommation prevue est en baisse sur les 8 prochaines semaines."
+            else:
+                trend_phrase = "La consommation prevue est stable sur les 8 prochaines semaines."
+
+    # Amplitude de l'intervalle en semaine 1
+    uncertainty_phrase = ""
+    if stock_band:
+        first = stock_band[0]
+        s_low = float(first.get("stock_low", 0.0))
+        s_high = float(first.get("stock_high", 0.0))
+        amplitude = s_high - s_low
+        if amplitude > 0:
+            unit_str = f" {unit}" if unit else ""
+            uncertainty_phrase = (
+                f"Amplitude de l'intervalle de confiance en semaine 1 : "
+                f"{amplitude:.1f}{unit_str}."
+            )
+
+    # Risque de rupture
+    if prob >= 0.8:
+        risk_phrase = f"Risque de rupture eleve ({prob:.0%}) sur l'horizon de prevision."
+    elif prob >= 0.4:
+        risk_phrase = f"Risque de rupture modere ({prob:.0%}) sur l'horizon de prevision."
+    else:
+        risk_phrase = f"Risque de rupture faible ({prob:.0%}) sur l'horizon de prevision."
+
+    parts = [p for p in [risk_phrase, trend_phrase, uncertainty_phrase] if p]
+    return " ".join(parts)
 
 
 def attach_ml_projections(
@@ -178,6 +238,13 @@ def attach_ml_projections(
     if model is None:
         return all_kpis
 
+    # Détection d'anomalies sur l'historique global (best-effort).
+    try:
+        history_flagged = detect_anomalies(history)
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        log.warning("ML : detection anomalies echouee (%s)", exc)
+        history_flagged = history
+
     n_attached = 0
     for kpi in all_kpis:
         sku = kpi["stock_sku"]
@@ -190,6 +257,14 @@ def attach_ml_projections(
             incoming_eta=_parse_eta(kpi.get("incoming_eta")),
         )
         if proj is not None:
+            # Attacher les semaines anomalies pour ce SKU
+            sku_flags = history_flagged[
+                (history_flagged["stock_sku"] == sku) & history_flagged["is_anomaly"]
+            ]
+            proj["anomaly_weeks"] = (
+                sku_flags["week_label"].tolist() if "week_label" in sku_flags.columns else []
+            )
+            proj["explanation"] = explain_projection(proj, kpi)
             kpi["ml_projection"] = proj
             n_attached += 1
     log.info("ML : projections attachees a %d/%d SKU.", n_attached, len(all_kpis))
@@ -226,6 +301,7 @@ __all__ = [
     "MIN_TRAINING_ROWS",
     "MIN_WEEKS_PER_SKU",
     "attach_ml_projections",
+    "explain_projection",
     "project_for_sku",
     "train_global_model",
 ]

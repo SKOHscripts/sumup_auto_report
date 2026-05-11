@@ -36,7 +36,9 @@ class EvaluationMetrics:
     """Résumé des métriques calculées sur un fold ou agrégées."""
 
     mae: float = 0.0
+    rmse: float = 0.0
     mape: float = 0.0
+    mean_bias: float = 0.0
     pinball_low: float = 0.0
     pinball_med: float = 0.0
     pinball_high: float = 0.0
@@ -49,7 +51,9 @@ class EvaluationMetrics:
         """Renvoie les métriques sous forme de dict simple (sans fold_metrics)."""
         out = {
             "mae": self.mae,
+            "rmse": self.rmse,
             "mape": self.mape,
+            "mean_bias": self.mean_bias,
             "pinball_low": self.pinball_low,
             "pinball_med": self.pinball_med,
             "pinball_high": self.pinball_high,
@@ -63,6 +67,16 @@ class EvaluationMetrics:
 def mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Mean Absolute Error."""
     return float(np.mean(np.abs(y_true - y_pred)))
+
+
+def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Root Mean Squared Error."""
+    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+
+
+def mean_bias(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Biais moyen : erreur systématique (positif = surestimation)."""
+    return float(np.mean(y_pred - y_true))
 
 
 def mape(y_true: np.ndarray, y_pred: np.ndarray, eps: float = 1.0) -> float:
@@ -146,7 +160,9 @@ def walk_forward_backtest(
             "n_train": len(train_idx),
             "n_test": len(test_idx),
             "mae": mae(y_test, q_med_arr),
+            "rmse": rmse(y_test, q_med_arr),
             "mape": mape(y_test, q_med_arr),
+            "mean_bias": mean_bias(y_test, q_med_arr),
             "pinball_low": pinball_loss(y_test, q_low_arr, q_low_frac),
             "pinball_med": pinball_loss(y_test, q_med_arr, q_med_frac),
             "pinball_high": pinball_loss(y_test, q_high_arr, q_high_frac),
@@ -156,7 +172,9 @@ def walk_forward_backtest(
     n = len(fold_results)
     return EvaluationMetrics(
         mae=float(np.mean([r["mae"] for r in fold_results])),
+        rmse=float(np.mean([r["rmse"] for r in fold_results])),
         mape=float(np.mean([r["mape"] for r in fold_results])),
+        mean_bias=float(np.mean([r["mean_bias"] for r in fold_results])),
         pinball_low=float(np.mean([r["pinball_low"] for r in fold_results])),
         pinball_med=float(np.mean([r["pinball_med"] for r in fold_results])),
         pinball_high=float(np.mean([r["pinball_high"] for r in fold_results])),
@@ -221,7 +239,9 @@ __all__ = [
     "coverage",
     "is_model_promotable",
     "mae",
+    "mean_bias",
     "mape",
     "pinball_loss",
+    "rmse",
     "walk_forward_backtest",
 ]
