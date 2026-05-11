@@ -80,7 +80,7 @@ def _check_fpdf_version():
 
 _check_fpdf_version()
 
-DEFAULT_WEEKS = 4
+DEFAULT_WEEKS = 8
 PROJECTION_WEEKS = 4
 
 logging.basicConfig(
