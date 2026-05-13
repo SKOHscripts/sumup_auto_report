@@ -373,7 +373,9 @@ class TransactionAnalyzer:
             N > 0 = période fixe identique pour tous les articles.
         """
         weeks = sorted({r["week"] for r in rows})
-        by_article = defaultdict(lambda: {"qty": 0, "revenue": 0.0, "category": "", "mapped": False, "weeks_seen": set()})
+        by_article = defaultdict(
+            lambda: {"qty": 0, "revenue": 0.0, "category": "", "mapped": False, "weeks_seen": set()}
+        )
         by_category_week = defaultdict(lambda: defaultdict(lambda: {"qty": 0, "revenue": 0.0}))
         by_category = defaultdict(lambda: {"qty": 0, "revenue": 0.0})
         payments = Counter()
