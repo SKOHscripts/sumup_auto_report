@@ -365,10 +365,15 @@ class TransactionAnalyzer:
 
         return rows
 
-    def compute_metrics(self, rows: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Calcule les métriques agrégées (top articles, catégories, paiements)."""
+    def compute_metrics(self, rows: List[Dict[str, Any]], norm_weeks: int = 0) -> Dict[str, Any]:
+        """Calcule les métriques agrégées (top articles, catégories, paiements).
+
+        norm_weeks : diviseur de normalisation.
+            0 = nombre de semaines actives par article (semaines où l'article a eu des ventes).
+            N > 0 = période fixe identique pour tous les articles.
+        """
         weeks = sorted({r["week"] for r in rows})
-        by_article = defaultdict(lambda: {"qty": 0, "revenue": 0.0, "category": "", "mapped": False})
+        by_article = defaultdict(lambda: {"qty": 0, "revenue": 0.0, "category": "", "mapped": False, "weeks_seen": set()})
         by_category_week = defaultdict(lambda: defaultdict(lambda: {"qty": 0, "revenue": 0.0}))
         by_category = defaultdict(lambda: {"qty": 0, "revenue": 0.0})
         payments = Counter()
@@ -381,6 +386,7 @@ class TransactionAnalyzer:
             by_article[key]["revenue"] += safe_float(r.get("estimated_revenue"), 0.0)
             by_article[key]["category"] = r["category"]
             by_article[key]["mapped"] = r["mapped"]
+            by_article[key]["weeks_seen"].add(r["week"])
 
             cat = r["category"] or "autres"
             by_category_week[cat][r["week"]]["qty"] += r["quantity"]
@@ -395,22 +401,33 @@ class TransactionAnalyzer:
             if not r["mapped"]:
                 unmapped[(r["product_name"], r["product_variant"])] += r["quantity"]
 
+        for v in by_article.values():
+            divisor = norm_weeks if norm_weeks > 0 else len(v["weeks_seen"])
+            divisor = divisor or 1
+            v["qty_per_week"] = round(v["qty"] / divisor, 2)
+            v["revenue_per_week"] = round(v["revenue"] / divisor, 2)
+            v["n_active_weeks"] = len(v["weeks_seen"])
+
         top_articles = sorted(
             [{"label": k, **v} for k, v in by_article.items()],
-            key=lambda x: (-x["qty"], -x["revenue"], x["label"]),
+            key=lambda x: (-x["qty_per_week"], -x["revenue_per_week"], x["label"]),
         )
         top_articles_revenue = sorted(
             [{"label": k, **v} for k, v in by_article.items() if v["revenue"] > 0],
-            key=lambda x: (-x["revenue"], -x["qty"], x["label"]),
+            key=lambda x: (-x["revenue_per_week"], -x["qty_per_week"], x["label"]),
         )
         least_articles = sorted(
             [{"label": k, **v} for k, v in by_article.items()],
-            key=lambda x: (x["qty"], x["revenue"], x["label"]),
+            key=lambda x: (x["qty_per_week"], x["revenue_per_week"], x["label"]),
         )
+
+        norm_label = f"{norm_weeks} sem. fixe" if norm_weeks > 0 else "sem. actives par article"
 
         return {
             "weeks": weeks,
             "rows": rows,
+            "norm_weeks": norm_weeks,
+            "norm_label": norm_label,
             "top_articles": top_articles,
             "top_articles_revenue": top_articles_revenue,
             "least_articles": least_articles,
@@ -676,6 +693,7 @@ class ReportBuilder:
             ("Semaines analysées", str(len(metrics["weeks"]))),
             ("Quantité totale vendue", str(metrics["total_qty"])),
             ("CA estimé total", f"{metrics['total_revenue']:.2f} EUR"),
+            ("Normalisation", metrics["norm_label"]),
             ("Taux de mapping catalogue", f"{mapped_ratio:.0f} %"),
             ("Ratio cash", f"{cash_ratio:.0f} %"),
             ("Ratio CB", f"{cb_ratio:.0f} %"),
@@ -683,27 +701,36 @@ class ReportBuilder:
 
         pdf.section("Top articles vendus")
         top_qty_rows = [
-            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} EUR"]
+            [a["label"], a["category"], f"{a['qty_per_week']:.1f}", str(a["qty"]), str(a["n_active_weeks"])]
 
             for a in metrics["top_articles"][:10]
         ]
-        pdf.simple_table(["Article", "Catégorie", "Qté", "CA estimé"], top_qty_rows, [78, 36, 18, 38])
+        pdf.simple_table(
+            ["Article", "Catégorie", "Qté/sem", "Qté tot.", "Sem. act."],
+            top_qty_rows, [68, 34, 20, 22, 26],
+        )
 
         pdf.section("Articles les plus rentables")
         top_rev_rows = [
-            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} EUR"]
+            [a["label"], a["category"], f"{a['revenue_per_week']:.2f}", f"{a['revenue']:.2f}", str(a["n_active_weeks"])]
 
             for a in metrics["top_articles_revenue"][:10]
         ]
-        pdf.simple_table(["Article", "Catégorie", "Qté", "CA estimé"], top_rev_rows, [78, 36, 18, 38])
+        pdf.simple_table(
+            ["Article", "Catégorie", "CA/sem (EUR)", "CA tot. (EUR)", "Sem. act."],
+            top_rev_rows, [60, 32, 30, 32, 26],
+        )
 
         pdf.section("Articles les moins vendus")
         low_rows = [
-            [a["label"], a["category"], str(a["qty"]), f"{a['revenue']:.2f} EUR"]
+            [a["label"], a["category"], f"{a['qty_per_week']:.1f}", str(a["qty"]), str(a["n_active_weeks"])]
 
             for a in metrics["least_articles"][:10]
         ]
-        pdf.simple_table(["Article", "Catégorie", "Qté", "CA estimé"], low_rows, [78, 36, 18, 38])
+        pdf.simple_table(
+            ["Article", "Catégorie", "Qté/sem", "Qté tot.", "Sem. act."],
+            low_rows, [68, 34, 20, 22, 26],
+        )
 
         pdf.add_page()
         pdf.section("Ventes hebdomadaires par catégorie")
@@ -753,23 +780,28 @@ def send_statistics_email(_weeks: int, pdf_path: Path, metrics: Dict[str, Any]) 
     mapped_ratio = metrics["mapped_rows"] / (metrics["total_rows"] or 1) * 100
     n_unmapped = len(metrics["unmapped"])
 
+    norm_label = metrics.get("norm_label", "sem. actives par article")
+
     top5_qty = metrics["top_articles"][:5]
     top5_qty_str = "\n".join(
-        f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty']} vendus, {a['revenue']:.2f} EUR"
+        f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty_per_week']:.1f}/sem "
+        f"({a['qty']} tot., {a['n_active_weeks']} sem. act.)"
 
         for i, a in enumerate(top5_qty)
     )
 
     top5_rev = metrics["top_articles_revenue"][:5]
     top5_rev_str = "\n".join(
-        f"  {i + 1}. {a['label']} ({a['category']}) : {a['revenue']:.2f} EUR ({a['qty']} vendus)"
+        f"  {i + 1}. {a['label']} ({a['category']}) : {a['revenue_per_week']:.2f} EUR/sem "
+        f"({a['revenue']:.2f} EUR tot., {a['n_active_weeks']} sem. act.)"
 
         for i, a in enumerate(top5_rev)
     )
 
     least5 = metrics["least_articles"][:5]
     least5_str = "\n".join(
-        f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty']} vendus"
+        f"  {i + 1}. {a['label']} ({a['category']}) : {a['qty_per_week']:.1f}/sem "
+        f"({a['qty']} tot., {a['n_active_weeks']} sem. act.)"
 
         for i, a in enumerate(least5)
     )
@@ -799,6 +831,7 @@ RESUME -- {period_start} a {period_end} ({n_weeks} semaines)
 ======================================================
 Quantite totale vendue  : {total_qty}
 CA estime total         : {total_revenue:.2f} EUR
+Normalisation           : {norm_label}
 Ratio cash / CB         : {cash_ratio:.0f}% / {cb_ratio:.0f}%
 Montant cash estime     : {metrics['payment_amounts'].get('cash', 0.0):.2f} EUR
 Montant CB estime       : {metrics['payment_amounts'].get('cb', 0.0):.2f} EUR
@@ -806,13 +839,13 @@ Taux de mapping         : {mapped_ratio:.0f}%
 Produits non mappes     : {n_unmapped}
 ======================================================
 
-TOP 5 ARTICLES - QUANTITE VENDUE :
+TOP 5 ARTICLES - QUANTITE VENDUE (normalise) :
 {top5_qty_str}
 
-TOP 5 ARTICLES - CA ESTIME :
+TOP 5 ARTICLES - CA ESTIME (normalise) :
 {top5_rev_str}
 
-ARTICLES LES MOINS VENDUS (5 derniers) :
+ARTICLES LES MOINS VENDUS (5 derniers, normalises) :
 {least5_str}
 
 VENTES PAR CATEGORIE :
@@ -844,6 +877,7 @@ def run_report(
     api_key: Optional[str] = None,
     enrich: bool = True,
     send_mail: bool = True,
+    norm_weeks: int = 0,
 ) -> Path:
     """Exécute le pipeline complet : chargement, transactions, métriques, PDF, email."""
     now = datetime.now(timezone.utc)
@@ -870,7 +904,7 @@ def run_report(
     log.info("Etape 3/4 - Analyse et calcul des metriques...")
     analyzer = TransactionAnalyzer(catalog)
     rows = analyzer.normalize_transactions(txns)
-    metrics = analyzer.compute_metrics(rows)
+    metrics = analyzer.compute_metrics(rows, norm_weeks=norm_weeks)
     log.info(
         "Analyse : %s unites vendues, CA estime %.2f EUR, mapping %s/%s lignes",
         metrics['total_qty'], metrics['total_revenue'],
@@ -910,6 +944,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("--api-key", default=None, help="Cle API SumUp ; sinon variable d'environnement SUMUP_API_KEY")
     p.add_argument("--no-enrich", action="store_true", help="Desactive l'enrichissement transaction par transaction")
     p.add_argument("--no-mail", action="store_true", help="Genere le PDF sans envoyer l'email")
+    p.add_argument(
+        "--norm-weeks", type=int, default=0,
+        help=(
+            "Periode de normalisation en semaines (defaut : 0 = semaines actives par article). "
+            "Exemple : --norm-weeks 8 divise par 8 pour tous les articles."
+        ),
+    )
     return p
 
 
@@ -931,6 +972,7 @@ def main():
         api_key=api_key,
         enrich=not args.no_enrich,
         send_mail=not args.no_mail,
+        norm_weeks=args.norm_weeks,
     )
 
 

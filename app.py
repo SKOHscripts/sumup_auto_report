@@ -685,6 +685,20 @@ elif sid == "stats":
             help="Chemin relatif vers un fichier JSON de transactions fictives.",
         )
 
+    col_norm, _ = st.columns([1, 2])
+    with col_norm:
+        norm_weeks = st.number_input(
+            "Normalisation (semaines)",
+            min_value=0, max_value=52, value=0,
+            key=f"norm_weeks_{sid}",
+            disabled=is_running,
+            help=(
+                "Période de normalisation pour comparer les articles équitablement. "
+                "0 = diviseur automatique (semaines actives par article). "
+                "N > 0 = période fixe identique pour tous les articles."
+            ),
+        )
+
     col3, col4 = st.columns(2)
     with col3:
         no_mail = st.checkbox(
@@ -707,6 +721,8 @@ elif sid == "stats":
 
     stats_args: list[str] = ["--weeks", str(int(weeks))]
     stats_env: dict[str, str] = {}
+    if int(norm_weeks) > 0:
+        stats_args += ["--norm-weeks", str(int(norm_weeks))]
     if no_mail:
         stats_args.append("--no-mail")
     if no_enrich:
