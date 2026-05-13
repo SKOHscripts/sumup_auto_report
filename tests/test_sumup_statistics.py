@@ -430,3 +430,62 @@ class TestTransactionAnalyzerComputeMetrics:
         rows = [self._row(label="A", qty=10), self._row(label="B", qty=1)]
         least = analyzer.compute_metrics(rows)["least_articles"]
         assert least[0]["label"] == "B"
+
+    # ── Normalisation ─────────────────────────────────────────────────────────
+
+    def test_qty_per_week_computed_single_week(self, analyzer):
+        rows = [self._row(label="A", qty=8, week="2026-W16")]
+        art = analyzer.compute_metrics(rows)["top_articles"][0]
+        assert art["qty_per_week"] == 8.0
+        assert art["n_active_weeks"] == 1
+
+    def test_qty_per_week_computed_two_weeks(self, analyzer):
+        rows = [
+            self._row(label="A", qty=4, week="2026-W16"),
+            self._row(label="A", qty=4, week="2026-W17"),
+        ]
+        art = analyzer.compute_metrics(rows)["top_articles"][0]
+        assert art["n_active_weeks"] == 2
+        assert art["qty_per_week"] == 4.0  # 8 / 2
+
+    def test_norm_weeks_fixed_overrides_active_weeks(self, analyzer):
+        rows = [
+            self._row(label="A", qty=4, week="2026-W16"),
+            self._row(label="A", qty=4, week="2026-W17"),
+        ]
+        art = analyzer.compute_metrics(rows, norm_weeks=8)["top_articles"][0]
+        assert art["qty_per_week"] == 1.0  # 8 / 8
+
+    def test_normalization_changes_ranking(self, analyzer):
+        # B has more total qty but spread over more weeks → lower rate
+        # A has fewer total qty but in fewer weeks → higher rate
+        rows = [
+            self._row(label="A", qty=6, week="2026-W16"),
+            self._row(label="B", qty=3, week="2026-W16"),
+            self._row(label="B", qty=3, week="2026-W17"),
+            self._row(label="B", qty=3, week="2026-W18"),
+        ]
+        # Without normalization B would have qty=9 > A's qty=6
+        # With normalization: A=6/1=6/sem, B=9/3=3/sem → A ranks first
+        top = analyzer.compute_metrics(rows)["top_articles"]
+        assert top[0]["label"] == "A"
+
+    def test_norm_label_auto(self, analyzer):
+        metrics = analyzer.compute_metrics([self._row()])
+        assert metrics["norm_label"] == "sem. actives par article"
+
+    def test_norm_label_fixed(self, analyzer):
+        metrics = analyzer.compute_metrics([self._row()], norm_weeks=4)
+        assert "4" in metrics["norm_label"]
+
+    def test_norm_weeks_in_metrics(self, analyzer):
+        metrics = analyzer.compute_metrics([self._row()], norm_weeks=4)
+        assert metrics["norm_weeks"] == 4
+
+    def test_revenue_per_week_computed(self, analyzer):
+        rows = [
+            self._row(label="A", revenue=10.0, week="2026-W16"),
+            self._row(label="A", revenue=10.0, week="2026-W17"),
+        ]
+        art = analyzer.compute_metrics(rows)["top_articles_revenue"][0]
+        assert art["revenue_per_week"] == 10.0  # 20 / 2
