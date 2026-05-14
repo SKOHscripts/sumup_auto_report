@@ -575,13 +575,13 @@ def compute_stats(lignes):
 
 def _draw_header_logo(header_ax):
     """Charge et affiche le logo du café dans l'axe d'en-tête."""
-    logo_path = BASE_DIR / "assets" / "logo_village_orange.png"
+    logo_path = BASE_DIR / "assets" / "logo_village_dark.png"
     if not logo_path.exists():
         return
     try:
-        imagebox = OffsetImage(mpimg.imread(str(logo_path)), zoom=0.28)
+        imagebox = OffsetImage(mpimg.imread(str(logo_path)), zoom=0.14)
         header_ax.add_artist(
-            AnnotationBbox(imagebox, (0.06, 0.5), xycoords="axes fraction",
+            AnnotationBbox(imagebox, (0.08, 0.5), xycoords="axes fraction",
                            frameon=False, pad=0, zorder=3)
         )
     except Exception as e:
