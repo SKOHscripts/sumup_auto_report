@@ -25,7 +25,11 @@ import statistics
 from collections import Counter
 from datetime import datetime
 
+import re
+
 import matplotlib
+import matplotlib.image as mpimg
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 matplotlib.use("Agg")
 
 
@@ -197,6 +201,29 @@ def pick_existing_key(row, candidates):
     return None
 
 
+REFERENTS_CAC_LABEL = "Référents au CAC"
+
+_CATEGORY_REMAP = {
+    "administrateurs": REFERENTS_CAC_LABEL,
+    "référent au cac": REFERENTS_CAC_LABEL,
+    "référents au cac": REFERENTS_CAC_LABEL,
+    "referent au cac": REFERENTS_CAC_LABEL,
+}
+
+
+def normalize_category(name):
+    """Regroupe 'Administrateurs' et variantes de 'Référent au CAC' sous un même label."""
+    return _CATEGORY_REMAP.get(to_clean_str(name).lower(), name)
+
+
+def normalize_city(value):
+    """Normalise les arrondissements de Lyon (ex: 'Lyon 8e Arrondissement') en 'Lyon'."""
+    city = to_clean_str(value)
+    if re.match(r"^Lyon\s+\d", city, re.IGNORECASE):
+        return "Lyon"
+    return city
+
+
 def normalize_newsletter(value):
     """Normalise la valeur d'abonnement newsletter en 'Oui', 'Non' ou la valeur brute."""
     value = to_clean_str(value)
@@ -353,7 +380,7 @@ def fetch_members_rows(category_lookup):
 
     for row in rows:
         category_id = to_clean_str(row.get("_category_id"))
-        category_name = category_lookup.get(category_id, "")
+        category_name = normalize_category(category_lookup.get(category_id, ""))
 
         normalized_rows.append({
             "Date de naissance complète": to_clean_str(row.get("Date de naissance complète")),
@@ -364,7 +391,7 @@ def fetch_members_rows(category_lookup):
                 ),
             "Date d'inscription": to_clean_str(row.get("Date d'inscription")),
             "Code postal": to_clean_str(row.get("Code postal")),
-            "Ville": to_clean_str(row.get("Ville")),
+            "Ville": normalize_city(row.get("Ville")),
             })
 
     if PAHEKO_SAVE_RAW_JSON:
@@ -524,10 +551,12 @@ def compute_stats(lignes):
         "dates_inscription": dates_inscription,
         "codes_postaux": codes_postaux,
         "villes": villes,
-        "membres_actifs": find_category_count(cat_counts, "Membres actifs"),
+        "referents": find_category_count(cat_counts, REFERENTS_CAC_LABEL),
+        "membres_actifs": (
+            find_category_count(cat_counts, "Membres actifs")
+            + find_category_count(cat_counts, REFERENTS_CAC_LABEL)
+        ),
         "anciens_membres": find_category_count(cat_counts, "Anciens membres"),
-        "administrateurs": find_category_count(cat_counts, "Administrateurs"),
-        "referents": find_category_count(cat_counts, "Référent au CAC"),
         "taux_abo": taux_abo,
         "n_ages": len(ages_precis),
         "n_categories": len(categories),
@@ -544,6 +573,21 @@ def compute_stats(lignes):
         }
 
 
+def _draw_header_logo(header_ax):
+    """Charge et affiche le logo du café dans l'axe d'en-tête."""
+    logo_path = BASE_DIR / "assets" / "logo_village_orange.png"
+    if not logo_path.exists():
+        return
+    try:
+        imagebox = OffsetImage(mpimg.imread(str(logo_path)), zoom=0.28)
+        header_ax.add_artist(
+            AnnotationBbox(imagebox, (0.06, 0.5), xycoords="axes fraction",
+                           frameon=False, pad=0, zorder=3)
+        )
+    except Exception as e:
+        log.warning("Impossible de charger le logo: %s", e)
+
+
 def render_dashboard(stats, output_path):
     """Génère le dashboard matplotlib et l'enregistre en PNG."""
     fig = plt.figure(figsize=(20, 13), facecolor=COLORS["background"])
@@ -554,6 +598,8 @@ def render_dashboard(stats, output_path):
     header_ax.axis("off")
     header_ax.set_facecolor(COLORS["primary"])
     header_ax.axhspan(0, 1, color=COLORS["primary"], zorder=1)
+
+    _draw_header_logo(header_ax)
 
     header_ax.text(
         0.5, 0.65, "TABLEAU DE BORD DES MEMBRES",
@@ -925,10 +971,9 @@ Veuillez trouver ci-joint le tableau de bord des membres Paheko généré automa
 
 Date d'analyse : {today}
 Total membres : {stats["total_membres"]}
-Membres actifs : {stats["membres_actifs"]}
+Membres actifs (dont référents au CAC) : {stats["membres_actifs"]}
+  dont Référents au CAC : {stats["referents"]}
 Anciens membres : {stats["anciens_membres"]}
-Administrateurs : {stats["administrateurs"]}
-Référent au CAC : {stats["referents"]}
 Abonnés newsletter : {stats["taux_abo"]:.0f}%
 Âge moyen : {stats["age_moyen"]:.0f} ans
 Codes postaux uniques : {stats["n_codes_uniques"]}
