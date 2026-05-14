@@ -579,7 +579,7 @@ def _draw_header_logo(header_ax):
     if not logo_path.exists():
         return
     try:
-        imagebox = OffsetImage(mpimg.imread(str(logo_path)), zoom=0.14)
+        imagebox = OffsetImage(mpimg.imread(str(logo_path)), zoom=0.1)
         header_ax.add_artist(
             AnnotationBbox(imagebox, (0.08, 0.5), xycoords="axes fraction",
                            frameon=False, pad=0, zorder=3)
