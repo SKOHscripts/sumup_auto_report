@@ -573,6 +573,21 @@ def compute_stats(lignes):
         }
 
 
+def _draw_header_logo(header_ax):
+    """Charge et affiche le logo du café dans l'axe d'en-tête."""
+    logo_path = BASE_DIR / "assets" / "logo_village_orange.png"
+    if not logo_path.exists():
+        return
+    try:
+        imagebox = OffsetImage(mpimg.imread(str(logo_path)), zoom=0.28)
+        header_ax.add_artist(
+            AnnotationBbox(imagebox, (0.06, 0.5), xycoords="axes fraction",
+                           frameon=False, pad=0, zorder=3)
+        )
+    except Exception as e:
+        log.warning("Impossible de charger le logo: %s", e)
+
+
 def render_dashboard(stats, output_path):
     """Génère le dashboard matplotlib et l'enregistre en PNG."""
     fig = plt.figure(figsize=(20, 13), facecolor=COLORS["background"])
@@ -584,21 +599,7 @@ def render_dashboard(stats, output_path):
     header_ax.set_facecolor(COLORS["primary"])
     header_ax.axhspan(0, 1, color=COLORS["primary"], zorder=1)
 
-    logo_path = BASE_DIR / "assets" / "logo_village_orange.png"
-    if logo_path.exists():
-        try:
-            logo_img = mpimg.imread(str(logo_path))
-            imagebox = OffsetImage(logo_img, zoom=0.28)
-            ab = AnnotationBbox(
-                imagebox, (0.06, 0.5),
-                xycoords="axes fraction",
-                frameon=False,
-                pad=0,
-                zorder=3,
-            )
-            header_ax.add_artist(ab)
-        except Exception as e:
-            log.warning("Impossible de charger le logo: %s", e)
+    _draw_header_logo(header_ax)
 
     header_ax.text(
         0.5, 0.65, "TABLEAU DE BORD DES MEMBRES",
