@@ -18,3 +18,5 @@ promoted_at,week_label,version,promoted,mae,mape,pinball_low,pinball_med,pinball
 2026-05-04T00:00:00+00:00,2026-W19,4183c43f5d82,0,7.5388,0.7018,2.0835,3.7694,2.7869,0.5158,0.6814,95,5,MAPE trop eleve (70.18% > 45%) | Coverage hors cible (52% vs 80%±10%) | ML (70.18%) ne bat pas la baseline (68.14%)
 2026-05-04T00:00:03+00:00,2026-W19,3265d138b636,0,7.5388,0.7018,2.0835,3.7694,2.7869,0.5158,0.6814,95,5,MAPE trop eleve (70.18% > 45%) | Coverage hors cible (52% vs 80%±10%) | ML (70.18%) ne bat pas la baseline (68.14%)
 2026-05-04T05:12:15+00:00,2026-W19,4183c43f5d82,0,7.5388,0.7018,2.0835,3.7694,2.7869,0.5158,0.6814,95,5,MAPE trop eleve (70.18% > 45%) | Coverage hors cible (52% vs 80%±10%) | ML (70.18%) ne bat pas la baseline (68.14%)
+2026-05-18T06:36:44+00:00,2026-W21,4183c43f5d82,0,7.5388,17.6130,0.7018,1.2005,2.0835,3.7694,2.7869,0.5158,0.6814,95,5,MAPE trop eleve (70.18% > 45%) | Coverage hors cible (52% vs 80%±10%) | ML (70.18%) ne bat pas la baseline (68.14%)
+2026-05-18T06:45:02+00:00,2026-W21,4183c43f5d82,0,9.0516,26.2157,0.6506,-0.4378,2.2922,4.5258,3.4334,0.6080,0.6935,125,5,MAPE trop eleve (65.06% > 45%) | Coverage hors cible (61% vs 80%±10%)
