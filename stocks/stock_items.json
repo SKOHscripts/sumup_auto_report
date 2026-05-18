@@ -83,7 +83,7 @@
       "variant": "Pression 33 cL"
     },
     "pack_size": 30,
-    "consumption_per_sale": 0.40,
+    "consumption_per_sale": 0.4,
     "supplier_lead_time_days": 6,
     "stock_state": {
       "stock_on_hand": 55,
@@ -177,7 +177,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 16,
+      "stock_on_hand": 46.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -192,6 +192,15 @@
           "qty_added": 18.0,
           "previous_stock_on_hand": 18.0,
           "new_stock_on_hand": 36.0,
+          "source": "gdrive_excel"
+        },
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 30.0,
+          "previous_stock_on_hand": 16.0,
+          "new_stock_on_hand": 46.0,
           "source": "gdrive_excel"
         }
       ]
@@ -270,12 +279,23 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 4,
+      "stock_on_hand": 14.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-09",
+          "buyer": "",
+          "qty_added": 10.0,
+          "previous_stock_on_hand": 4.0,
+          "new_stock_on_hand": 14.0,
+          "source": "gdrive_excel"
+        }
+      ]
     },
     "stock_sku": "vin_blanc"
   },
@@ -386,12 +406,23 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 12.0,
+      "stock_on_hand": 24.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 12.0,
+          "previous_stock_on_hand": 12.0,
+          "new_stock_on_hand": 24.0,
+          "source": "gdrive_excel"
+        }
+      ]
     },
     "stock_sku": "jus_pomme_bio_20cl_brique"
   },
@@ -448,7 +479,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 6.0,
+      "stock_on_hand": 18.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
@@ -463,6 +494,15 @@
           "qty_added": 6.0,
           "previous_stock_on_hand": 6.0,
           "new_stock_on_hand": 12.0,
+          "source": "gdrive_excel"
+        },
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 12.0,
+          "previous_stock_on_hand": 6.0,
+          "new_stock_on_hand": 18.0,
           "source": "gdrive_excel"
         }
       ]
@@ -525,12 +565,23 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 6.0,
+      "stock_on_hand": 18.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 12.0,
+          "previous_stock_on_hand": 6.0,
+          "new_stock_on_hand": 18.0,
+          "source": "gdrive_excel"
+        }
+      ]
     }
   },
   {
@@ -571,12 +622,23 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 6.0,
+      "stock_on_hand": 12.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 6.0,
+          "previous_stock_on_hand": 6.0,
+          "new_stock_on_hand": 12.0,
+          "source": "gdrive_excel"
+        }
+      ]
     }
   },
   {
@@ -594,7 +656,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 12.0,
+      "stock_on_hand": 24.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -609,6 +671,15 @@
           "qty_added": 12.0,
           "previous_stock_on_hand": 6.0,
           "new_stock_on_hand": 18.0,
+          "source": "gdrive_excel"
+        },
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 12.0,
+          "previous_stock_on_hand": 12.0,
+          "new_stock_on_hand": 24.0,
           "source": "gdrive_excel"
         }
       ]
@@ -757,12 +828,23 @@
       "variant": "Oasis"
     },
     "stock_state": {
-      "stock_on_hand": 3.0,
+      "stock_on_hand": 9.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 6.0,
+          "previous_stock_on_hand": 3.0,
+          "new_stock_on_hand": 9.0,
+          "source": "gdrive_excel"
+        }
+      ]
     }
   },
   {
@@ -884,7 +966,7 @@
       "variant": "Saucissons mini sachet"
     },
     "stock_state": {
-      "stock_on_hand": 31.0,
+      "stock_on_hand": 41.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -899,6 +981,15 @@
           "qty_added": 18.0,
           "previous_stock_on_hand": 18.0,
           "new_stock_on_hand": 36.0,
+          "source": "gdrive_excel"
+        },
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 10.0,
+          "previous_stock_on_hand": 31.0,
+          "new_stock_on_hand": 41.0,
           "source": "gdrive_excel"
         }
       ]
@@ -1036,12 +1127,23 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 9.0,
+      "stock_on_hand": 29.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
-      "inventory_count_method": "manual"
+      "inventory_count_method": "manual",
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-04",
+          "buyer": "",
+          "qty_added": 20.0,
+          "previous_stock_on_hand": 9.0,
+          "new_stock_on_hand": 29.0,
+          "source": "gdrive_excel"
+        }
+      ]
     }
   },
   {
@@ -1057,13 +1159,23 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 11,
+      "stock_on_hand": 17.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "stock_history": []
+      "stock_history": [
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 6.0,
+          "previous_stock_on_hand": 11.0,
+          "new_stock_on_hand": 17.0,
+          "source": "gdrive_excel"
+        }
+      ]
     }
   },
   {
@@ -1079,7 +1191,7 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 14.0,
+      "stock_on_hand": 15.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -1094,6 +1206,15 @@
           "qty_added": 10.0,
           "previous_stock_on_hand": 10.0,
           "new_stock_on_hand": 20.0,
+          "source": "gdrive_excel"
+        },
+        {
+          "type": "purchase",
+          "date": "2026-05-08",
+          "buyer": "",
+          "qty_added": 1.0,
+          "previous_stock_on_hand": 14.0,
+          "new_stock_on_hand": 15.0,
           "source": "gdrive_excel"
         }
       ]
