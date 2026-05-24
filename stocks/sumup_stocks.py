@@ -1814,8 +1814,21 @@ def _render_ml_kv_table(pdf: StockPDF, rows: list[tuple], col_widths: tuple) -> 
     pdf.set_text_color(*PALETTE["text_dark"])
 
 
+def render_ml_intro(pdf: StockPDF, all_kpis: list, week_label: str) -> None:
+    """Affiche le titre ML et le paragraphe de vulgarisation en haut de document.
+
+    Placé juste après le tableau récapitulatif, avant les pages articles.
+    N'ajoute rien si aucun KPI n'a de projection ML.
+    """
+    if not any(k.get("ml_projection") for k in all_kpis):
+        return
+    pdf.add_page()
+    pdf.section_title(f"Synthese ML — Semaine {week_label}", PALETTE["accent"])
+    render_ml_disclaimer(pdf)
+
+
 def render_ml_global_summary(pdf: StockPDF, all_kpis: list, week_label: str) -> None:
-    """Génère la page de synthèse globale ML (qualité modèle, top articles).
+    """Génère la page d'annexe ML (qualité modèle, top articles).
 
     Contient :
     - qualité du modèle (depuis le registry) ;
@@ -1831,12 +1844,8 @@ def render_ml_global_summary(pdf: StockPDF, all_kpis: list, week_label: str) -> 
     pw = pdf.usable_width()
     col_orange = (255, 167, 11)
 
-    # ── Titre ──────────────────────────────────────────────────────────────────
-    pdf.section_title(f"Synthese ML — Semaine {week_label}", PALETTE["accent"])
-
-    # ── Disclaimer de vulgarisation en tête de page ────────────────────────────
-    render_ml_disclaimer(pdf)
-    pdf.ln(3)
+    # ── Titre annexe ───────────────────────────────────────────────────────────
+    pdf.section_title(f"Annexe ML — Semaine {week_label}", PALETTE["accent"])
 
     # ── Qualité du modèle ──────────────────────────────────────────────────────
     pdf.set_font("Helvetica", "B", 8.5)
@@ -2142,6 +2151,8 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
     """Génère le PDF complet (synthèse + pages articles + qualité) et le sauvegarde."""
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
+    if use_ml:
+        render_ml_intro(pdf, all_kpis, week_label)
 
     for kpi in all_kpis:
         render_article_page(pdf, kpi)
