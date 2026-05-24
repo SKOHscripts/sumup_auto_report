@@ -42,7 +42,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 
 import requests
 import fpdf as _fpdf
@@ -1180,6 +1179,13 @@ class StockPDF(FPDF):
         # Zone hebdo de reference pour la moyenne glissante (4 dernieres semaines).
         start_idx = max(0, len(week_dates) - 4)
 
+        # Projection ML (bande de stock). Si elle est disponible, le modele ML est
+        # "choisi" pour cet article : on n'affiche alors que la courbe ML et on retire
+        # la tendance lineaire simple, pour ne pas surcharger le graphique.
+        ml_proj = kpi.get("ml_projection") or {}
+        ml_band = _trim_trailing_zero_band(ml_proj.get("stock_band") or [])
+        ml_active = bool(ml_band)
+
         # ── Tendance simple : part du stock actuel (aujourd'hui) et atteint 0 a
         # la date de rupture canonique affichee dans les indicateurs. On reutilise
         # exactement cette date (KPI lineaire) pour que la courbe touche le 0 au
@@ -1253,24 +1259,23 @@ class StockPDF(FPDF):
             label="Historique de stock",
             )
 
-        # Tendance
-        ax.plot(
-            trend_dates,
-            trend_values,
-            color="#E05A2B",
-            linewidth=2.0,
-            linestyle="--",
-            marker="o",
-            markersize=3.5,
-            label="Tendance",
-            )
+        # Tendance simple : affichee uniquement si le modele ML n'est pas retenu.
+        if not ml_active:
+            ax.plot(
+                trend_dates,
+                trend_values,
+                color="#E05A2B",
+                linewidth=2.0,
+                linestyle="--",
+                marker="o",
+                markersize=3.5,
+                label="Tendance",
+                )
 
         # Tendance ML : on consomme directement la bande de stock issue de la
         # simulation Monte-Carlo (cf. ``simulate_rupture``). Cela garantit que la
         # bande visuelle et les dates de rupture annoncees viennent de la meme
         # distribution.
-        ml_proj = kpi.get("ml_projection") or {}
-        ml_band = _trim_trailing_zero_band(ml_proj.get("stock_band") or [])
         ml_low_lbl, ml_med_lbl, ml_high_lbl = _ml_quantile_labels(kpi)
         ml_dates: list = []
         ml_low_stock: list = []
@@ -1312,7 +1317,9 @@ class StockPDF(FPDF):
             )
 
         # Seuils
-        ax.axvspan(week_dates[start_idx], week_dates[-1], color="#B3E0E3", alpha=0.18, label="Période de tendance")
+        if not ml_active:
+            ax.axvspan(week_dates[start_idx], week_dates[-1], color="#B3E0E3", alpha=0.18,
+                       label="Période de tendance")
         ax.axhspan(0, safety_stock, color="#FFE5C8", alpha=0.35)
         ax.axhline(safety_stock, color="#E05A2B", linestyle=":", linewidth=1.3, label="Stock de sécurité")
         ax.axhline(reorder_point, color="#FFA70B", linestyle=":", linewidth=1.3, label="Point de commande")
@@ -1329,10 +1336,8 @@ class StockPDF(FPDF):
         ymax = max(plotted_values) if plotted_values else 1.0
         ymax = max(ymax, 1.0)
 
-        # Barre verticale exacte au point où la tendance touche 0
-
-        if rupture_dt is not None:
-            # ax.axvline(rupture_dt, color="#990000", linestyle="--", linewidth=1.2)
+        # Annotation "Rupture simple" : seulement si la tendance simple est affichee.
+        if rupture_dt is not None and not ml_active:
             label_y = ymax * 0.18 if ymax > 0 else 1.0
             ax.annotate(
                 f"Rupture simple\n{rupture_label}",
@@ -1386,24 +1391,24 @@ class StockPDF(FPDF):
                 color="#00818A",
                 )
 
-        # Etiquettes projection : seulement sur les ticks hebdo de projection
+        # Etiquettes projection simple : seulement si la tendance simple est affichee.
+        if not ml_active:
+            for x, y in zip(future_dates, future_stock):
+                ax.annotate(
+                    fmt_qty(y),
+                    (x, y),
+                    textcoords="offset points",
+                    xytext=(0, 7),
+                    ha="center",
+                    fontsize=7,
+                    color="#C8860A",
+                    )
 
-        for x, y in zip(future_dates, future_stock):
-            ax.annotate(
-                fmt_qty(y),
-                (x, y),
-                textcoords="offset points",
-                xytext=(0, 7),
-                ha="center",
-                fontsize=7,
-                color="#C8860A",
-                )
-
-            ax.set_title("Evolution du stock et tendance", fontsize=11)
+        ax.set_title("Evolution du stock et tendance", fontsize=11)
         ax.set_ylabel(f"Quantite [{kpi.get('unit') or 'S.U.'}]")
 
         ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
-        ax.xaxis.set_major_formatter(mticker.FuncFormatter(_iso_week_axis_formatter))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d/%m/%Y"))
         plt.setp(ax.get_xticklabels(), rotation=35, ha="right", fontsize=7)
 
         ax.tick_params(axis="y", labelsize=8)
@@ -1413,14 +1418,17 @@ class StockPDF(FPDF):
         ax.set_ylim(0, ymax * 1.20)
 
         xmin = week_dates[0] - timedelta(days=2)
-        xmax_candidates = [
-            future_dates[-1] + timedelta(days=4) if future_dates else trend_anchor_dt + timedelta(weeks=4)
-        ]
+        xmax_candidates = [trend_anchor_dt + timedelta(weeks=4)]
 
-        if rupture_dt is not None:
-            xmax_candidates.append(rupture_dt + timedelta(days=4))
-        if ml_dates:
-            xmax_candidates.append(ml_dates[-1] + timedelta(days=4))
+        if ml_active:
+            # Seule la courbe ML est tracee : on cadre sur sa derniere semaine.
+            if ml_dates:
+                xmax_candidates.append(ml_dates[-1] + timedelta(days=4))
+        else:
+            if future_dates:
+                xmax_candidates.append(future_dates[-1] + timedelta(days=4))
+            if rupture_dt is not None:
+                xmax_candidates.append(rupture_dt + timedelta(days=4))
         xmax = max(xmax_candidates)
         ax.set_xlim(xmin, xmax)
 
@@ -1540,17 +1548,6 @@ def _format_iso_date_dmy(value: str) -> str:
         return datetime.fromisoformat(value).strftime("%d/%m/%Y")
     except ValueError:
         return "N/A"
-
-
-def _iso_week_axis_formatter(x, _pos=None) -> str:
-    """Formate une date matplotlib en label de semaine ISO ('2026-W14').
-
-    Utilise ``isocalendar()`` pour rester coherent avec les labels du tableau
-    hebdomadaire ; ``strftime('%W')`` differe de la semaine ISO (souvent d'une
-    semaine) et faisait apparaitre un decalage de dates sur les graphiques.
-    """
-    iso = mdates.num2date(x).isocalendar()
-    return f"{iso[0]}-W{iso[1]:02d}"
 
 
 def _trim_trailing_zero_band(band: list) -> list:

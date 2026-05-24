@@ -253,7 +253,11 @@ def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
         idx = float(np.percentile(weeks_filled, p, method="lower"))
         if idx >= n_weeks:
             return None
-        return _to_date(week_starts[int(idx)])
+        # ``trajectories[:, t]`` est le stock a la FIN de la semaine t : la rupture
+        # constatee a l'indice t se produit donc en fin de cette semaine. On date la
+        # rupture a la fin de semaine (week_start + 7 j) pour rester coherent avec la
+        # bande de stock ci-dessous (qui pointe le stock de fin de semaine).
+        return _to_date(week_starts[int(idx)]) + timedelta(days=7)
 
     low_pct = quantile_fractions[0] * 100.0
     high_pct = quantile_fractions[1] * 100.0
@@ -266,9 +270,13 @@ def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
     stock_low_band = np.percentile(trajectories, low_pct, axis=0)
     stock_med_band = np.percentile(trajectories, 50.0, axis=0)
     stock_high_band = np.percentile(trajectories, high_pct, axis=0)
+    # ``trajectories[:, t]`` est le stock a la FIN de la semaine t : on date donc
+    # chaque point de bande a la fin de semaine (week_start + 7 j). Cela evite le
+    # decrochage visuel du premier point (le stock apres une semaine de conso etait
+    # auparavant place au debut de cette semaine, soit ~une semaine trop tot).
     stock_band = [
         {
-            "week_start": _to_date(week_starts[t]),
+            "week_start": _to_date(week_starts[t]) + timedelta(days=7),
             "stock_low": float(stock_low_band[t]),
             "stock_med": float(stock_med_band[t]),
             "stock_high": float(stock_high_band[t]),
@@ -287,7 +295,7 @@ def simulate_rupture(  # pylint: disable=too-many-arguments,too-many-locals
             ever_ruptured[:, t] = ever_ruptured[:, t - 1] | (rupture_weeks == t)
     prob_rupture_by_week = [
         {
-            "week_start": _to_date(week_starts[t]).isoformat(),
+            "week_start": (_to_date(week_starts[t]) + timedelta(days=7)).isoformat(),
             "prob_rupture_cumul": float(np.mean(ever_ruptured[:, t])),
         }
         for t in range(n_weeks)
