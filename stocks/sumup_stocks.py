@@ -1123,15 +1123,17 @@ class StockPDF(FPDF):
         avg_week = float(kpi["avg_rolling4"] or 0)
 
         # ── Reconstruction de la courbe historique hebdomadaire ──
+        # stock_curve[i] = stock estime au DEBUT de la semaine i (avant la conso
+        # de cette semaine), reconstruit a rebours depuis le stock actuel. Ainsi
+        # la valeur tracee au lundi de la semaine i correspond bien au stock de
+        # ce lundi-la (et non au stock de fin de semaine, qui creait un decalage).
         stock_curve = []
         running_stock = effective_stock_now
 
         for qty in reversed(sales):
             running_stock += float(qty or 0)
-
-        for qty in sales:
-            running_stock -= float(qty or 0)
             stock_curve.append(max(running_stock, 0.0))
+        stock_curve.reverse()
 
         week_dates = []
 
@@ -1164,68 +1166,75 @@ class StockPDF(FPDF):
 
         now_dt = datetime.now().replace(microsecond=0)
 
-        # ── Historique : on peut rejoindre 'aujourd'hui' seulement si la valeur
-        # est identique au dernier point hebdo, pour éviter de raconter une fausse histoire.
+        # ── Historique : la courbe converge vers le stock d'aujourd'hui. ──
+        # Le dernier point connu est le stock actuel a la date du jour (now_dt) :
+        # l'historique se termine dessus, et c'est de ce point que partent toutes
+        # les projections (tendance simple et ML), pour un graphique coherent.
         history_dates = list(week_dates)
         history_values = list(stock_curve)
 
-        if history_values:
-            last_hist_stock = float(history_values[-1])
+        if now_dt > history_dates[-1]:
+            history_dates.append(now_dt)
+            history_values.append(effective_stock_now)
 
-            if now_dt > history_dates[-1] and abs(effective_stock_now - last_hist_stock) < 1e-9:
-                history_dates.append(now_dt)
-                history_values.append(last_hist_stock)
-
-        # ── Tendance : départ au dernier point HEBDO, pas au jour courant ──
+        # Zone hebdo de reference pour la moyenne glissante (4 dernieres semaines).
         start_idx = max(0, len(week_dates) - 4)
-        trend_start_dt = week_dates[start_idx]
-        trend_start_stock = float(stock_curve[start_idx]) if stock_curve else float(current_stock + incoming_qty)
+
+        # ── Tendance simple : part du stock actuel (aujourd'hui) et atteint 0 a
+        # la date de rupture canonique affichee dans les indicateurs. On reutilise
+        # exactement cette date (KPI lineaire) pour que la courbe touche le 0 au
+        # meme endroit que l'etiquette : plus aucun ecart entre les deux. ──
+        trend_anchor_dt = history_dates[-1]
+        trend_anchor_stock = float(history_values[-1])
 
         rupture_dt = None
         rupture_label = None
-
         future_dates = []
         future_stock = []
 
-        if avg_week > 0 and trend_start_stock > 0:
-            weeks_to_rupture = trend_start_stock / avg_week
-            rupture_dt = trend_start_dt + timedelta(weeks=weeks_to_rupture)
-            # Privilege la date stockee dans le KPI pour coherence avec le bloc indicateurs.
-            # La date du KPI (rupture_date_linear si override ML, sinon rupture_date) est la
-            # reference canonique ; on la re-formate ici pour que l'annotation corresponde.
-            _kpi_linear_iso = kpi.get("rupture_date_linear") or kpi.get("rupture_date")
-            rupture_label = (
-                _format_iso_date_dmy(_kpi_linear_iso)
-                if _kpi_linear_iso
-                else rupture_dt.strftime("%d/%m/%Y")
-            )
+        _kpi_linear_iso = kpi.get("rupture_date_linear") or kpi.get("rupture_date")
+        _kpi_rupture_dt = None
+        if _kpi_linear_iso:
+            try:
+                _kpi_rupture_dt = datetime.fromisoformat(str(_kpi_linear_iso)[:10])
+            except ValueError:
+                _kpi_rupture_dt = None
 
-            n_future = max(4, int(math.floor(weeks_to_rupture)) + 2)
-
-            for i in range(1, n_future + 1):
-                dt_i = trend_start_dt + timedelta(weeks=i)
-                val_i = trend_start_stock - (avg_week * i)
+        if _kpi_rupture_dt is not None and _kpi_rupture_dt > trend_anchor_dt and trend_anchor_stock > 0:
+            # Cas nominal : droite reliant (aujourd'hui, stock) -> (date KPI, 0).
+            rupture_dt = _kpi_rupture_dt
+            rupture_label = _format_iso_date_dmy(_kpi_linear_iso)
+            total_days = (rupture_dt - trend_anchor_dt).total_seconds() / 86400.0
+            n_future = max(1, int(math.ceil(total_days / 7.0)))
+            for i in range(1, n_future):
+                dt_i = trend_anchor_dt + timedelta(weeks=i)
+                if dt_i >= rupture_dt:
+                    break
+                frac = (dt_i - trend_anchor_dt).total_seconds() / 86400.0 / total_days
                 future_dates.append(dt_i)
-                future_stock.append(max(val_i, 0.0))
-
-            # On ne garde pour la ligne que les points hebdo avant la rupture,
-            # puis on ajoute le point précis de rupture à 0.
-            trend_dates = [trend_start_dt]
-            trend_values = [trend_start_stock]
-
-            for dt_i, val_i in zip(future_dates, future_stock):
-                if dt_i < rupture_dt:
-                    trend_dates.append(dt_i)
-                    trend_values.append(val_i)
-
-            trend_dates.append(rupture_dt)
-            trend_values.append(0.0)
+                future_stock.append(max(trend_anchor_stock * (1.0 - frac), 0.0))
+            trend_dates = [trend_anchor_dt] + future_dates + [rupture_dt]
+            trend_values = [trend_anchor_stock] + future_stock + [0.0]
+        elif avg_week > 0 and trend_anchor_stock > 0:
+            # Repli : pas de date KPI exploitable, on projette a la moyenne hebdo.
+            weeks_to_rupture = trend_anchor_stock / avg_week
+            rupture_dt = trend_anchor_dt + timedelta(weeks=weeks_to_rupture)
+            rupture_label = rupture_dt.strftime("%d/%m/%Y")
+            n_future = max(4, int(math.floor(weeks_to_rupture)) + 2)
+            for i in range(1, n_future + 1):
+                dt_i = trend_anchor_dt + timedelta(weeks=i)
+                if dt_i >= rupture_dt:
+                    break
+                future_dates.append(dt_i)
+                future_stock.append(max(trend_anchor_stock - (avg_week * i), 0.0))
+            trend_dates = [trend_anchor_dt] + future_dates + [rupture_dt]
+            trend_values = [trend_anchor_stock] + future_stock + [0.0]
         else:
-            # Pas de consommation exploitable : on trace une ligne plate sur 4 semaines
-            future_dates = [trend_start_dt + timedelta(weeks=i) for i in range(1, 5)]
-            future_stock = [trend_start_stock for _ in future_dates]
-            trend_dates = [trend_start_dt] + future_dates
-            trend_values = [trend_start_stock] + future_stock
+            # Pas de consommation exploitable : ligne plate sur 4 semaines.
+            future_dates = [trend_anchor_dt + timedelta(weeks=i) for i in range(1, 5)]
+            future_stock = [trend_anchor_stock for _ in future_dates]
+            trend_dates = [trend_anchor_dt] + future_dates
+            trend_values = [trend_anchor_stock] + future_stock
 
         safety_stock = float(kpi.get("safety_stock") or 0)
         reorder_point = float(kpi.get("reorder_point") or 0)
@@ -1269,10 +1278,8 @@ class StockPDF(FPDF):
         ml_high_stock: list = []
         if ml_band:
             ml_initial = float(ml_proj.get("stock_initial", current_stock))
-            # Ancrage de la courbe ML sur le dernier point de l'historique (et non
-            # sur "aujourd'hui") : la prevision ML reprend ainsi exactement la ou
-            # s'arrete la courbe bleue, sur la meme grille hebdomadaire que la
-            # tendance simple. Cela supprime le decalage visuel d'une semaine.
+            # Ancrage de la courbe ML sur le point "aujourd'hui" (fin de
+            # l'historique) : ML et tendance simple partent ainsi du meme endroit.
             ml_anchor_dt = history_dates[-1] if history_dates else now_dt
             ml_dates.append(ml_anchor_dt)
             ml_low_stock.append(ml_initial)
@@ -1282,6 +1289,10 @@ class StockPDF(FPDF):
                 try:
                     week_dt = datetime.fromisoformat(entry["week_start"])
                 except (KeyError, ValueError):
+                    continue
+                # Ignore les semaines anterieures a l'ancre (deja couvertes par
+                # l'historique) pour eviter un retour en arriere de la courbe.
+                if week_dt <= ml_anchor_dt:
                     continue
                 ml_dates.append(week_dt)
                 ml_low_stock.append(float(entry.get("stock_low", 0.0)))
@@ -1403,7 +1414,7 @@ class StockPDF(FPDF):
 
         xmin = week_dates[0] - timedelta(days=2)
         xmax_candidates = [
-            future_dates[-1] + timedelta(days=4) if future_dates else trend_start_dt + timedelta(weeks=4)
+            future_dates[-1] + timedelta(days=4) if future_dates else trend_anchor_dt + timedelta(weeks=4)
         ]
 
         if rupture_dt is not None:
