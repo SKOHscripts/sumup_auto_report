@@ -2043,5 +2043,30 @@
     },
     "consumption_per_sale": 1,
     "pack_size": 1
+  },
+  {
+    "is_stock_reference": true,
+    "label": "Tomates cerise",
+    "enabled": true,
+    "unit": "bol",
+    "category": "snacking",
+    "sumup_match": {
+      "name": "Tomates cerise",
+      "variant": ""
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_state": {
+      "stock_on_hand": 0.0,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "",
+      "inventory_count_method": "manual",
+      "last_auto_update": "",
+      "stock_history": []
+    },
+    "stock_sku": "tomates_cerise"
   }
 ]

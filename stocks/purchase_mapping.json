@@ -172,6 +172,11 @@
       "excel_label": "pop corn salé",
       "stock_sku": "pop_corn_sal",
       "qty_multiplier": 1
+    },
+    {
+      "excel_label": "Bols tomates cerises",
+      "stock_sku": "tomates_cerise",
+      "qty_multiplier": 1
     }
   ]
 }
