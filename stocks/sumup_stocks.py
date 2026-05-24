@@ -42,6 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 import requests
 import fpdf as _fpdf
@@ -1260,7 +1261,7 @@ class StockPDF(FPDF):
         # bande visuelle et les dates de rupture annoncees viennent de la meme
         # distribution.
         ml_proj = kpi.get("ml_projection") or {}
-        ml_band = ml_proj.get("stock_band") or []
+        ml_band = _trim_trailing_zero_band(ml_proj.get("stock_band") or [])
         ml_low_lbl, ml_med_lbl, ml_high_lbl = _ml_quantile_labels(kpi)
         ml_dates: list = []
         ml_low_stock: list = []
@@ -1268,7 +1269,12 @@ class StockPDF(FPDF):
         ml_high_stock: list = []
         if ml_band:
             ml_initial = float(ml_proj.get("stock_initial", current_stock))
-            ml_dates.append(now_dt)
+            # Ancrage de la courbe ML sur le dernier point de l'historique (et non
+            # sur "aujourd'hui") : la prevision ML reprend ainsi exactement la ou
+            # s'arrete la courbe bleue, sur la meme grille hebdomadaire que la
+            # tendance simple. Cela supprime le decalage visuel d'une semaine.
+            ml_anchor_dt = history_dates[-1] if history_dates else now_dt
+            ml_dates.append(ml_anchor_dt)
             ml_low_stock.append(ml_initial)
             ml_med_stock.append(ml_initial)
             ml_high_stock.append(ml_initial)
@@ -1386,7 +1392,7 @@ class StockPDF(FPDF):
         ax.set_ylabel(f"Quantite [{kpi.get('unit') or 'S.U.'}]")
 
         ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-W%W"))
+        ax.xaxis.set_major_formatter(mticker.FuncFormatter(_iso_week_axis_formatter))
         plt.setp(ax.get_xticklabels(), rotation=35, ha="right", fontsize=7)
 
         ax.tick_params(axis="y", labelsize=8)
@@ -1424,41 +1430,6 @@ class StockPDF(FPDF):
 
         self.image(buf, x=self.l_margin, y=y0, w=chart_w, h=chart_h)
         self.set_y(y0 + chart_h + 4)
-
-        # ── Graphique 4 : probabilité de rupture cumulée semaine par semaine ──
-        prob_by_week = ml_proj.get("prob_rupture_by_week") or []
-        if prob_by_week:
-            try:
-                pw_dates = [datetime.fromisoformat(p["week_start"]) for p in prob_by_week]
-                pw_probs = [float(p["prob_rupture_cumul"]) for p in prob_by_week]
-                fig2, ax2 = plt.subplots(figsize=(8.6, 2.2), dpi=160)
-                ax2.fill_between(pw_dates, pw_probs, color="#C00000", alpha=0.20)
-                ax2.plot(pw_dates, pw_probs, color="#C00000", linewidth=2.0, marker="o", markersize=3)
-                ax2.axhline(0.5, color="#E05A2B", linestyle="--", linewidth=1.0, label="Seuil 50 %")
-                ax2.set_ylim(0, 1.05)
-                ax2.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
-                ax2.set_yticklabels(["0 %", "25 %", "50 %", "75 %", "100 %"], fontsize=7)
-                ax2.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=4))
-                ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-W%W"))
-                plt.setp(ax2.get_xticklabels(), rotation=30, ha="right", fontsize=7)
-                ax2.set_title("Probabilite de rupture cumulee (ML)", fontsize=9)
-                ax2.set_ylabel("Prob. rupture", fontsize=8)
-                ax2.grid(axis="y", linestyle=":", linewidth=0.7, alpha=0.5)
-                ax2.legend(loc="upper left", fontsize=7)
-                fig2.tight_layout()
-                buf2 = io.BytesIO()
-                fig2.savefig(buf2, format="png", dpi=160)
-                plt.close(fig2)
-                buf2.seek(0)
-                chart2_h = 38
-                y0 = self.get_y()
-                if y0 + chart2_h > self.h - self.b_margin:
-                    self.add_page()
-                    y0 = self.get_y()
-                self.image(buf2, x=self.l_margin, y=y0, w=chart_w, h=chart2_h)
-                self.set_y(y0 + chart2_h + 4)
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                log.debug("Graphique prob_rupture_by_week ignore : %s", exc)
 
 # ─── Page 1 : Synthèse globale ────────────────────────────────────────────────
 
@@ -1558,6 +1529,33 @@ def _format_iso_date_dmy(value: str) -> str:
         return datetime.fromisoformat(value).strftime("%d/%m/%Y")
     except ValueError:
         return "N/A"
+
+
+def _iso_week_axis_formatter(x, _pos=None) -> str:
+    """Formate une date matplotlib en label de semaine ISO ('2026-W14').
+
+    Utilise ``isocalendar()`` pour rester coherent avec les labels du tableau
+    hebdomadaire ; ``strftime('%W')`` differe de la semaine ISO (souvent d'une
+    semaine) et faisait apparaitre un decalage de dates sur les graphiques.
+    """
+    iso = mdates.num2date(x).isocalendar()
+    return f"{iso[0]}-W{iso[1]:02d}"
+
+
+def _trim_trailing_zero_band(band: list) -> list:
+    """Coupe les semaines de prevision ou tous les quantiles de stock sont nuls.
+
+    Une fois que le stock atteint 0 dans tous les scenarios (bas, median, haut),
+    inutile d'afficher les semaines suivantes (la courbe reste plate a zero). On
+    conserve la premiere semaine nulle pour montrer le moment de rupture.
+    """
+    for i, entry in enumerate(band):
+        s_low = float(entry.get("stock_low", 0.0) or 0.0)
+        s_med = float(entry.get("stock_med", 0.0) or 0.0)
+        s_high = float(entry.get("stock_high", 0.0) or 0.0)
+        if s_low <= 0.0 and s_med <= 0.0 and s_high <= 0.0:
+            return band[: i + 1]
+    return band
 
 
 def _quantile_pct_label(frac: float) -> str:
@@ -2076,13 +2074,13 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     icon_d = 8.0   # diamètre du cercle icone
 
     body_text = pdf.safe_str(
-        "Ce rapport contient des projections calculees par un algorithme d'apprentissage "
-        "automatique, en complement de la tendance lineaire classique. "
-        "L'algorithme analyse l'historique des consommations et propose trois scenarios "
-        "par article — optimiste, median et pessimiste — representes par les plages "
-        "colorees sur les graphiques. "
-        "Les resultats s'ameliorent au fil du temps : il faut au moins 17 semaines "
-        "d'historique par article pour qu'une projection ML soit disponible."
+        "Ce rapport ajoute des previsions calculees automatiquement a partir de "
+        "l'historique des ventes. Pour chaque produit, le programme estime quand le "
+        "stock risque de tomber a zero. Comme l'avenir n'est jamais certain, il donne "
+        "une fourchette : sur les graphiques, la zone violette va du scenario le plus "
+        "optimiste au plus pessimiste, et le trait central represente l'estimation la "
+        "plus probable. Ces previsions deviennent fiables avec le temps : il faut "
+        "plusieurs mois de ventes pour qu'un produit puisse etre analyse."
     )
 
     # Zone de texte : commence apres l'icone
@@ -2136,12 +2134,13 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
     """Génère le PDF complet (synthèse + pages articles + qualité) et le sauvegarde."""
     pdf = StockPDF(week_label)
     render_page_summary(pdf, all_kpis, week_label, weeks_range)
-    if use_ml:
-        render_ml_global_summary(pdf, all_kpis, week_label)
 
     for kpi in all_kpis:
         render_article_page(pdf, kpi)
     render_data_quality_page(pdf, unmapped, all_kpis)
+    # Synthese ML (qualite du modele + top articles) reportee en fin de document.
+    if use_ml:
+        render_ml_global_summary(pdf, all_kpis, week_label)
     pdf.output(path)
     log.info("PDF genere -> %s", path)
 
