@@ -153,25 +153,41 @@ def project_for_sku(  # pylint: disable=too-many-arguments
     }
 
 
-def explain_projection(ml_projection: dict, kpi: dict) -> str:
-    """Génère un commentaire d'explicabilité court pour une projection ML.
+def explain_projection(ml_projection: dict) -> str:
+    """Génère un commentaire d'explicabilité court, accessible aux néophytes.
 
-    Le texte est basé sur les valeurs KPI disponibles (probabilité de rupture,
-    amplitude de l'intervalle, tendance sur l'horizon).
+    Trois idées simples : le risque de manquer (en « chances sur 10 »), la
+    tendance des ventes (hausse / stable / baisse) et la fiabilité de la
+    prévision.
 
     Args:
         ml_projection: dict retourné par ``project_for_sku``.
-        kpi: dict KPI de l'article (pour l'unité, la consommation, etc.).
 
     Returns:
-        Chaîne de 1-2 phrases en français prête à afficher dans le PDF.
+        Chaîne de 1-3 phrases en français prête à afficher dans le PDF.
     """
     prob = ml_projection.get("prob_rupture", 0.0) or 0.0
-    unit = kpi.get("unit", "")
     forecast = ml_projection.get("weekly_forecast") or []
-    stock_band = ml_projection.get("stock_band") or []
 
-    # Tendance : comparer la médiane prévue semaine 1 vs semaine 8
+    # Risque de rupture, exprime en "chances sur 10" pour rester intuitif.
+    chances = int(round(prob * 10))
+    if prob >= 0.8:
+        risk_phrase = (
+            f"Ce produit risque fortement de manquer dans les prochaines semaines "
+            f"(environ {chances} chances sur 10)."
+        )
+    elif prob >= 0.4:
+        risk_phrase = (
+            f"Ce produit pourrait manquer dans les prochaines semaines "
+            f"(environ {chances} chances sur 10)."
+        )
+    else:
+        risk_phrase = (
+            f"Ce produit a peu de risque de manquer prochainement "
+            f"(environ {chances} chances sur 10)."
+        )
+
+    # Tendance : comparer la médiane prévue semaine 1 vs semaine 8.
     trend_phrase = ""
     if len(forecast) >= 8:
         q_med_w1 = float(forecast[0].get("q_med", 0.0))
@@ -179,35 +195,27 @@ def explain_projection(ml_projection: dict, kpi: dict) -> str:
         if q_med_w1 > 0:
             ratio = q_med_w8 / q_med_w1
             if ratio > 1.15:
-                trend_phrase = "La consommation prevue est en hausse sur les 8 prochaines semaines."
+                trend_phrase = "Les ventes prevues sont en hausse."
             elif ratio < 0.85:
-                trend_phrase = "La consommation prevue est en baisse sur les 8 prochaines semaines."
+                trend_phrase = "Les ventes prevues sont en baisse."
             else:
-                trend_phrase = "La consommation prevue est stable sur les 8 prochaines semaines."
+                trend_phrase = "Les ventes prevues sont stables."
 
-    # Amplitude de l'intervalle en semaine 1
-    uncertainty_phrase = ""
-    if stock_band:
-        first = stock_band[0]
-        s_low = float(first.get("stock_low", 0.0))
-        s_high = float(first.get("stock_high", 0.0))
-        amplitude = s_high - s_low
-        if amplitude > 0:
-            unit_str = f" {unit}" if unit else ""
-            uncertainty_phrase = (
-                f"Amplitude de l'intervalle de confiance en semaine 1 : "
-                f"{amplitude:.1f}{unit_str}."
-            )
+    # Fiabilite : largeur de la fourchette de consommation comparee a la médiane.
+    confidence_phrase = ""
+    if forecast:
+        first = forecast[0]
+        q_low = float(first.get("q_low", 0.0))
+        q_med = float(first.get("q_med", 0.0))
+        q_high = float(first.get("q_high", 0.0))
+        if q_med > 0:
+            spread = (q_high - q_low) / q_med
+            if spread > 1.0:
+                confidence_phrase = "La prevision reste incertaine : les ventes peuvent beaucoup varier."
+            else:
+                confidence_phrase = "La prevision est plutot fiable."
 
-    # Risque de rupture
-    if prob >= 0.8:
-        risk_phrase = f"Risque de rupture eleve ({prob:.0%}) sur l'horizon de prevision."
-    elif prob >= 0.4:
-        risk_phrase = f"Risque de rupture modere ({prob:.0%}) sur l'horizon de prevision."
-    else:
-        risk_phrase = f"Risque de rupture faible ({prob:.0%}) sur l'horizon de prevision."
-
-    parts = [p for p in [risk_phrase, trend_phrase, uncertainty_phrase] if p]
+    parts = [p for p in [risk_phrase, trend_phrase, confidence_phrase] if p]
     return " ".join(parts)
 
 
@@ -264,7 +272,7 @@ def attach_ml_projections(
             proj["anomaly_weeks"] = (
                 sku_flags["week_label"].tolist() if "week_label" in sku_flags.columns else []
             )
-            proj["explanation"] = explain_projection(proj, kpi)
+            proj["explanation"] = explain_projection(proj)
             kpi["ml_projection"] = proj
             n_attached += 1
     log.info("ML : projections attachees a %d/%d SKU.", n_attached, len(all_kpis))
