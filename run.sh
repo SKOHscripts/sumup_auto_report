@@ -64,9 +64,9 @@ shift
 case "$MODULE" in
 
     stocks)
-        # Commit les éventuels changements de stock_items.json du run précédent
-        if [ -n "$(git status --porcelain stocks/stock_items.json)" ]; then
-            git add stocks/stock_items.json
+        # Commit les éventuels changements du run précédent (stock + artefacts ML)
+        if [ -n "$(git status --porcelain stocks/stock_items.json stocks/models/history.csv stocks/models/config.json stocks/data/weekly_usage.parquet)" ]; then
+            git add stocks/stock_items.json stocks/models/history.csv stocks/models/config.json stocks/data/weekly_usage.parquet
             git commit -m "auto: maj des stocks suite à l'exécution précédente"
         fi
 
