@@ -13,13 +13,13 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 7,
     "stock_state": {
-      "stock_on_hand": 83.0,
+      "stock_on_hand": 80.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -68,6 +68,14 @@
           "consumed_qty": 15.0,
           "previous_stock_on_hand": 98.0,
           "new_stock_on_hand": 83.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 3.0,
+          "previous_stock_on_hand": 83.0,
+          "new_stock_on_hand": 80.0
         }
       ]
     },
@@ -102,13 +110,13 @@
     "consumption_per_sale": 0.4,
     "supplier_lead_time_days": 6,
     "stock_state": {
-      "stock_on_hand": 4.45,
+      "stock_on_hand": 0.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-04-16",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-27",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -165,6 +173,14 @@
           "consumed_qty": 0.65,
           "previous_stock_on_hand": 5.1,
           "new_stock_on_hand": 4.45
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-27",
+          "to_date": "2026-05-29",
+          "consumed_qty": 9.6,
+          "previous_stock_on_hand": 4.45,
+          "new_stock_on_hand": 0.0
         }
       ]
     }
@@ -217,13 +233,13 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 44.0,
+      "stock_on_hand": 33.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "purchase",
@@ -267,6 +283,14 @@
           "consumed_qty": 28.0,
           "previous_stock_on_hand": 72.0,
           "new_stock_on_hand": 44.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 11.0,
+          "previous_stock_on_hand": 44.0,
+          "new_stock_on_hand": 33.0
         }
       ]
     },
@@ -286,13 +310,13 @@
     "consumption_per_sale": 0.25,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 0.75,
+      "stock_on_hand": 0.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -309,6 +333,14 @@
           "consumed_qty": 3.0,
           "previous_stock_on_hand": 3.75,
           "new_stock_on_hand": 0.75
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 2.0,
+          "previous_stock_on_hand": 0.75,
+          "new_stock_on_hand": 0.0
         }
       ]
     },
@@ -327,13 +359,13 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 9.1,
+      "stock_on_hand": 8.1,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -342,6 +374,14 @@
           "consumed_qty": 0.3,
           "previous_stock_on_hand": 9.4,
           "new_stock_on_hand": 9.1
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 1.0,
+          "previous_stock_on_hand": 9.1,
+          "new_stock_on_hand": 8.1
         }
       ]
     },
@@ -374,7 +414,7 @@
     "consumption_per_sale": 0.15,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 5.9,
+      "stock_on_hand": 3.95,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -405,9 +445,17 @@
           "consumed_qty": 1.95,
           "previous_stock_on_hand": 7.85,
           "new_stock_on_hand": 5.9
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 1.95,
+          "previous_stock_on_hand": 5.9,
+          "new_stock_on_hand": 3.95
         }
       ],
-      "last_auto_update": "2026-05-24"
+      "last_auto_update": "2026-05-29"
     },
     "stock_sku": "vin_blanc"
   },
@@ -537,7 +585,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 29.0,
+      "stock_on_hand": 22.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -585,9 +633,17 @@
           "consumed_qty": 1.0,
           "previous_stock_on_hand": 30.0,
           "new_stock_on_hand": 29.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-27",
+          "to_date": "2026-05-29",
+          "consumed_qty": 7.0,
+          "previous_stock_on_hand": 29.0,
+          "new_stock_on_hand": 22.0
         }
       ],
-      "last_auto_update": "2026-05-27"
+      "last_auto_update": "2026-05-29"
     },
     "stock_sku": "jus_pomme_bio_20cl_brique"
   },
@@ -605,13 +661,13 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 4.0,
+      "stock_on_hand": 3.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -628,6 +684,14 @@
           "consumed_qty": 5.0,
           "previous_stock_on_hand": 9.0,
           "new_stock_on_hand": 4.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 1.0,
+          "previous_stock_on_hand": 4.0,
+          "new_stock_on_hand": 3.0
         }
       ]
     },
@@ -663,13 +727,13 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 12.0,
+      "stock_on_hand": 9.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-27",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "purchase",
@@ -721,6 +785,14 @@
           "consumed_qty": 5.0,
           "previous_stock_on_hand": 17.0,
           "new_stock_on_hand": 12.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-27",
+          "to_date": "2026-05-29",
+          "consumed_qty": 3.0,
+          "previous_stock_on_hand": 12.0,
+          "new_stock_on_hand": 9.0
         }
       ]
     }
@@ -790,7 +862,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 9.0,
+      "stock_on_hand": 4.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -829,9 +901,17 @@
           "consumed_qty": 1.0,
           "previous_stock_on_hand": 10.0,
           "new_stock_on_hand": 9.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-28",
+          "to_date": "2026-05-29",
+          "consumed_qty": 5.0,
+          "previous_stock_on_hand": 9.0,
+          "new_stock_on_hand": 4.0
         }
       ],
-      "last_auto_update": "2026-05-28"
+      "last_auto_update": "2026-05-29"
     }
   },
   {
@@ -849,13 +929,13 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 1.15,
+      "stock_on_hand": 1.1,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-27",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -880,6 +960,14 @@
           "consumed_qty": 0.05,
           "previous_stock_on_hand": 1.2,
           "new_stock_on_hand": 1.15
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-27",
+          "to_date": "2026-05-29",
+          "consumed_qty": 0.05,
+          "previous_stock_on_hand": 1.15,
+          "new_stock_on_hand": 1.1
         }
       ]
     }
@@ -942,13 +1030,13 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 32.0,
+      "stock_on_hand": 30.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "purchase",
@@ -992,6 +1080,14 @@
           "consumed_qty": 1.0,
           "previous_stock_on_hand": 33.0,
           "new_stock_on_hand": 32.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 2.0,
+          "previous_stock_on_hand": 32.0,
+          "new_stock_on_hand": 30.0
         }
       ]
     }
@@ -1012,13 +1108,13 @@
     "consumption_per_sale": 10,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 2904.0,
+      "stock_on_hand": 2896.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -1035,6 +1131,14 @@
           "consumed_qty": 62.0,
           "previous_stock_on_hand": 2966.0,
           "new_stock_on_hand": 2904.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 8.0,
+          "previous_stock_on_hand": 2904.0,
+          "new_stock_on_hand": 2896.0
         }
       ]
     }
@@ -1084,13 +1188,13 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 73.0,
+      "stock_on_hand": 70.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -1116,6 +1220,14 @@
           "consumed_qty": 9.0,
           "previous_stock_on_hand": 82.0,
           "new_stock_on_hand": 73.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 3.0,
+          "previous_stock_on_hand": 73.0,
+          "new_stock_on_hand": 70.0
         }
       ]
     }
@@ -1325,13 +1437,13 @@
       "variant": "Coca Cola classique"
     },
     "stock_state": {
-      "stock_on_hand": 22.0,
+      "stock_on_hand": 21.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -1348,6 +1460,14 @@
           "consumed_qty": 2.0,
           "previous_stock_on_hand": 24.0,
           "new_stock_on_hand": 22.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 1.0,
+          "previous_stock_on_hand": 22.0,
+          "new_stock_on_hand": 21.0
         }
       ]
     }
@@ -1561,13 +1681,13 @@
       "variant": "Coca Cola Zero"
     },
     "stock_state": {
-      "stock_on_hand": 17.0,
+      "stock_on_hand": 14.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -1584,6 +1704,14 @@
           "consumed_qty": 6.0,
           "previous_stock_on_hand": 23.0,
           "new_stock_on_hand": 17.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 3.0,
+          "previous_stock_on_hand": 17.0,
+          "new_stock_on_hand": 14.0
         }
       ]
     }
@@ -1623,7 +1751,7 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 29.0,
+      "stock_on_hand": 27.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -1638,8 +1766,17 @@
           "previous_stock_on_hand": 9.0,
           "new_stock_on_hand": 29.0,
           "source": "gdrive_excel"
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-03",
+          "to_date": "2026-05-29",
+          "consumed_qty": 2.0,
+          "previous_stock_on_hand": 29.0,
+          "new_stock_on_hand": 27.0
         }
-      ]
+      ],
+      "last_auto_update": "2026-05-29"
     }
   },
   {
@@ -1696,13 +1833,13 @@
       "variant": ""
     },
     "stock_state": {
-      "stock_on_hand": 24.0,
+      "stock_on_hand": 22.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-24",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "purchase",
@@ -1746,6 +1883,14 @@
           "consumed_qty": 7.0,
           "previous_stock_on_hand": 31.0,
           "new_stock_on_hand": 24.0
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-24",
+          "to_date": "2026-05-29",
+          "consumed_qty": 2.0,
+          "previous_stock_on_hand": 24.0,
+          "new_stock_on_hand": 22.0
         }
       ]
     }
@@ -2004,13 +2149,13 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 0.9,
+      "stock_on_hand": 0.85,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-27",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -2044,6 +2189,14 @@
           "consumed_qty": 0.1,
           "previous_stock_on_hand": 1.0,
           "new_stock_on_hand": 0.9
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-27",
+          "to_date": "2026-05-29",
+          "consumed_qty": 0.05,
+          "previous_stock_on_hand": 0.9,
+          "new_stock_on_hand": 0.85
         }
       ]
     }
@@ -2122,13 +2275,13 @@
     "consumption_per_sale": 0.05,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 0.5,
+      "stock_on_hand": 0.45,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
       "last_inventory_date": "2026-05-03",
       "inventory_count_method": "manual",
-      "last_auto_update": "2026-05-27",
+      "last_auto_update": "2026-05-29",
       "stock_history": [
         {
           "type": "auto_refresh",
@@ -2153,6 +2306,14 @@
           "consumed_qty": 0.05,
           "previous_stock_on_hand": 0.55,
           "new_stock_on_hand": 0.5
+        },
+        {
+          "type": "auto_refresh",
+          "from_date": "2026-05-27",
+          "to_date": "2026-05-29",
+          "consumed_qty": 0.05,
+          "previous_stock_on_hand": 0.5,
+          "new_stock_on_hand": 0.45
         }
       ]
     }
