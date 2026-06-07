@@ -712,6 +712,14 @@ class AdhesionPDF(FPDF):
         code_w = self._pw() - sum(v for k, v in COL_W.items() if k != "code")
         self.cell(code_w, dyn_h, code, border="B", align="C")
 
+        # ── Barré rouge pour les transactions exclues des totaux ──
+        if status_raw in _EXCLUDED_STATUSES:
+            self.set_draw_color(*PALETTE["status"]["FAILED"])
+            self.set_line_width(0.5)
+            mid_y = y0 + dyn_h / 2
+            self.line(x0, mid_y, x0 + self._pw(), mid_y)
+            self.set_line_width(0.2)
+
         # ── Repositionne proprement sous la ligne ──
         self.set_xy(x0, y0 + dyn_h)
         self.set_text_color(*PALETTE["text_dark"])
