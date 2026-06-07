@@ -188,8 +188,14 @@ def _matches_adhesion_label(text: str, filters: list = None) -> bool:
     return any(kw in normalized for kw in _get_active_filters(filters))
 
 
+_EXCLUDED_STATUSES = {"FAILED", "CANCELLED"}
+
+
 def count_adhesions_in_txn(txn: dict, filters: list = None) -> int:
     """Compte le nombre d'adhésions dans une transaction selon les filtres actifs."""
+    if (txn.get("status") or "").upper() in _EXCLUDED_STATUSES:
+        return 0
+
     products = txn.get("products") or []
     total = 0
 
@@ -243,6 +249,9 @@ def get_filtered_amount(txn: dict, filters: list = None) -> float:
     correspond ou si les données de prix sont absentes, repli sur le montant
     total de la transaction.
     """
+    if (txn.get("status") or "").upper() in _EXCLUDED_STATUSES:
+        return 0.0
+
     products = txn.get("products") or []
     total = 0.0
     found_match = False
