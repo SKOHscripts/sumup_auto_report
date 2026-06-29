@@ -2743,7 +2743,7 @@
     "stock_sku": "pate_en_croute",
     "is_stock_reference": true,
     "label": "Pate en croute",
-    "enabled": false,
+    "enabled": true,
     "unit": "piece",
     "consumption_per_sale": 1,
     "category": "snacking",
@@ -2897,15 +2897,15 @@
   {
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
-    "label": "Adhésions",
-    "enabled": false,
+    "label": "Non adhérent",
+    "enabled": true,
     "unit": "feuille",
     "category": "adhesions",
     "sumup_match": {
       "name": "Non adhérent",
       "variant": ""
     },
-    "consumption_per_sale": 1
+    "consumption_per_sale": 0
   },
   {
     "stock_sku": "don",
@@ -3485,5 +3485,60 @@
       ]
     },
     "stock_sku": "tomates_cerise"
+  },
+  {
+    "stock_sku": "schweppes_agrumes",
+    "is_stock_reference": false,
+    "label": "Schweppes agrumes",
+    "stock_label": "Schweppes agrumes",
+    "enabled": true,
+    "unit": "piece",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Schweppes agrumes"
+    },
+    "consumption_per_sale": 1,
+    "pack_size": 1
+  },
+  {
+    "stock_sku": "jus_divers",
+    "is_stock_reference": false,
+    "label": "Jus divers et multifruits",
+    "stock_label": "Jus divers",
+    "enabled": true,
+    "unit": "L",
+    "category": "soft",
+    "sumup_match": {
+      "name": "Jus & Sodas",
+      "variant": "Jus divers et multifruits"
+    },
+    "consumption_per_sale": 0.2,
+    "pack_size": 1
+  },
+  {
+    "stock_sku": "bieres_commerce_blanche_25cl",
+    "is_stock_reference": true,
+    "label": "Bières commerce blanche 25 cL",
+    "enabled": true,
+    "unit": "bouteille",
+    "category": "bar",
+    "sumup_match": {
+      "name": "Bières",
+      "variant": "Commerce blanche 25 cl"
+    },
+    "pack_size": 1,
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_state": {
+      "stock_on_hand": 0.0,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "",
+      "inventory_count_method": "manual",
+      "last_auto_update": "",
+      "stock_history": []
+    }
   }
 ]

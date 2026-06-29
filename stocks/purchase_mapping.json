@@ -132,8 +132,9 @@
     },
     {
       "excel_label": "blanche 25cl",
-      "stock_sku": "bieres_commerce_blonde_25cl",
-      "qty_multiplier": 1
+      "stock_sku": "bieres_commerce_blanche_25cl",
+      "qty_multiplier": 1,
+      "comment": "1 bouteille 25 cl (unité stock : bouteille)"
     },
     {
       "excel_label": "ambrée 25cl",
