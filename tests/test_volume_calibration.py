@@ -190,6 +190,7 @@ class TestCalibrateGroup:
         summary = calibrate_group(groups[0], txns, index, match_product_to_sku)
         raw_ref = groups[0]["reference_item"]["_raw_ref"]
         # Aucun ajustement appliqué, volume inchangé.
+        assert summary is None or summary.get("applied", 0) == 0
         assert "declared_consumption_per_sale" not in raw_ref
         assert raw_ref["consumption_per_sale"] == 0.15
         # Mais l'historique trace la raison.
