@@ -160,7 +160,8 @@ sumup_auto_report/
 ├── stocks/
 │   ├── sumup_stocks.py             # Rapport stocks hebdomadaire (flag --ml)
 │   ├── sumup_statistics.py         # Statistiques de ventes
-│   ├── update_stock_from_purchases.py  # Intégration achats Google Drive
+│   ├── update_stock_from_purchases.py  # Intégration achats + états des lieux Google Drive
+│   ├── volume_calibration.py       # Calibration glissante des volumes par vente
 │   ├── gdrive_loader.py            # Téléchargement Google Drive
 │   ├── stock_items.json            # Catalogue + état des stocks
 │   ├── purchase_mapping.json       # Mapping produits Excel → stock_sku
@@ -283,6 +284,51 @@ Dans ce cas, le module :
 - Trace l'opération dans `stock_history` avec `type: "inventory"` (déduplication par date).
 
 Cela permet à n'importe qui de corriger les stocks directement depuis l'Excel, sans toucher au code.
+
+### Calibration glissante des volumes par transaction
+
+Les volumes déduits par vente (`consumption_per_sale` : un verre de vin à 15 cL,
+une pression au litre, 10 g de café par expresso…) sont saisis à la main. En
+pratique, le service au comptoir n'est jamais parfaitement régulier et le stock
+théorique **dérive** peu à peu du stock réel.
+
+Le module `stocks/volume_calibration.py` corrige cette dérive **automatiquement
+et progressivement** à partir des états des lieux. Entre deux comptages
+physiques, la consommation réelle d'un stock est connue exactement :
+
+```
+conso_réelle = stock_compté_début + achats_période − stock_compté_fin
+```
+
+Elle est comparée à la consommation théorique (ventes × volume déclaré) sur la
+même période, et les volumes par vente sont recalés par un **lissage glissant**
+(moyenne mobile exponentielle) :
+
+- **Réactivité élevée** (α = 0,50) : les volumes rattrapent vite la mesure
+  (convergence en ~2-3 inventaires). Réglable dans `CALIBRATION_ALPHA`.
+- **Bornes de sécurité** : le ratio brut est borné à [0,5 ; 2,0] et le
+  déplacement d'un volume est limité à ±50 % par état des lieux, pour neutraliser
+  un comptage isolé erroné.
+- **Garde-fou de signal** : aucun ajustement si moins de `MIN_VARIABLE_SALES`
+  ventes « calibrables » sur la période.
+
+**Portée** (« versés imprécis seulement ») : seuls les articles servis à une
+quantité **mesurée** (unité `L`, `cL`, `mL`, `g`, `kg`…) dérivent. Les contenants
+comptés à l'unité (bouteille, canette, sachet…) gardent un volume fixe et servent
+de référence stable. Un article peut forcer son comportement via le champ
+`calibrate_volume` (`true`/`false`) du catalogue.
+
+La calibration ne modifie que `consumption_per_sale` dans `stock_items.json` :
+
+- le volume déclaré d'origine est conservé dans `declared_consumption_per_sale` ;
+- l'historique des ajustements (réel, théorique, ratio, pas appliqué) est tracé
+  dans le bloc `volume_calibration` de l'article de référence ;
+- le rapport PDF affiche une **page « Calibration glissante des volumes »** et un
+  encart par article (volume déclaré → calibré + dérive %), à titre informatif.
+
+La calibration s'exécute automatiquement au début du rapport stocks
+(`python -m stocks.sumup_stocks`) ; elle reste sans effet tant qu'aucun état des
+lieux n'a été saisi.
 
 Pour ajouter un nouveau produit au fichier Excel, ajoutez une entrée dans `stocks/purchase_mapping.json` :
 
