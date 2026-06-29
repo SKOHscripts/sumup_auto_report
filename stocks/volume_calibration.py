@@ -65,7 +65,7 @@ STEP_MAX = 1.5
 MIN_VARIABLE_SALES = 5
 
 # Unités continues (versées / pesées) éligibles à la calibration par défaut.
-MEASURE_UNITS = {"l", "cl", "ml", "dl", "g", "kg", "cl"}
+MEASURE_UNITS = {"l", "cl", "ml", "dl", "g", "kg"}
 
 
 # ── Détermination de l'éligibilité d'un article ───────────────────────────────
@@ -257,7 +257,7 @@ def _apply_step_to_sku(group: dict, stock_sku: str, step: float) -> None:
             raw_extra["consumption_per_sale"] = round(current * step, 6)
 
 
-def _reference_factor(group: dict, stock_sku: str) -> float | None:
+def _reference_factor(group: dict) -> float | None:
     """Retourne le facteur cumulé courant/déclaré du volume de référence."""
     ref = group["reference_item"]
     raw = ref.get("_raw_ref", ref)
@@ -366,7 +366,7 @@ def calibrate_group(group: dict, txns: list, sku_index: dict,
     calib["alpha"] = alpha
     if last_done is not None:
         calib["last_calibrated_date"] = last_done.isoformat()
-    factor = _reference_factor(group, stock_sku)
+    factor = _reference_factor(group)
     if factor is not None:
         calib["current_factor"] = factor
     raw_ref["volume_calibration"] = calib
