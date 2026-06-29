@@ -68,6 +68,22 @@
       "qty_multiplier": 1
     },
     {
+      "excel_label": "Brique jus d'orange 20cl",
+      "stock_sku": "jus_sodas_jus_de_orange_bio_20_cl_brique",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "fanta",
+      "stock_sku": "jus_sodas_fanta",
+      "qty_multiplier": 1
+    },
+    {
+      "excel_label": "jus divers [L]",
+      "stock_sku": "jus_divers",
+      "qty_multiplier": 1,
+      "comment": "Jus divers comptés en litres (unité stock : L)"
+    },
+    {
       "excel_label": "eau gazeuse 50cl",
       "stock_sku": "eau_gazeuse",
       "qty_multiplier": 1
@@ -109,6 +125,12 @@
       "comment": "Quantité Excel en litres (unité stock : L)"
     },
     {
+      "excel_label": "crème de cassis ou mûre",
+      "stock_sku": "creme_cassis_mure",
+      "qty_multiplier": 1,
+      "comment": "Cassis et mûre regroupés sur une seule ligne ; quantité en litres (unité stock : L). Consommée via les ventes de Kir (also_consumes)."
+    },
+    {
       "excel_label": "blanche 25cl",
       "stock_sku": "bieres_commerce_blonde_25cl",
       "qty_multiplier": 1
@@ -128,6 +150,12 @@
       "stock_sku": "bieres_pression",
       "qty_multiplier": 1,
       "comment": "Bière au fût comptée en litres (unité stock : L)"
+    },
+    {
+      "excel_label": "cidre [L]",
+      "stock_sku": "cidre",
+      "qty_multiplier": 1,
+      "comment": "Cidre compté en litres (unité stock : L)"
     },
     {
       "excel_label": "chips",

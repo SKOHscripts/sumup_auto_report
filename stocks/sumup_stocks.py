@@ -194,6 +194,30 @@ def get_refresh_start_dt(stock_groups: list, fallback_start_dt: datetime) -> dat
     return min(fallback_start_dt, *anchor_dates)
 
 
+def _accumulate_item_usage(item: dict, qty: float, txn_date: date,
+                           anchors_by_sku: dict, usage_by_stock_sku: dict) -> None:
+    """Accumule la consommation d'un item pour ``qty`` ventes.
+
+    Couvre le stock_sku principal ET les éventuels stock_sku secondaires
+    déclarés dans ``also_consumes`` (ex. un Kir consomme du vin blanc ET de
+    la crème de cassis/mûre). Chaque sku est filtré par sa propre ancre : la
+    consommation n'est comptée que pour les ventes postérieures à la date
+    d'inventaire de ce sku.
+    """
+    consumptions = [(item.get("stock_sku"), float(item.get("consumption_per_sale", 1) or 1))]
+    for extra in item.get("also_consumes") or []:
+        esku = extra.get("stock_sku")
+        if esku:
+            consumptions.append((esku, float(extra.get("consumption_per_sale", 0) or 0)))
+
+    for sku, per_sale in consumptions:
+        if not sku or per_sale <= 0:
+            continue
+        anchor = anchors_by_sku.get(sku)
+        if anchor and txn_date > anchor:
+            usage_by_stock_sku[sku] += qty * per_sale
+
+
 def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dict, as_of: date) -> dict:
     """
     Agrège l'utilisation des stocks en une seule passe sur les transactions,
@@ -227,14 +251,9 @@ def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dic
             sku, item = match_product_to_sku(summary, "", sku_index)
 
             if sku and item:
-                stock_sku = item["stock_sku"]
-                anchor = anchors_by_sku.get(stock_sku)
-                # On vérifie l'ancre: l'ancre est exclue, le as_of est inclus
-
-                if anchor and txn_date > anchor:
-                    usage = float(item.get("consumption_per_sale", 1) or 1)
-                    usage_by_stock_sku[stock_sku] += usage
-                    log.warning("Fallback product_summary utilise pour %s (quantite 1 deduite).", stock_sku)
+                # L'ancre est exclue, le as_of est inclus (cf. _accumulate_item_usage).
+                log.warning("Fallback product_summary utilise pour %s (quantite 1 deduite).", item.get("stock_sku"))
+                _accumulate_item_usage(item, 1, txn_date, anchors_by_sku, usage_by_stock_sku)
 
             continue
 
@@ -257,12 +276,7 @@ def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dic
             if not sku or not item:
                 continue
 
-            stock_sku = item["stock_sku"]
-            anchor = anchors_by_sku.get(stock_sku)
-
-            if anchor and txn_date > anchor:
-                usage = qty * float(item.get("consumption_per_sale", 1) or 1)
-                usage_by_stock_sku[stock_sku] += usage
+            _accumulate_item_usage(item, qty, txn_date, anchors_by_sku, usage_by_stock_sku)
 
     return usage_by_stock_sku
 
