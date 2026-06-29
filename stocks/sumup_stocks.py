@@ -2657,7 +2657,7 @@ def run_stock_report(
 
     log.info("Etape 2b/6 - Calibration glissante des volumes (etats des lieux)...")
     calib_changed, calib_summaries = calibrate_volumes_in_items(
-        stock_items, stock_groups, all_txns, sku_index,
+        stock_items, stock_groups, all_txns, sku_index, match_product_to_sku,
     )
     if calib_changed:
         save_stock_items(items_file, raw_items)

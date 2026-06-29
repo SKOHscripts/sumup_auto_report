@@ -11,7 +11,12 @@ from stocks.volume_calibration import (
     calibrate_volumes_in_items,
     item_calibratable,
 )
-from stocks.sumup_stocks import build_stock_groups, build_sku_index, prepare_enabled_stock_items
+from stocks.sumup_stocks import (
+    build_stock_groups,
+    build_sku_index,
+    match_product_to_sku,
+    prepare_enabled_stock_items,
+)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -98,7 +103,7 @@ class TestAggregateWindow:
             _txn("2026-05-10"),  # = end, inclus
             _txn("2026-05-11"),  # après, exclu
         ]
-        res = aggregate_window_consumption(txns, index, date(2026, 5, 1), date(2026, 5, 10))
+        res = aggregate_window_consumption(txns, index, date(2026, 5, 1), date(2026, 5, 10), match_product_to_sku)
         # 2 ventes comptées × 0.15
         assert res["vin_rose"]["total"] == pytest.approx(0.30)
         assert res["vin_rose"]["n_var_sales"] == 2
@@ -118,7 +123,7 @@ class TestAggregateWindow:
             _txn("2026-05-02", variant="Rosé", qty=2),       # variable : 2×0.15
             _txn("2026-05-03", variant="Rose Pot", qty=1),   # fixe : 1×1
         ]
-        res = aggregate_window_consumption(txns, index, date(2026, 5, 1), date(2026, 5, 10))
+        res = aggregate_window_consumption(txns, index, date(2026, 5, 1), date(2026, 5, 10), match_product_to_sku)
         assert res["vin_rose"]["total"] == pytest.approx(0.30 + 1.0)
         assert res["vin_rose"]["fixed"] == pytest.approx(1.0)
         assert res["vin_rose"]["n_var_sales"] == 2
@@ -131,7 +136,7 @@ class TestCalibrateGroup:
         raw = [_wine_item()]
         raw[0]["stock_state"]["stock_history"] = [_inv("2026-05-01", 10.0)]
         _items, groups, index = _prepare(raw)
-        assert calibrate_group(groups[0], [], index) is None
+        assert calibrate_group(groups[0], [], index, match_product_to_sku) is None
 
     def test_over_pour_increases_volume(self):
         # Compté 10 L le 01, 0 L le 10 ; aucun achat ⇒ conso réelle = 10 L.
@@ -144,7 +149,7 @@ class TestCalibrateGroup:
         _items, groups, index = _prepare(raw)
         txns = [_txn(f"2026-05-0{(i % 8) + 2}", qty=1) for i in range(50)]
 
-        summary = calibrate_group(groups[0], txns, index, alpha=0.5)
+        summary = calibrate_group(groups[0], txns, index, match_product_to_sku, alpha=0.5)
 
         assert summary is not None
         assert summary["applied"] == 1
@@ -168,7 +173,7 @@ class TestCalibrateGroup:
         _items, groups, index = _prepare(raw)
         txns = [_txn(f"2026-05-0{(i % 8) + 2}", qty=1) for i in range(50)]
 
-        calibrate_group(groups[0], txns, index, alpha=0.5)
+        calibrate_group(groups[0], txns, index, match_product_to_sku, alpha=0.5)
         raw_ref = groups[0]["reference_item"]["_raw_ref"]
         assert raw_ref["consumption_per_sale"] < 0.15
 
@@ -182,7 +187,7 @@ class TestCalibrateGroup:
         # Moins de MIN_VARIABLE_SALES ventes
         txns = [_txn("2026-05-02") for _ in range(MIN_VARIABLE_SALES - 1)]
 
-        summary = calibrate_group(groups[0], txns, index)
+        summary = calibrate_group(groups[0], txns, index, match_product_to_sku)
         raw_ref = groups[0]["reference_item"]["_raw_ref"]
         # Aucun ajustement appliqué, volume inchangé.
         assert "declared_consumption_per_sale" not in raw_ref
@@ -201,7 +206,7 @@ class TestCalibrateGroup:
         _items, groups, index = _prepare(raw)
         txns = [_txn(f"2026-05-0{(i % 8) + 2}", qty=1) for i in range(50)]
 
-        calibrate_group(groups[0], txns, index, alpha=0.5)
+        calibrate_group(groups[0], txns, index, match_product_to_sku, alpha=0.5)
         entry = groups[0]["reference_item"]["_raw_ref"]["volume_calibration"]["history"][0]
         assert entry["actual_consumed"] == pytest.approx(15.0)
 
@@ -213,7 +218,7 @@ class TestCalibrateGroup:
         ]
         _items, groups, index = _prepare(raw)
         txns = [_txn("2026-05-02") for _ in range(50)]
-        assert calibrate_group(groups[0], txns, index) is None
+        assert calibrate_group(groups[0], txns, index, match_product_to_sku) is None
 
     def test_idempotent_second_run(self):
         raw = [_wine_item(per_sale=0.15)]
@@ -224,10 +229,10 @@ class TestCalibrateGroup:
         _items, groups, index = _prepare(raw)
         txns = [_txn(f"2026-05-0{(i % 8) + 2}", qty=1) for i in range(50)]
 
-        calibrate_group(groups[0], txns, index, alpha=0.5)
+        calibrate_group(groups[0], txns, index, match_product_to_sku, alpha=0.5)
         after_first = groups[0]["reference_item"]["_raw_ref"]["consumption_per_sale"]
         # Deuxième passe : le couple est déjà traité, pas de nouvel ajustement.
-        summary2 = calibrate_group(groups[0], txns, index, alpha=0.5)
+        summary2 = calibrate_group(groups[0], txns, index, match_product_to_sku, alpha=0.5)
         after_second = groups[0]["reference_item"]["_raw_ref"]["consumption_per_sale"]
         assert after_first == after_second
         assert summary2 is None or summary2.get("applied", 0) == 0
@@ -245,13 +250,13 @@ class TestCalibrateVolumesInItems:
         stock_items, groups, index = _prepare(raw)
         txns = [_txn(f"2026-05-0{(i % 8) + 2}", qty=1) for i in range(50)]
 
-        changed, summaries = calibrate_volumes_in_items(stock_items, groups, txns, index)
+        changed, summaries = calibrate_volumes_in_items(stock_items, groups, txns, index, match_product_to_sku)
         assert changed is True
         assert summaries and summaries[0]["stock_sku"] == "vin_rose"
 
     def test_no_inventory_no_change(self):
         raw = [_wine_item(per_sale=0.15)]
         stock_items, groups, index = _prepare(raw)
-        changed, summaries = calibrate_volumes_in_items(stock_items, groups, [], index)
+        changed, summaries = calibrate_volumes_in_items(stock_items, groups, [], index, match_product_to_sku)
         assert changed is False
         assert summaries == []

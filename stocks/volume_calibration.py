@@ -152,14 +152,15 @@ def _item_contributions(item: dict):
             )
 
 
-def aggregate_window_consumption(txns: list, sku_index: dict, start: date, end: date) -> dict:
+def aggregate_window_consumption(txns: list, sku_index: dict, start: date, end: date,
+                                 match_fn) -> dict:
     """Agrège la consommation théorique par stock_sku sur la fenêtre (start, end].
 
+    ``match_fn(name, variant, sku_index) -> (sku, item)`` est injecté par
+    l'appelant pour éviter une dépendance circulaire avec ``sumup_stocks``.
     Retourne ``{ stock_sku: {"total", "fixed", "n_var_sales"} }`` où ``fixed``
     est la part provenant d'articles non calibrables (volume considéré exact).
     """
-    from stocks.sumup_stocks import match_product_to_sku  # pylint: disable=import-outside-toplevel
-
     res: dict[str, dict] = defaultdict(lambda: {"total": 0.0, "fixed": 0.0, "n_var_sales": 0})
 
     for txn in txns:
@@ -167,7 +168,7 @@ def aggregate_window_consumption(txns: list, sku_index: dict, start: date, end: 
         if d is None or not start < d <= end:
             continue
         for name, variant, qty in _iter_sale_lines(txn):
-            _sku, item = match_product_to_sku(name, variant, sku_index)
+            _sku, item = match_fn(name, variant, sku_index)
             if not item:
                 continue
             for tgt_sku, per_sale, calibratable in _item_contributions(item):
@@ -271,7 +272,7 @@ def _reference_factor(group: dict) -> float | None:
         return None
 
 
-def calibrate_group(group: dict, txns: list, sku_index: dict,
+def calibrate_group(group: dict, txns: list, sku_index: dict, match_fn,
                     alpha: float = CALIBRATION_ALPHA) -> dict | None:
     """Calibre les volumes d'un groupe de stock depuis ses états des lieux.
 
@@ -311,7 +312,7 @@ def calibrate_group(group: dict, txns: list, sku_index: dict,
         purchases = _purchases_in_window(state, d0, d1)
         actual = c0 + purchases - c1
 
-        window = aggregate_window_consumption(txns, sku_index, d0, d1)
+        window = aggregate_window_consumption(txns, sku_index, d0, d1, match_fn)
         bucket = window.get(stock_sku, {"total": 0.0, "fixed": 0.0, "n_var_sales": 0})
         theoretical_total = bucket["total"]
         theoretical_fixed = bucket["fixed"]
@@ -385,10 +386,12 @@ def calibrate_group(group: dict, txns: list, sku_index: dict,
 
 
 def calibrate_volumes_in_items(_stock_items: list, stock_groups: list,
-                               txns: list, sku_index: dict,
+                               txns: list, sku_index: dict, match_fn,
                                alpha: float = CALIBRATION_ALPHA) -> tuple[bool, list]:
     """Calibre tous les groupes éligibles. Retourne (changed, résumés).
 
+    ``match_fn(name, variant, sku_index) -> (sku, item)`` est injecté par
+    l'appelant (``sumup_stocks``) pour éviter une dépendance circulaire.
     ``changed`` est vrai dès qu'au moins un volume a été ajusté (donc qu'il
     faut re-sauvegarder le catalogue). Les résumés alimentent le rapport.
     """
@@ -396,7 +399,7 @@ def calibrate_volumes_in_items(_stock_items: list, stock_groups: list,
     summaries = []
 
     for group in stock_groups:
-        summary = calibrate_group(group, txns, sku_index, alpha=alpha)
+        summary = calibrate_group(group, txns, sku_index, match_fn, alpha=alpha)
         if summary is None:
             continue
         summaries.append(summary)
