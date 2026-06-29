@@ -6,6 +6,16 @@ Télécharge le fichier Excel ACHATS_suivi_stock.xlsx depuis Google Drive,
 parse les colonnes d'achat (date + acheteur + quantités), et met à jour
 stock_items.json en ajoutant les quantités achetées au stock_on_hand.
 
+Deux types de colonnes sont reconnus, distingués par la ligne 2 (la
+même que les marqueurs « exemple ») :
+
+  - Colonne d'achat (par défaut) : les quantités sont AJOUTÉES au stock.
+  - Colonne « état des lieux » : si la ligne 2 contient « état des lieux »
+    (ou « inventaire »), les quantités REMPLACENT le stock enregistré.
+    Cela permet à n'importe qui de déclarer, directement depuis l'Excel,
+    qu'un comptage physique a été réalisé à cette date. La date de
+    l'état des lieux ré-ancre aussi le calcul de consommation du rapport.
+
 Usage :
   python -m stocks.update_stock_from_purchases            # depuis Google Drive
   python -m stocks.update_stock_from_purchases --dry-run  # simulation sans écriture
@@ -46,11 +56,16 @@ STOCKS_DIR = Path(__file__).resolve().parent
 STOCK_ITEMS_PATH = STOCKS_DIR / "stock_items.json"
 PURCHASE_MAPPING_PATH = STOCKS_DIR / "purchase_mapping.json"
 
+# Marqueurs (ligne 2 de l'Excel, déjà normalisés sans accents) qui déclarent
+# une colonne comme un « état des lieux » : les quantités remplacent le stock
+# au lieu d'y être ajoutées.
+INVENTORY_MARKERS = ("etat des lieux", "etat des stocks", "inventaire", "inventory", "snapshot")
+
 # ── Structures de données ──────────────────────────────────────────────────────
 
 @dataclass
 class PurchaseItem:
-    """Un produit acheté dans une colonne du fichier Excel."""
+    """Un produit compté dans une colonne du fichier Excel."""
 
     excel_label: str
     qty: float
@@ -58,11 +73,21 @@ class PurchaseItem:
 
 @dataclass
 class PurchaseEvent:
-    """Un achat complet : une colonne du fichier Excel."""
+    """Une colonne du fichier Excel.
+
+    kind vaut "purchase" (les quantités sont ajoutées au stock) ou
+    "inventory" (état des lieux : les quantités remplacent le stock).
+    """
 
     purchase_date: date
     buyer: str
     items: list[PurchaseItem] = field(default_factory=list)
+    kind: str = "purchase"
+
+
+def _is_inventory_marker(marker_norm: str) -> bool:
+    """Indique si un marqueur (déjà normalisé) déclare un état des lieux."""
+    return any(m in marker_norm for m in INVENTORY_MARKERS)
 
 
 # ── Lecture / écriture stock_items.json ───────────────────────────────────────
@@ -95,14 +120,17 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
     Structure attendue du fichier :
       Ligne 0 : titre
       Ligne 1 : date màj
-      Ligne 2 : marqueurs "exemple" (colonnes à ignorer)
+      Ligne 2 : marqueurs de colonne :
+        - "exemple"         → colonne ignorée
+        - "état des lieux"  → colonne d'inventaire (remplace le stock)
+        - (vide)            → colonne d'achat (ajoute au stock)
       Ligne 3 : prénoms acheteurs  (col C+)
       Ligne 4 : dates d'achat      (col C+)
       Ligne 5 : vide
       Ligne 6+ : données produits par catégorie
         col A : type d'unité (propagé vers le bas)
         col B : nom catégorie (MAJUSCULES) ou nom produit
-        col C+: quantités achetées
+        col C+: quantités achetées ou comptées
     """
     if not _OPENPYXL_AVAILABLE:
         raise ImportError(
@@ -121,13 +149,14 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
     row_buyers  = rows[3]   # ligne 3 : prénoms acheteurs
     row_dates   = rows[4]   # ligne 4 : dates d'achat
 
-    # Identifie les colonnes de données (à partir de la colonne C = index 2)
-    # et filtre les colonnes "exemple"
-    purchase_cols: list[tuple[int, date, str]] = []  # (col_idx, date, buyer)
+    # Identifie les colonnes de données (à partir de la colonne C = index 2),
+    # filtre les colonnes "exemple" et distingue achats / états des lieux.
+    purchase_cols: list[tuple[int, date, str, str]] = []  # (col_idx, date, buyer, kind)
     for col_idx in range(2, len(row_dates)):
+        marker_norm = ""
         if col_idx < len(row_example):
-            marker = str(row_example[col_idx] or "").strip().lower()
-            if "exemple" in marker:
+            marker_norm = normalize(str(row_example[col_idx] or ""))
+            if "exemple" in marker_norm:
                 continue
 
         raw_date = row_dates[col_idx] if col_idx < len(row_dates) else None
@@ -139,15 +168,16 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
             continue
 
         buyer = str("").strip() if col_idx < len(row_buyers) else ""  # anonymisé volontairement
-        purchase_cols.append((col_idx, purchase_date, buyer))
+        kind = "inventory" if _is_inventory_marker(marker_norm) else "purchase"
+        purchase_cols.append((col_idx, purchase_date, buyer, kind))
 
     if not purchase_cols:
         log.warning("Aucune colonne d'achat valide trouvée dans le fichier Excel.")
         return []
 
     events: dict[int, PurchaseEvent] = {
-        col_idx: PurchaseEvent(purchase_date=d, buyer=b)
-        for col_idx, d, b in purchase_cols
+        col_idx: PurchaseEvent(purchase_date=d, buyer=b, kind=kind)
+        for col_idx, d, b, kind in purchase_cols
     }
 
     for row in rows[6:]:
@@ -160,7 +190,7 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
         if col_b == col_b.upper() and col_b.replace("/", "").replace("&", "").replace(" ", "").isupper():
             continue
 
-        for col_idx, _, _ in purchase_cols:
+        for col_idx, _, _, kind in purchase_cols:
             raw_qty = row[col_idx] if col_idx < len(row) else None
             if raw_qty is None:
                 continue
@@ -168,12 +198,20 @@ def parse_purchases_excel(excel_bytes: bytes) -> list[PurchaseEvent]:
                 qty = float(raw_qty)
             except (TypeError, ValueError):
                 continue
-            if qty <= 0:
+            if qty < 0:
+                continue
+            # Pour un achat, une quantité nulle = rien acheté → ignorée.
+            # Pour un état des lieux, 0 est un comptage valide (stock vide).
+            if qty == 0 and kind != "inventory":
                 continue
             events[col_idx].items.append(PurchaseItem(excel_label=col_b, qty=qty))
 
     result = [ev for ev in events.values() if ev.items]
-    log.info("%d événement(s) d'achat détecté(s) dans le fichier Excel.", len(result))
+    n_inv = sum(1 for ev in result if ev.kind == "inventory")
+    log.info(
+        "%d colonne(s) détectée(s) dans le fichier Excel (%d achat(s), %d état(s) des lieux).",
+        len(result), len(result) - n_inv, n_inv,
+    )
     return result
 
 
@@ -215,12 +253,17 @@ def load_purchase_mapping(path: Path) -> dict[str, tuple[str, float]]:
 # ── Déduplication ─────────────────────────────────────────────────────────────
 
 def find_already_processed_dates(raw_items: list) -> set[date]:
-    """Retourne les dates déjà intégrées via stock_history (type='purchase')."""
+    """Retourne les dates déjà intégrées via stock_history.
+
+    Couvre aussi bien les achats (type='purchase') que les états des lieux
+    (type='inventory'), afin qu'une colonne déjà traitée ne soit pas
+    réappliquée à chaque exécution.
+    """
     processed: set[date] = set()
     for item in raw_items:
         state = item.get("stock_state") or {}
         for entry in state.get("stock_history", []):
-            if entry.get("type") == "purchase":
+            if entry.get("type") in ("purchase", "inventory"):
                 try:
                     processed.add(date.fromisoformat(entry["date"]))
                 except (KeyError, ValueError):
@@ -237,12 +280,15 @@ def apply_purchases_to_stock(
     already_processed: set[date],
     dry_run: bool = False,
 ) -> tuple[list, list[str], list[str]]:
-    """Applique les événements d'achat sur raw_items.
+    """Applique les événements (achats et états des lieux) sur raw_items.
 
     Pour chaque événement dont la date n'est pas déjà traitée :
       - Résout chaque excel_label en stock_sku via le mapping
-      - Ajoute qty * multiplicateur au stock_on_hand du reference item
-      - Ajoute une entrée stock_history de type 'purchase'
+      - Achat (kind='purchase') : ajoute qty * multiplicateur au
+        stock_on_hand et trace une entrée stock_history 'purchase'.
+      - État des lieux (kind='inventory') : remplace stock_on_hand par
+        qty * multiplicateur, ré-ancre last_inventory_date / last_auto_update
+        à la date du comptage et trace une entrée stock_history 'inventory'.
 
     Returns:
         (raw_items_mis_à_jour, liste_de_succès, liste_de_warnings)
@@ -267,9 +313,11 @@ def apply_purchases_to_stock(
             continue
 
         date_str = event.purchase_date.isoformat()
+        is_inventory = event.kind == "inventory"
         log.info(
-            "Traitement achat %s par %s (%d produit(s)).",
-            date_str, event.buyer or "?", len(event.items)
+            "Traitement %s %s par %s (%d produit(s)).",
+            "état des lieux" if is_inventory else "achat",
+            date_str, event.buyer or "?", len(event.items),
         )
 
         for purchase_item in event.items:
@@ -294,7 +342,7 @@ def apply_purchases_to_stock(
                 log.warning(msg)
                 continue
 
-            qty_to_add = purchase_item.qty * multiplier
+            qty_value = purchase_item.qty * multiplier
             ref_item = ref_items_by_sku[stock_sku]
 
             if "stock_state" not in ref_item or ref_item["stock_state"] is None:
@@ -310,29 +358,52 @@ def apply_purchases_to_stock(
 
             state = ref_item["stock_state"]
             prev_stock = float(state.get("stock_on_hand") or 0)
-            new_stock = round(prev_stock + qty_to_add, 6)
-
-            history_entry = {
-                "type": "purchase",
-                "date": date_str,
-                "buyer": event.buyer or "",
-                "qty_added": qty_to_add,
-                "previous_stock_on_hand": prev_stock,
-                "new_stock_on_hand": new_stock,
-                "source": "gdrive_excel",
-            }
-
             label = ref_item.get("stock_label") or ref_item.get("label") or stock_sku
             unit = ref_item.get("stock_unit") or ref_item.get("unit") or ""
-            msg = (
-                f"[{date_str}] {label} : +{qty_to_add} {unit} "
-                f"({prev_stock} → {new_stock})"
-            )
+
+            if is_inventory:
+                new_stock = round(qty_value, 6)
+                history_entry = {
+                    "type": "inventory",
+                    "date": date_str,
+                    "buyer": event.buyer or "",
+                    "counted_qty": qty_value,
+                    "previous_stock_on_hand": prev_stock,
+                    "new_stock_on_hand": new_stock,
+                    "source": "gdrive_excel",
+                }
+                msg = (
+                    f"[{date_str}] {label} : état des lieux = {new_stock} {unit} "
+                    f"({prev_stock} → {new_stock})"
+                )
+            else:
+                new_stock = round(prev_stock + qty_value, 6)
+                history_entry = {
+                    "type": "purchase",
+                    "date": date_str,
+                    "buyer": event.buyer or "",
+                    "qty_added": qty_value,
+                    "previous_stock_on_hand": prev_stock,
+                    "new_stock_on_hand": new_stock,
+                    "source": "gdrive_excel",
+                }
+                msg = (
+                    f"[{date_str}] {label} : +{qty_value} {unit} "
+                    f"({prev_stock} → {new_stock})"
+                )
+
             successes.append(msg)
             log.info(msg)
 
             if not dry_run:
                 state["stock_on_hand"] = new_stock
+                if is_inventory:
+                    # Le comptage physique fait foi à cette date : on ré-ancre
+                    # le calcul de consommation du rapport (auto_refresh) afin
+                    # que seules les ventes postérieures soient déduites.
+                    state["last_inventory_date"] = date_str
+                    state["inventory_count_method"] = "manual"
+                    state["last_auto_update"] = date_str
                 if "stock_history" not in state:
                     state["stock_history"] = []
                 state["stock_history"].append(history_entry)
@@ -482,7 +553,7 @@ def main():
     if args.dry_run:
         print("\n=== SIMULATION (--dry-run) — aucune modification effectuée ===\n")
     else:
-        print(f"\n=== Achats intégrés : {len(successes)} mise(s) à jour ===\n")
+        print(f"\n=== Mises à jour intégrées (achats + états des lieux) : {len(successes)} ===\n")
 
     for line in successes:
         print(f"  + {line}")

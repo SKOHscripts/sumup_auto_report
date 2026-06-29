@@ -266,6 +266,24 @@ Le fichier `ACHATS_suivi_stock.xlsx` sur Google Drive est un tableau collaborati
 4. Ajoute les quantités achetées au `stock_on_hand` de `stock_items.json`
 5. Trace chaque achat dans `stock_history` avec `type: "purchase"` (déduplication par date)
 
+### Colonnes « état des lieux » (comptage physique)
+
+Par défaut, chaque colonne est un **achat** : ses quantités sont **ajoutées** au stock.
+Pour déclarer plutôt qu'un **comptage physique** (état des lieux) a été réalisé à une date,
+il suffit d'écrire `état des lieux` (ou `inventaire`) dans la **ligne 2** de la colonne —
+la même ligne que les marqueurs `exemple`, juste au-dessus du prénom et de la date.
+
+Dans ce cas, le module :
+
+- **Remplace** le `stock_on_hand` par la quantité comptée (au lieu de l'ajouter) ;
+  une cellule à `0` vide donc effectivement le stock du produit (un produit laissé vide
+  dans la colonne n'est pas modifié).
+- Ré-ancre `last_inventory_date` et `last_auto_update` à la date du comptage, pour que le
+  rapport de stocks ne déduise ensuite que les ventes **postérieures** à l'état des lieux.
+- Trace l'opération dans `stock_history` avec `type: "inventory"` (déduplication par date).
+
+Cela permet à n'importe qui de corriger les stocks directement depuis l'Excel, sans toucher au code.
+
 Pour ajouter un nouveau produit au fichier Excel, ajoutez une entrée dans `stocks/purchase_mapping.json` :
 
 ```json

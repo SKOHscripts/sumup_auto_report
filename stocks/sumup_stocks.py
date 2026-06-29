@@ -194,6 +194,30 @@ def get_refresh_start_dt(stock_groups: list, fallback_start_dt: datetime) -> dat
     return min(fallback_start_dt, *anchor_dates)
 
 
+def _accumulate_item_usage(item: dict, qty: float, txn_date: date,
+                           anchors_by_sku: dict, usage_by_stock_sku: dict) -> None:
+    """Accumule la consommation d'un item pour ``qty`` ventes.
+
+    Couvre le stock_sku principal ET les éventuels stock_sku secondaires
+    déclarés dans ``also_consumes`` (ex. un Kir consomme du vin blanc ET de
+    la crème de cassis/mûre). Chaque sku est filtré par sa propre ancre : la
+    consommation n'est comptée que pour les ventes postérieures à la date
+    d'inventaire de ce sku.
+    """
+    consumptions = [(item.get("stock_sku"), float(item.get("consumption_per_sale", 1) or 1))]
+    for extra in item.get("also_consumes") or []:
+        esku = extra.get("stock_sku")
+        if esku:
+            consumptions.append((esku, float(extra.get("consumption_per_sale", 0) or 0)))
+
+    for sku, per_sale in consumptions:
+        if not sku or per_sale <= 0:
+            continue
+        anchor = anchors_by_sku.get(sku)
+        if anchor and txn_date > anchor:
+            usage_by_stock_sku[sku] += qty * per_sale
+
+
 def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dict, as_of: date) -> dict:
     """
     Agrège l'utilisation des stocks en une seule passe sur les transactions,
@@ -227,14 +251,9 @@ def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dic
             sku, item = match_product_to_sku(summary, "", sku_index)
 
             if sku and item:
-                stock_sku = item["stock_sku"]
-                anchor = anchors_by_sku.get(stock_sku)
-                # On vérifie l'ancre: l'ancre est exclue, le as_of est inclus
-
-                if anchor and txn_date > anchor:
-                    usage = float(item.get("consumption_per_sale", 1) or 1)
-                    usage_by_stock_sku[stock_sku] += usage
-                    log.warning("Fallback product_summary utilise pour %s (quantite 1 deduite).", stock_sku)
+                # L'ancre est exclue, le as_of est inclus (cf. _accumulate_item_usage).
+                log.warning("Fallback product_summary utilise pour %s (quantite 1 deduite).", item.get("stock_sku"))
+                _accumulate_item_usage(item, 1, txn_date, anchors_by_sku, usage_by_stock_sku)
 
             continue
 
@@ -257,12 +276,7 @@ def aggregate_stock_usage_since(txns: list, sku_index: dict, anchors_by_sku: dic
             if not sku or not item:
                 continue
 
-            stock_sku = item["stock_sku"]
-            anchor = anchors_by_sku.get(stock_sku)
-
-            if anchor and txn_date > anchor:
-                usage = qty * float(item.get("consumption_per_sale", 1) or 1)
-                usage_by_stock_sku[stock_sku] += usage
+            _accumulate_item_usage(item, qty, txn_date, anchors_by_sku, usage_by_stock_sku)
 
     return usage_by_stock_sku
 
@@ -1711,6 +1725,43 @@ def render_article_page(pdf: StockPDF, kpi: dict):
 
 # ─── Dernière page : qualité des données ─────────────────────────────────────
 
+def _load_purchase_mapping_entries() -> list:
+    """Charge purchase_mapping.json → liste {excel_label, stock_sku}. Best-effort.
+
+    Sert à l'alerte de correspondance Excel ↔ stock de la page qualité.
+    En cas d'absence ou d'erreur de lecture, retourne [] (alerte ignorée).
+    """
+    path = Path(__file__).resolve().parent / "purchase_mapping.json"
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError) as exc:
+        log.warning("purchase_mapping.json illisible (%s) : alerte de correspondance Excel ignoree.", exc)
+        return []
+    return [
+        {"excel_label": e.get("excel_label", ""), "stock_sku": e.get("stock_sku", "")}
+        for e in data.get("products", [])
+        if e.get("stock_sku")
+    ]
+
+
+def compute_excel_purchase_coverage(all_kpis: list, mapping_entries: list) -> tuple:
+    """Évalue la correspondance entre articles de stock et lignes du fichier d'achats Excel.
+
+    Returns:
+        (unlinked, orphans) où
+          - unlinked : articles de stock (KPIs) sans aucune ligne d'achat Excel
+            (achats non suivis pour ces articles) ;
+          - orphans  : entrées du mapping pointant vers un article non suivi
+            (stock_sku inconnu ou désactivé).
+    """
+    mapped_skus = {e["stock_sku"] for e in mapping_entries}
+    kpi_skus = {k["stock_sku"] for k in all_kpis}
+    unlinked = [k for k in all_kpis if k["stock_sku"] not in mapped_skus]
+    orphans = [e for e in mapping_entries if e["stock_sku"] not in kpi_skus]
+    return unlinked, orphans
+
+
 def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
     """Génère la page de qualité des données (produits non mappés, dates d'inventaire)."""
     pdf.add_page()
@@ -1760,6 +1811,68 @@ def render_data_quality_page(pdf: StockPDF, unmapped: list, all_kpis: list):
         pdf.set_font("Helvetica", "I", 8)
         pdf.set_text_color(*PALETTE["text_mid"])
         pdf.cell(0, 6, "Aucun produit non mappe.", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.ln(4)
+
+    # Correspondance avec le fichier d'achats Excel (suivi des entrées de stock)
+    mapping_entries = _load_purchase_mapping_entries()
+    unlinked, orphans = compute_excel_purchase_coverage(all_kpis, mapping_entries)
+
+    if pdf.get_y() + 40 > pdf.h - pdf.b_margin:
+        pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.cell(0, 6, f"Articles de stock sans ligne d'achat Excel : {len(unlinked)}",
+             new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(1)
+
+    if unlinked:
+        col_lbl = pw * 0.60
+        col_sku = pw * 0.40
+        pdf.set_font("Helvetica", "B", 7.5)
+        pdf.set_text_color(*PALETTE["text_mid"])
+        pdf.cell(col_lbl, 6, "Article de stock", border=0, align="L")
+        pdf.cell(col_sku, 6, "stock_sku", border=0, align="L",
+                 new_x="LMARGIN", new_y="NEXT")
+        for i, k in enumerate(unlinked):
+            if pdf.get_y() + 5.5 > pdf.h - pdf.b_margin:
+                break
+            if i % 2 == 0:
+                pdf.set_fill_color(*PALETTE["row_even"])
+                pdf.rect(pdf.l_margin, pdf.get_y(), pw, 5.5, style="F")
+            pdf.set_font("Helvetica", "", 7.5)
+            pdf.set_text_color(*PALETTE["text_dark"])
+            pdf.cell(col_lbl, 5.5, pdf.safe_str(k.get("label", ""), 50), border="B", align="L")
+            pdf.set_text_color(*PALETTE["text_mid"])
+            pdf.cell(col_sku, 5.5, pdf.safe_str(k.get("stock_sku", ""), 36), border="B", align="L",
+                     new_x="LMARGIN", new_y="NEXT")
+    else:
+        pdf.set_font("Helvetica", "I", 8)
+        pdf.set_text_color(*PALETTE["text_mid"])
+        pdf.cell(0, 6, "Tous les articles de stock ont une ligne d'achat dans l'Excel.",
+                 new_x="LMARGIN", new_y="NEXT")
+
+    # Liens du mapping pointant vers un article non suivi (inconnu ou désactivé)
+    if orphans:
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.cell(0, 6, f"Lignes Excel sans article de stock actif : {len(orphans)}",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1)
+        for i, e in enumerate(orphans):
+            if pdf.get_y() + 5.5 > pdf.h - pdf.b_margin:
+                break
+            if i % 2 == 0:
+                pdf.set_fill_color(*PALETTE["row_even"])
+                pdf.rect(pdf.l_margin, pdf.get_y(), pw, 5.5, style="F")
+            pdf.set_font("Helvetica", "", 7.5)
+            pdf.set_text_color(*PALETTE["text_dark"])
+            pdf.cell(pw * 0.60, 5.5, pdf.safe_str(e.get("excel_label", ""), 50), border="B", align="L")
+            pdf.set_text_color(*PALETTE["text_mid"])
+            pdf.cell(pw * 0.40, 5.5, pdf.safe_str(e.get("stock_sku", ""), 36), border="B", align="L",
+                     new_x="LMARGIN", new_y="NEXT")
 
     pdf.ln(4)
 
@@ -2458,6 +2571,14 @@ def run_stock_report(
         log.info("Etape 5b/6 - Projection ML quantile (--ml)...")
         all_kpis = _attach_ml_if_enabled(all_kpis, enable=True)
         all_kpis = _apply_ml_rupture_override(all_kpis, ref_date=now.date())
+
+    _unlinked_excel, _ = compute_excel_purchase_coverage(all_kpis, _load_purchase_mapping_entries())
+    if _unlinked_excel:
+        log.warning(
+            "%s article(s) de stock sans ligne d'achat Excel : %s",
+            len(_unlinked_excel),
+            ", ".join(k["stock_sku"] for k in _unlinked_excel),
+        )
 
     log.info("Étape 6/6 - Generation des fichiers…")
     safe_week = current_week.replace("-", "_")

@@ -428,7 +428,11 @@ if sid == "stocks":
                 "Le fichier `ACHATS_suivi_stock.xlsx` est récupéré depuis Google Drive. "
                 "Les colonnes d'achat sont parsées et les quantités achetées sont ajoutées "
                 "au champ `stock_on_hand` de chaque article dans `stock_items.json`. "
-                "Les achats déjà intégrés sont ignorés automatiquement (déduplication par date)."
+                "Les achats déjà intégrés sont ignorés automatiquement (déduplication par date).\n\n"
+                "**État des lieux** : pour déclarer un comptage physique, écrivez "
+                "« état des lieux » (ou « inventaire ») dans la ligne 2 de la colonne "
+                "(la même que « exemple »). Les quantités comptées **remplacent** alors le "
+                "stock enregistré au lieu d'y être ajoutées."
             )
 
         _purch_running = st.session_state[f"running_{_PURCH_ID}"]

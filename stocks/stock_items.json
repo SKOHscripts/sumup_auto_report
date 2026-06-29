@@ -654,6 +654,29 @@
     "stock_sku": "vin_blanc"
   },
   {
+    "is_stock_reference": true,
+    "label": "Crème de cassis ou mûre",
+    "enabled": true,
+    "unit": "L",
+    "category": "bar",
+    "sumup_match": {
+      "name": "",
+      "variant": ""
+    },
+    "consumption_per_sale": 1,
+    "supplier_lead_time_days": 4,
+    "stock_state": {
+      "stock_on_hand": 0.0,
+      "stock_reserved": 0,
+      "incoming_qty": 0,
+      "incoming_eta": "",
+      "last_inventory_date": "2026-06-29",
+      "inventory_count_method": "manual",
+      "stock_history": []
+    },
+    "stock_sku": "creme_cassis_mure"
+  },
+  {
     "stock_sku": "vin_blanc",
     "is_stock_reference": false,
     "label": "Kir",
@@ -665,7 +688,13 @@
       "variant": ""
     },
     "consumption_per_sale": 0.15,
-    "supplier_lead_time_days": 4
+    "supplier_lead_time_days": 4,
+    "also_consumes": [
+      {
+        "stock_sku": "creme_cassis_mure",
+        "consumption_per_sale": 0.02
+      }
+    ]
   },
   {
     "is_stock_reference": true,
@@ -693,7 +722,13 @@
       "variant": "Standard"
     },
     "consumption_per_sale": 0.15,
-    "supplier_lead_time_days": 4
+    "supplier_lead_time_days": 4,
+    "also_consumes": [
+      {
+        "stock_sku": "creme_cassis_mure",
+        "consumption_per_sale": 0.02
+      }
+    ]
   },
   {
     "is_stock_reference": true,
@@ -765,7 +800,13 @@
       "variant": "Communard"
     },
     "consumption_per_sale": 0.15,
-    "supplier_lead_time_days": 4
+    "supplier_lead_time_days": 4,
+    "also_consumes": [
+      {
+        "stock_sku": "creme_cassis_mure",
+        "consumption_per_sale": 0.02
+      }
+    ]
   },
   {
     "is_stock_reference": true,

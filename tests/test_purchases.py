@@ -9,11 +9,16 @@ import pytest
 
 # ── Helpers pour créer des données de test ────────────────────────────────────
 
-def _make_excel_bytes(purchase_cols: list[tuple[str, str, dict[str, float]]]) -> bytes:
+def _make_excel_bytes(
+    purchase_cols: list[tuple[str, str, dict[str, float]]],
+    markers: list[str] | None = None,
+) -> bytes:
     """
     Crée un fichier Excel de test en mémoire.
 
     purchase_cols : liste de (buyer, date_iso, {label: qty})
+    markers : valeurs de la ligne 2 (marqueurs de colonne), une par colonne
+              (ex. "état des lieux"). None pour laisser vide.
     Retourne les bytes du fichier .xlsx.
     """
     import openpyxl
@@ -25,7 +30,11 @@ def _make_excel_bytes(purchase_cols: list[tuple[str, str, dict[str, float]]]) ->
     ws.cell(row=1, column=1, value="STOCK - ENTREES DES ACHATS")
     # Ligne 1 : màj
     ws.cell(row=2, column=1, value="màj le 28/04/2026")
-    # Ligne 2 : marqueurs exemple — aucun dans nos tests
+    # Ligne 2 : marqueurs de colonne (exemple / état des lieux)
+    if markers is not None:
+        for i, marker in enumerate(markers):
+            if marker:
+                ws.cell(row=3, column=3 + i, value=marker)
     # Ligne 3 : prénoms acheteurs (col C+)
     for i, (buyer, _, _) in enumerate(purchase_cols):
         ws.cell(row=4, column=3 + i, value=buyer)
@@ -212,6 +221,42 @@ class TestParsePurchasesExcel:
         events = self.parse(buf.getvalue())
         assert events == []
 
+    def test_inventory_marker_sets_kind(self):
+        """Une colonne marquée « état des lieux » en ligne 2 → kind='inventory'."""
+        xlsx = _make_excel_bytes(
+            [("Alice", "2026-04-20", {"chips": 7.0})],
+            markers=["état des lieux"],
+        )
+        events = self.parse(xlsx)
+        assert len(events) == 1
+        assert events[0].kind == "inventory"
+
+    def test_default_column_is_purchase(self):
+        """Sans marqueur, une colonne reste un achat."""
+        xlsx = _make_excel_bytes([("Alice", "2026-04-20", {"chips": 7.0})])
+        events = self.parse(xlsx)
+        assert events[0].kind == "purchase"
+
+    def test_inventory_keeps_zero_qty(self):
+        """Pour un état des lieux, une quantité 0 est conservée (stock vide)."""
+        xlsx = _make_excel_bytes(
+            [("Alice", "2026-04-20", {"chips": 0.0, "coca": 3.0})],
+            markers=["inventaire"],
+        )
+        events = self.parse(xlsx)
+        labels = {item.excel_label for item in events[0].items}
+        assert "chips" in labels  # conservé car comptage = 0
+        assert "coca" in labels
+
+    def test_inventory_marker_accent_insensitive(self):
+        """« Etat des lieux » (sans accent, casse différente) est reconnu."""
+        xlsx = _make_excel_bytes(
+            [("Alice", "2026-04-20", {"chips": 7.0})],
+            markers=["Etat Des Lieux"],
+        )
+        events = self.parse(xlsx)
+        assert events[0].kind == "inventory"
+
 
 # ── Tests : load_purchase_mapping ────────────────────────────────────────────
 
@@ -299,6 +344,14 @@ class TestFindAlreadyProcessedDates:
         ]
         assert self.find(items) == set()
 
+    def test_inventory_dates_detected(self):
+        """Les états des lieux déjà appliqués sont aussi dédupliqués."""
+        items = _make_raw_items(["chips"])
+        items[0]["stock_state"]["stock_history"] = [
+            {"type": "inventory", "date": "2026-05-01", "counted_qty": 4.0},
+        ]
+        assert date(2026, 5, 1) in self.find(items)
+
 
 # ── Tests : apply_purchases_to_stock ─────────────────────────────────────────
 
@@ -311,11 +364,12 @@ class TestApplyPurchasesToStock:
         self.PurchaseEvent = PurchaseEvent
         self.PurchaseItem = PurchaseItem
 
-    def _event(self, d: str, buyer: str, items: dict[str, float]):
+    def _event(self, d: str, buyer: str, items: dict[str, float], kind: str = "purchase"):
         return self.PurchaseEvent(
             purchase_date=date.fromisoformat(d),
             buyer=buyer,
             items=[self.PurchaseItem(excel_label=k, qty=v) for k, v in items.items()],
+            kind=kind,
         )
 
     def test_basic_stock_increase(self):
@@ -424,6 +478,104 @@ class TestApplyPurchasesToStock:
         self.apply(items, [event], mapping, already)
 
         assert date(2026, 4, 20) in already
+
+    # ── États des lieux (kind='inventory') ────────────────────────────────────
+
+    def test_inventory_replaces_stock(self):
+        """Un état des lieux remplace le stock au lieu de l'incrémenter."""
+        items = _make_raw_items(["chips"])  # stock initial = 10
+        mapping = {"chips": ("chips", 1.0)}
+        event = self._event("2026-05-01", "Alice", {"chips": 4.0}, kind="inventory")
+
+        items, successes, warnings = self.apply(items, [event], mapping, set())
+
+        assert not warnings
+        assert len(successes) == 1
+        assert items[0]["stock_state"]["stock_on_hand"] == 4.0  # remplacé, pas 14
+
+    def test_inventory_multiplier_applied(self):
+        items = _make_raw_items(["cafe"])
+        mapping = {"cafe 1 kg": ("cafe", 1000.0)}
+        event = self._event("2026-05-01", "Bob", {"cafe 1 kg": 3.0}, kind="inventory")
+
+        items, _, _ = self.apply(items, [event], mapping, set())
+
+        assert items[0]["stock_state"]["stock_on_hand"] == 3000.0  # 3 kg comptés
+
+    def test_inventory_can_zero_stock(self):
+        """Un comptage à 0 vide effectivement le stock."""
+        items = _make_raw_items(["chips"])
+        mapping = {"chips": ("chips", 1.0)}
+        event = self._event("2026-05-01", "Alice", {"chips": 0.0}, kind="inventory")
+
+        items, _, _ = self.apply(items, [event], mapping, set())
+
+        assert items[0]["stock_state"]["stock_on_hand"] == 0.0
+
+    def test_inventory_history_entry(self):
+        items = _make_raw_items(["chips"])
+        mapping = {"chips": ("chips", 1.0)}
+        event = self._event("2026-05-01", "Alice", {"chips": 4.0}, kind="inventory")
+
+        items, _, _ = self.apply(items, [event], mapping, set())
+
+        entry = items[0]["stock_state"]["stock_history"][0]
+        assert entry["type"] == "inventory"
+        assert entry["date"] == "2026-05-01"
+        assert entry["counted_qty"] == 4.0
+        assert entry["previous_stock_on_hand"] == 10.0
+        assert entry["new_stock_on_hand"] == 4.0
+        assert entry["source"] == "gdrive_excel"
+
+    def test_inventory_reanchors_consumption_dates(self):
+        """L'état des lieux ré-ancre last_inventory_date et last_auto_update."""
+        items = _make_raw_items(["chips"])
+        items[0]["stock_state"]["last_auto_update"] = "2026-06-30"  # ancre obsolète
+        mapping = {"chips": ("chips", 1.0)}
+        event = self._event("2026-05-01", "Alice", {"chips": 4.0}, kind="inventory")
+
+        items, _, _ = self.apply(items, [event], mapping, set())
+
+        state = items[0]["stock_state"]
+        assert state["last_inventory_date"] == "2026-05-01"
+        assert state["last_auto_update"] == "2026-05-01"
+        assert state["inventory_count_method"] == "manual"
+
+    def test_inventory_dry_run_no_modification(self):
+        items = _make_raw_items(["chips"])
+        mapping = {"chips": ("chips", 1.0)}
+        event = self._event("2026-05-01", "Alice", {"chips": 4.0}, kind="inventory")
+
+        items, successes, _ = self.apply(items, [event], mapping, set(), dry_run=True)
+
+        assert len(successes) == 1
+        assert items[0]["stock_state"]["stock_on_hand"] == 10.0  # inchangé
+        assert items[0]["stock_state"]["stock_history"] == []
+
+    def test_inventory_then_purchase_same_run(self):
+        """État des lieux puis achat ultérieur : baseline remplacée puis incrémentée."""
+        items = _make_raw_items(["chips"])  # stock initial = 10
+        mapping = {"chips": ("chips", 1.0)}
+        events = [
+            self._event("2026-05-10", "Bob", {"chips": 6.0}),  # achat
+            self._event("2026-05-01", "Alice", {"chips": 4.0}, kind="inventory"),
+        ]
+
+        items, _, _ = self.apply(items, events, mapping, set())
+
+        # Tri chronologique : inventaire (=4) le 01, puis achat (+6) le 10 → 10
+        assert items[0]["stock_state"]["stock_on_hand"] == 10.0
+
+    def test_inventory_deduplicated(self):
+        items = _make_raw_items(["chips"])
+        mapping = {"chips": ("chips", 1.0)}
+        event = self._event("2026-05-01", "Alice", {"chips": 4.0}, kind="inventory")
+        already = {date(2026, 5, 1)}
+
+        items, successes, _ = self.apply(items, [event], mapping, already)
+
+        assert successes == []
+        assert items[0]["stock_state"]["stock_on_hand"] == 10.0  # inchangé
 
 
 # ── Tests : sauvegarde atomique ───────────────────────────────────────────────
