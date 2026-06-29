@@ -124,6 +124,12 @@
       "qty_multiplier": 1
     },
     {
+      "excel_label": "biere en fûts [L]",
+      "stock_sku": "bieres_pression",
+      "qty_multiplier": 1,
+      "comment": "Bière au fût comptée en litres (unité stock : L)"
+    },
+    {
       "excel_label": "chips",
       "stock_sku": "chips",
       "qty_multiplier": 1
