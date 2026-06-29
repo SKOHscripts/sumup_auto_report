@@ -84,6 +84,10 @@ _check_fpdf_version()
 DEFAULT_WEEKS = 8
 PROJECTION_WEEKS = 4
 
+# Affiche le tableau detaille des dernieres semaines sur chaque page article.
+# Desactive pour le moment : il ajoutait ~2 pages PDF par article.
+SHOW_WEEKLY_TABLE = False
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -1741,7 +1745,8 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     # ── Tableau hebdomadaire ──
     pdf.section_title("Evolution du stock")
     pdf.weekly_graph(kpi)
-    pdf.weekly_table(kpi)
+    if SHOW_WEEKLY_TABLE:
+        pdf.weekly_table(kpi)
 
 
 # ─── Dernière page : qualité des données ─────────────────────────────────────

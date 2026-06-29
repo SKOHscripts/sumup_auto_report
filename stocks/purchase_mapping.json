@@ -24,7 +24,7 @@
       "excel_label": "Chocolat en poudre 1kg",
       "stock_sku": "chocolat_chaud",
       "qty_multiplier": 1,
-      "comment": "Unité stock = dose unitaire (vérifier cohérence avec consumption_per_sale)"
+      "comment": "1 sac de 1 kg = 1 kg de stock (unité stock : kg ; ~0,02 kg/portion, recalé par calibration)"
     },
     {
       "excel_label": "coca",
