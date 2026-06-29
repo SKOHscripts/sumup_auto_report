@@ -143,3 +143,64 @@ def test_detect_drift_silent_when_only_2_bad(trained_model):
     reg.promote_if_better(trained_model, bad, False, [], None, "2026-W18")
     drifted, _msg = reg.detect_drift(n=3, mape_threshold=0.45)
     assert drifted is False
+
+
+# ── Migration de schéma history.csv (dérive d'en-tête) ────────────────────────
+
+def _write_history(path, header, rows):
+    """Écrit un history.csv brut avec l'en-tête et les lignes fournis."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        w.writerows(rows)
+
+
+def _legacy_row(week, mape):
+    # 14 colonnes : pas de rmse ni mean_bias
+    return ["2026-05-04T00:00:00+00:00", week, "v1", "0", "8.0", f"{mape:.4f}",
+            "1.0", "2.0", "1.5", "0.64", "0.67", "95", "5", "MAPE"]
+
+
+def _current_row(week, mape):
+    # 16 colonnes : rmse et mean_bias insérés
+    return ["2026-05-18T00:00:00+00:00", week, "v2", "0", "7.5", "17.6",
+            f"{mape:.4f}", "1.2", "2.0", "3.7", "2.7", "0.51", "0.68", "95", "5", "MAPE"]
+
+
+def test_recent_history_realigns_drifted_header():
+    """Avec un en-tête à l'ancien schéma, les lignes 16 colonnes sont relues alignées."""
+    _write_history(reg.HISTORY_CSV, reg.LEGACY_HISTORY_HEADER,
+                   [_legacy_row("2026-W18", 0.8376), _current_row("2026-W21", 0.7018)])
+    rows = reg.recent_history(n=10)
+    assert len(rows) == 2
+    # La MAPE doit être la vraie valeur, pas le rmse décalé.
+    assert float(rows[0]["mape"]) == pytest.approx(0.8376)
+    assert float(rows[1]["mape"]) == pytest.approx(0.7018)
+    assert rows[0]["rmse"] == ""          # ligne legacy : rmse vide
+    assert float(rows[1]["rmse"]) == pytest.approx(17.6)
+
+
+def test_migrate_history_file_rewrites_header():
+    _write_history(reg.HISTORY_CSV, reg.LEGACY_HISTORY_HEADER,
+                   [_legacy_row("2026-W18", 0.8376), _current_row("2026-W21", 0.7018)])
+    assert reg.migrate_history_file() is True
+    with open(reg.HISTORY_CSV, "r", encoding="utf-8") as f:
+        header = next(csv.reader(f))
+    assert header == reg.HISTORY_HEADER
+    # Idempotent : déjà au bon schéma → pas de seconde migration.
+    assert reg.migrate_history_file() is False
+
+
+def test_append_history_autoheals_drifted_header(trained_model):
+    _write_history(reg.HISTORY_CSV, reg.LEGACY_HISTORY_HEADER, [_legacy_row("2026-W18", 0.8376)])
+    metrics = EvaluationMetrics(n_folds=5, mae=7.0, rmse=20.0, mape=0.55,
+                                mean_bias=1.0, coverage_band=0.6, n_samples=100)
+    reg.append_history(metrics, promoted=False, version="v3", week_label="2026-W22",
+                       baseline_mape=0.70, reasons=["test"])
+    with open(reg.HISTORY_CSV, "r", encoding="utf-8") as f:
+        header = next(csv.reader(f))
+    assert header == reg.HISTORY_HEADER
+    rows = reg.recent_history(n=10)
+    assert float(rows[-1]["mape"]) == pytest.approx(0.55)
+    assert float(rows[0]["mape"]) == pytest.approx(0.8376)

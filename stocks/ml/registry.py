@@ -54,6 +54,96 @@ HISTORY_HEADER = [
     "reasons",
 ]
 
+# Ancien schéma (avant l'ajout des colonnes rmse / mean_bias). Conservé pour
+# migrer les fichiers history.csv écrits avec cette version sans casser la
+# lecture par nom de colonne (sinon décalage : la MAPE lue valait le rmse).
+LEGACY_HISTORY_HEADER = [
+    "promoted_at",
+    "week_label",
+    "version",
+    "promoted",
+    "mae",
+    "mape",
+    "pinball_low",
+    "pinball_med",
+    "pinball_high",
+    "coverage_band",
+    "baseline_mape",
+    "n_samples",
+    "n_folds",
+    "reasons",
+]
+
+
+def _canonicalize_history_row(values: list[str]) -> dict | None:
+    """Mappe une ligne CSV brute vers le schéma canonique ``HISTORY_HEADER``.
+
+    Gère les lignes au schéma courant (16 colonnes) comme celles à l'ancien
+    schéma (14 colonnes, sans ``rmse`` ni ``mean_bias``). Retourne ``None``
+    si la longueur est inattendue (ligne ignorée avec avertissement).
+    """
+    if len(values) == len(HISTORY_HEADER):
+        return dict(zip(HISTORY_HEADER, values))
+    if len(values) == len(LEGACY_HISTORY_HEADER):
+        row = dict(zip(LEGACY_HISTORY_HEADER, values))
+        row.setdefault("rmse", "")
+        row.setdefault("mean_bias", "")
+        return {key: row.get(key, "") for key in HISTORY_HEADER}
+    log.warning("Ligne history.csv ignoree (%d colonnes inattendues)", len(values))
+    return None
+
+
+def _read_all_history_rows() -> list[dict]:
+    """Lit toutes les lignes du journal en les ré-alignant sur le schéma courant.
+
+    Robuste aux fichiers dont l'en-tête a dérivé : on lit positionnellement et
+    on canonicalise par longueur, plutôt que de se fier à l'en-tête du fichier.
+    """
+    if not HISTORY_CSV.exists():
+        return []
+    with open(HISTORY_CSV, "r", encoding="utf-8", newline="") as f:
+        raw = list(csv.reader(f))
+    if not raw:
+        return []
+    rows = []
+    for values in raw[1:]:  # saute la ligne d'en-tête
+        if not values:
+            continue
+        canon = _canonicalize_history_row(values)
+        if canon is not None:
+            rows.append(canon)
+    return rows
+
+
+def _file_header() -> list[str] | None:
+    """Retourne l'en-tête actuel du fichier history.csv, ou None s'il est absent."""
+    if not HISTORY_CSV.exists():
+        return None
+    with open(HISTORY_CSV, "r", encoding="utf-8", newline="") as f:
+        first = f.readline()
+    if not first:
+        return None
+    return next(csv.reader([first]), None)
+
+
+def migrate_history_file() -> bool:
+    """Réécrit history.csv au schéma canonique si son en-tête a dérivé.
+
+    Retourne True si une migration a eu lieu. Sans effet si le fichier est
+    absent ou déjà au bon schéma.
+    """
+    header = _file_header()
+    if header is None or header == HISTORY_HEADER:
+        return False
+    rows = _read_all_history_rows()
+    _ensure_dirs()
+    with open(HISTORY_CSV, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=HISTORY_HEADER)
+        writer.writeheader()
+        writer.writerows(rows)
+    log.info("history.csv migre vers le schema courant (%d lignes).", len(rows))
+    return True
+
 
 def _ensure_dirs() -> None:
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
@@ -117,6 +207,9 @@ def append_history(
 ) -> Path:
     """Ajoute une ligne au journal de promotion (CSV)."""
     _ensure_dirs()
+    # Auto-répare un en-tête ayant dérivé (ancien schéma) avant d'ajouter, pour
+    # éviter que des lignes au schéma courant soient relues décalées.
+    migrate_history_file()
     is_new = not HISTORY_CSV.exists()
     row = {
         "promoted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -182,12 +275,12 @@ def promote_if_better(
 
 
 def recent_history(n: int = 10) -> list[dict]:
-    """Retourne les ``n`` dernières lignes du journal (utile pour drift detection)."""
-    if not HISTORY_CSV.exists():
-        return []
-    with open(HISTORY_CSV, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        return list(reader)[-n:]
+    """Retourne les ``n`` dernières lignes du journal (utile pour drift detection).
+
+    Lecture robuste à une éventuelle dérive de l'en-tête : les colonnes sont
+    ré-alignées sur le schéma courant quel que soit l'en-tête du fichier.
+    """
+    return _read_all_history_rows()[-n:]
 
 
 def detect_drift(
@@ -220,6 +313,7 @@ __all__ = [
     "archive_model",
     "detect_drift",
     "load_current",
+    "migrate_history_file",
     "promote_if_better",
     "recent_history",
     "set_current",

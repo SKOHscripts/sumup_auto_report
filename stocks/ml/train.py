@@ -190,7 +190,10 @@ def show_report(n: int = 10) -> int:
 
     for row in rows:
         promoted = "OUI" if row["promoted"] == "1" else "NON"
-        baseline = row["baseline_mape"] or "-"
+        try:
+            baseline = f"{float(row['baseline_mape']):.2%}"
+        except (TypeError, ValueError):
+            baseline = "-"
         print(
             f"{row['promoted_at']:<20} {row['week_label']:<10} {promoted:<6} "
             f"{float(row['mape']):.2%}   {float(row['coverage_band']):.0%}      {baseline}"
