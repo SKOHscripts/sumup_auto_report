@@ -153,10 +153,10 @@
       "comment": "Bière au fût comptée en litres (unité stock : L)"
     },
     {
-      "excel_label": "cidre [L]",
+      "excel_label": "cidre [bouteille]",
       "stock_sku": "cidre",
-      "qty_multiplier": 1,
-      "comment": "Cidre compté en litres (unité stock : L)"
+      "qty_multiplier": 0.75,
+      "comment": "Renommé depuis « cidre [L] » : compté en bouteilles ; 1 bouteille = 0,75 L (unité stock : L)"
     },
     {
       "excel_label": "chips",
