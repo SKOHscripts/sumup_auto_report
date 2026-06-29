@@ -2,7 +2,7 @@
   {
     "is_stock_reference": true,
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "feuille",
     "category": "adhesions",
     "sumup_match": {
@@ -116,7 +116,7 @@
   {
     "is_stock_reference": false,
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "category": "adhesions",
     "sumup_match": {
@@ -2743,7 +2743,7 @@
     "stock_sku": "pate_en_croute",
     "is_stock_reference": true,
     "label": "Pate en croute",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "consumption_per_sale": 1,
     "category": "snacking",
@@ -2791,7 +2791,7 @@
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "feuille",
     "category": "adhesions",
     "sumup_match": {
@@ -2885,7 +2885,7 @@
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "piece",
     "category": "adhesions",
     "sumup_match": {
@@ -2898,7 +2898,7 @@
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Non adhérent",
-    "enabled": true,
+    "enabled": false,
     "unit": "feuille",
     "category": "adhesions",
     "sumup_match": {
@@ -2925,7 +2925,7 @@
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "feuille",
     "category": "adhesions",
     "sumup_match": {
@@ -3206,7 +3206,7 @@
     "stock_sku": "adhesion_annuelle",
     "is_stock_reference": false,
     "label": "Adhésions",
-    "enabled": true,
+    "enabled": false,
     "unit": "feuille",
     "category": "adhesions",
     "sumup_match": {
