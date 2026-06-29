@@ -5,7 +5,6 @@ from datetime import date
 import pytest
 
 from stocks.volume_calibration import (
-    CALIBRATION_ALPHA,
     MIN_VARIABLE_SALES,
     aggregate_window_consumption,
     calibrate_group,

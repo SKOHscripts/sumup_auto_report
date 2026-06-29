@@ -95,7 +95,7 @@ def _txn_date(txn: dict):
     ts = txn.get("timestamp") or txn.get("transaction_date", "")
     try:
         return datetime.fromisoformat(ts.replace("Z", "+00:00")).date()
-    except Exception:  # pylint: disable=broad-exception-caught
+    except (ValueError, TypeError, AttributeError):
         return None
 
 
