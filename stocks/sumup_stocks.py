@@ -53,6 +53,7 @@ from utils.mail_utils import (
     send_email,
     )
 from utils.sumup_shared import normalize, iso_week_label, week_start
+from stocks.volume_calibration import calibrate_volumes_in_items
 
 # ─── Vérification version fpdf2 ───────────────────────────────────────────────
 
@@ -793,6 +794,7 @@ def compute_indicators(
             "sumup_display": format_sumup_display(item),
             "unit": item.get("unit", "piece"),
             "consumption_per_sale": item.get("consumption_per_sale", 1),
+            "declared_consumption_per_sale": item.get("declared_consumption_per_sale"),
             "sales_28d": sum(own_sales_series[-4:]) if len(own_sales_series) >= 4 else sum(own_sales_series),
             "sales_total": sum(own_sales_series),
             })
@@ -805,6 +807,10 @@ def compute_indicators(
         "sumup_match": ref.get("sumup_match", {}),
         "linked_items": linked_items,
         "linked_items_count": len(linked_items),
+        "volume_calibration": ref.get("volume_calibration"),
+        "consumption_per_sale": ref.get("consumption_per_sale"),
+        "declared_consumption_per_sale": ref.get("declared_consumption_per_sale"),
+        "volume_factor": (ref.get("volume_calibration") or {}).get("current_factor"),
 
         "stock_on_hand": stock_on_hand,
         "stock_reserved": stock_reserved,
@@ -1637,6 +1643,21 @@ def render_article_page(pdf: StockPDF, kpi: dict):
     pdf.set_text_color(*PALETTE["text_dark"])
     pdf.ln(1)
 
+    # Note de calibration glissante (volume par vente recale depuis les etats des lieux)
+    if (kpi.get("volume_calibration") or {}).get("history"):
+        declared = kpi.get("declared_consumption_per_sale")
+        current = kpi.get("consumption_per_sale")
+        drift = _calibration_drift_pct(kpi)
+        if declared is not None and current is not None:
+            drift_txt = f" ({drift:+.0f}%)" if drift is not None else ""
+            pdf.set_font("Helvetica", "I", 7.5)
+            pdf.set_text_color(*PALETTE["accent"])
+            pdf.multi_cell(0, 4.5, pdf.safe_str(
+                f"Volume par vente recale : {declared:.3f} -> {current:.3f} {kpi['unit']}{drift_txt} "
+                f"(calibration depuis les etats des lieux)."))
+            pdf.set_text_color(*PALETTE["text_dark"])
+            pdf.ln(1)
+
     pdf.kpi_block([
         # ("Categorie", kpi["category"]),
         # ("Variante SumUp", variant_str),
@@ -2257,6 +2278,109 @@ def render_ml_disclaimer(pdf: StockPDF) -> None:
     pdf.set_text_color(*PALETTE["text_dark"])
 
 
+# ─── Page calibration glissante des volumes ───────────────────────────────────
+
+def _calibration_drift_pct(kpi: dict) -> float | None:
+    """Retourne la dérive en % du volume de référence (courant vs déclaré)."""
+    calib = kpi.get("volume_calibration") or {}
+    factor = calib.get("current_factor")
+    if factor is None:
+        declared = kpi.get("declared_consumption_per_sale")
+        current = kpi.get("consumption_per_sale")
+        if declared in (None, 0) or current is None:
+            return None
+        factor = current / declared
+    try:
+        return (float(factor) - 1.0) * 100.0
+    except (TypeError, ValueError):
+        return None
+
+
+def render_volume_calibration_page(pdf: StockPDF, all_kpis: list) -> None:
+    """Page d'information sur la calibration glissante des volumes par transaction.
+
+    Liste les articles dont le volume par vente a été ajusté à partir des
+    états des lieux, avec le volume déclaré, le volume calibré, la dérive et la
+    date du dernier calage. N'ajoute rien si aucun article n'est calibré.
+    """
+    calibrated = [k for k in all_kpis if (k.get("volume_calibration") or {}).get("history")]
+    if not calibrated:
+        return
+
+    pdf.add_page()
+    pdf.section_title("Calibration glissante des volumes")
+    pw = pdf.usable_width()
+
+    pdf.set_font("Helvetica", "", 7.5)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.multi_cell(0, 4.5, pdf.safe_str(
+        "Les volumes deduits par vente (ex. un verre de vin a 15 cL) sont recales "
+        "automatiquement a partir des etats des lieux saisis dans l'Excel de suivi. "
+        "Entre deux comptages physiques, la consommation reelle est connue ; elle est "
+        "comparee a la consommation theorique et les volumes par vente sont ajustes "
+        "progressivement (lissage reactif). A titre informatif uniquement.",
+    ))
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.ln(2)
+
+    col_lbl = pw * 0.34
+    col_decl = pw * 0.16
+    col_cur = pw * 0.16
+    col_drift = pw * 0.14
+    col_date = pw * 0.20
+    row_h = 5.8
+
+    pdf.set_font("Helvetica", "B", 7.0)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.cell(col_lbl, row_h, "Article", border="B", align="L")
+    pdf.cell(col_decl, row_h, "Declare", border="B", align="R")
+    pdf.cell(col_cur, row_h, "Calibre", border="B", align="R")
+    pdf.cell(col_drift, row_h, "Derive", border="B", align="R")
+    pdf.cell(col_date, row_h, "Dernier calage", border="B", align="R",
+             new_x="LMARGIN", new_y="NEXT")
+
+    for i, kpi in enumerate(calibrated):
+        calib = kpi.get("volume_calibration") or {}
+        declared = kpi.get("declared_consumption_per_sale")
+        current = kpi.get("consumption_per_sale")
+        drift = _calibration_drift_pct(kpi)
+        unit = kpi.get("unit", "")
+
+        if pdf.get_y() + row_h > pdf.h - pdf.b_margin:
+            pdf.add_page()
+        if i % 2 == 0:
+            pdf.set_fill_color(*PALETTE["row_even"])
+            pdf.rect(pdf.l_margin, pdf.get_y(), pw, row_h, style="F")
+
+        pdf.set_font("Helvetica", "", 7.0)
+        pdf.set_text_color(*PALETTE["text_dark"])
+        pdf.cell(col_lbl, row_h, pdf.safe_str(kpi["label"], 46), border="B", align="L")
+        pdf.cell(col_decl, row_h,
+                 f"{declared:.3f} {unit}" if declared is not None else "-",
+                 border="B", align="R")
+        pdf.cell(col_cur, row_h,
+                 f"{current:.3f} {unit}" if current is not None else "-",
+                 border="B", align="R")
+        if drift is None:
+            pdf.set_text_color(*PALETTE["text_mid"])
+            pdf.cell(col_drift, row_h, "-", border="B", align="R")
+        else:
+            pdf.set_text_color(*((160, 38, 58) if drift > 0 else (0, 129, 138) if drift < 0 else PALETTE["text_mid"]))
+            pdf.cell(col_drift, row_h, f"{drift:+.0f}%", border="B", align="R")
+        pdf.set_text_color(*PALETTE["text_mid"])
+        pdf.cell(col_date, row_h, _format_iso_date_dmy(calib.get("last_calibrated_date") or ""),
+                 border="B", align="R", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_text_color(*PALETTE["text_dark"])
+    pdf.ln(2)
+    pdf.set_font("Helvetica", "I", 7.0)
+    pdf.set_text_color(*PALETTE["text_mid"])
+    pdf.cell(0, 5, pdf.safe_str(
+        "Derive positive = on sert plus que le volume declare (sur-consommation reelle)."),
+        new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*PALETTE["text_dark"])
+
+
 # ─── Génération complète du PDF ───────────────────────────────────────────────
 
 def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: list,
@@ -2270,6 +2394,7 @@ def generate_pdf(all_kpis: list, unmapped: list, week_label: str, weeks_range: l
     for kpi in all_kpis:
         render_article_page(pdf, kpi)
     render_data_quality_page(pdf, unmapped, all_kpis)
+    render_volume_calibration_page(pdf, all_kpis)
     # Synthese ML (qualite du modele + top articles) reportee en fin de document.
     if use_ml:
         render_ml_global_summary(pdf, all_kpis, week_label)
@@ -2293,6 +2418,7 @@ def export_csv_summary(all_kpis: list, path: str):
         "variation_pct", "n_zero_weeks", "total_used",
         "status", "last_inventory_date", "inventory_method",
         "linked_items_count",
+        "consumption_per_sale", "declared_consumption_per_sale", "volume_factor",
         ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
@@ -2528,6 +2654,24 @@ def run_stock_report(
     all_txns = fetch_transactions(fetch_start, fetch_end, mock_file=mock_file)
     if not mock_file:
         all_txns = enrich_transactions(all_txns, headers_api)
+
+    log.info("Etape 2b/6 - Calibration glissante des volumes (etats des lieux)...")
+    calib_changed, calib_summaries = calibrate_volumes_in_items(
+        stock_items, stock_groups, all_txns, sku_index,
+    )
+    if calib_changed:
+        save_stock_items(items_file, raw_items)
+        log.info("Volumes par transaction recalibres et sauvegardes : %s", items_file)
+        stock_items = prepare_enabled_stock_items(raw_items)
+        stock_groups = build_stock_groups(stock_items)
+        sku_index = build_sku_index(stock_items)
+    elif calib_summaries:
+        # Etats des lieux presents mais aucun ajustement applique (signal faible) :
+        # on persiste l'historique des raisons pour transparence dans le rapport.
+        save_stock_items(items_file, raw_items)
+        log.info("Calibration : historique mis a jour, aucun volume modifie.")
+    else:
+        log.info("Calibration : aucun etat des lieux exploitable, volumes inchanges.")
 
     log.info("Étape 3/6 - Agregation hebdomadaire…")
     weekly_sales, unmapped = aggregate_weekly_sales(all_txns, sku_index, weeks_range)
