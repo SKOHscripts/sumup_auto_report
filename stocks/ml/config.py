@@ -56,6 +56,7 @@ class MLConfig:
     coverage_target: float = 0.80
     coverage_tolerance: float = 0.15
     relative_mape_margin: float = 0.10
+    target_transform: Optional[str] = "log1p"
     tuned_params: dict = field(default_factory=lambda: dict(DEFAULT_HGB_PARAMS))
     tuned_at: Optional[str] = None
     tuning_score: Optional[float] = None
@@ -105,6 +106,8 @@ def load_config(path: Path | None = None) -> MLConfig:
     cfg.coverage_target = float(data.get("coverage_target", cfg.coverage_target))
     cfg.coverage_tolerance = float(data.get("coverage_tolerance", cfg.coverage_tolerance))
     cfg.relative_mape_margin = float(data.get("relative_mape_margin", cfg.relative_mape_margin))
+    if "target_transform" in data:
+        cfg.target_transform = data["target_transform"]
     tuned = data.get("tuned_params") or {}
     if isinstance(tuned, dict):
         cfg.tuned_params = {**DEFAULT_HGB_PARAMS, **tuned}

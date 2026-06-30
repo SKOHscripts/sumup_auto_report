@@ -8,6 +8,7 @@
     0.95
   ],
   "relative_mape_margin": 0.1,
+  "target_transform": "log1p",
   "tuned_at": "2026-05-03T23:59:58+00:00",
   "tuned_params": {
     "l2_regularization": 10.0,

@@ -165,7 +165,10 @@ class QuantileGradientBoostingForecaster:
         max_leaf_nodes: int = 31,
         random_state: int = 0,
         sku_col: str = "stock_sku",
+        target_transform: str | None = None,
     ):
+        if target_transform not in (None, "log1p"):
+            raise ValueError(f"target_transform inconnu : {target_transform!r} (attendu None ou 'log1p')")
         self.quantiles = tuple(quantiles)
         self.max_iter = max_iter
         self.max_depth = max_depth
@@ -173,11 +176,25 @@ class QuantileGradientBoostingForecaster:
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
         self.sku_col = sku_col
+        self.target_transform = target_transform
         self.models_: dict[float, HistGradientBoostingRegressor] = {}
         self.feature_cols_: list[str] = []
         self.metadata = ModelMetadata()
         self.l2_regularization = l2_regularization
         self.max_leaf_nodes = max_leaf_nodes
+
+    def _forward_target(self, y_arr: np.ndarray) -> np.ndarray:
+        """Applique la transformation directe de la cible (ex. log1p)."""
+        if self.target_transform == "log1p":
+            return np.log1p(y_arr)
+        return y_arr
+
+    def _inverse_target(self, preds: np.ndarray) -> np.ndarray:
+        """Repasse les prédictions dans l'échelle d'origine (consommation >= 0)."""
+        clipped = np.clip(preds, a_min=0.0, a_max=None)
+        if self.target_transform == "log1p":
+            return np.expm1(clipped)
+        return clipped
 
     def _make_estimator(self, q: float) -> HistGradientBoostingRegressor:
         return HistGradientBoostingRegressor(
@@ -208,7 +225,7 @@ class QuantileGradientBoostingForecaster:
             raise ValueError(f"Colonne `{self.sku_col}` absente de X")
         prepared = self._prepare_features(X)
         self.feature_cols_ = list(prepared.columns)
-        y_arr = y.astype("float64").to_numpy()
+        y_arr = self._forward_target(y.astype("float64").to_numpy())
 
         for q in self.quantiles:
             est = self._make_estimator(q)
@@ -227,7 +244,9 @@ class QuantileGradientBoostingForecaster:
                 "max_depth": self.max_depth,
                 "learning_rate": self.learning_rate,
                 "min_samples_leaf": self.min_samples_leaf,
+                "target_transform": self.target_transform,
             }),
+            notes=f"target_transform={self.target_transform}",
         )
 
         return self
@@ -253,8 +272,7 @@ class QuantileGradientBoostingForecaster:
         out = pd.DataFrame(index=X.index)
 
         for label, q in zip(QUANTILE_LABELS, sorted_q):
-            preds = np.clip(self.models_[q].predict(prepared), a_min=0.0, a_max=None)
-            out[label] = preds
+            out[label] = self._inverse_target(self.models_[q].predict(prepared))
         # Garantit la monotonie q_low <= q_med <= q_high (peut etre violee par 3 modeles independants)
         out[list(QUANTILE_LABELS)] = np.sort(out[list(QUANTILE_LABELS)].to_numpy(), axis=1)
 
@@ -273,7 +291,12 @@ class QuantileGradientBoostingForecaster:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(
-            {"models": self.models_, "feature_cols": self.feature_cols_, "quantiles": self.quantiles},
+            {
+                "models": self.models_,
+                "feature_cols": self.feature_cols_,
+                "quantiles": self.quantiles,
+                "target_transform": self.target_transform,
+            },
             target,
         )
         meta_path = target.with_suffix(target.suffix + ".meta.json")
@@ -287,7 +310,10 @@ class QuantileGradientBoostingForecaster:
         """Charge un modèle entraîné précédemment via `.save`."""
         target = Path(path)
         bundle = joblib.load(target)
-        instance = cls(quantiles=tuple(bundle["quantiles"]))
+        instance = cls(
+            quantiles=tuple(bundle["quantiles"]),
+            target_transform=bundle.get("target_transform"),
+        )
         instance.models_ = bundle["models"]
         instance.feature_cols_ = bundle["feature_cols"]
         meta_path = target.with_suffix(target.suffix + ".meta.json")

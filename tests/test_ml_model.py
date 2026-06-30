@@ -102,3 +102,50 @@ def test_handles_unknown_sku_in_predict(history_df):
     preds = model.predict(X_new)
     assert len(preds) == 1
     assert preds[0] >= 0
+
+
+# ── QuantileGradientBoostingForecaster : transformation log1p ─────────────────
+
+from stocks.ml.model import QuantileGradientBoostingForecaster  # noqa: E402
+
+
+def test_quantile_invalid_transform_raises():
+    with pytest.raises(ValueError):
+        QuantileGradientBoostingForecaster(target_transform="sqrt")
+
+
+def test_quantile_log1p_predictions_nonneg_and_ordered(history_df):
+    X, y, _ = ft.prepare_training_table(history_df)
+    model = QuantileGradientBoostingForecaster(
+        max_iter=40, max_depth=2, target_transform="log1p",
+    ).fit(X, y)
+    preds = model.predict_quantiles(X)
+    assert (preds[["q_low", "q_med", "q_high"]].to_numpy() >= 0).all()
+    # monotonie q_low <= q_med <= q_high
+    assert (preds["q_low"] <= preds["q_med"] + 1e-9).all()
+    assert (preds["q_med"] <= preds["q_high"] + 1e-9).all()
+    assert model.metadata.notes == "target_transform=log1p"
+
+
+def test_quantile_log1p_roundtrip_save_load(tmp_path, history_df):
+    X, y, _ = ft.prepare_training_table(history_df)
+    model = QuantileGradientBoostingForecaster(
+        max_iter=40, max_depth=2, target_transform="log1p",
+    ).fit(X, y)
+    path = tmp_path / "hgb.joblib"
+    model.save(path)
+    loaded = QuantileGradientBoostingForecaster.load(path)
+    assert loaded.target_transform == "log1p"
+    np.testing.assert_allclose(loaded.predict(X), model.predict(X))
+
+
+def test_quantile_log1p_recovers_scale_better_than_raw(history_df):
+    """Sur une cible multi-échelle, log1p ne dégrade pas la médiane (sanity)."""
+    X, y, _ = ft.prepare_training_table(history_df)
+    raw = QuantileGradientBoostingForecaster(max_iter=60, max_depth=2).fit(X, y)
+    log = QuantileGradientBoostingForecaster(
+        max_iter=60, max_depth=2, target_transform="log1p",
+    ).fit(X, y)
+    # Les deux doivent rester dans l'ordre de grandeur de la cible.
+    assert 0 < float(np.mean(log.predict(X))) < 3 * float(np.mean(y))
+    assert 0 < float(np.mean(raw.predict(X))) < 3 * float(np.mean(y))

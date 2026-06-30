@@ -63,6 +63,7 @@ def _build_model(cfg: MLConfig, random_state: int = 0) -> QuantileGradientBoosti
     return QuantileGradientBoostingForecaster(
         quantiles=cfg.quantiles,
         random_state=random_state,
+        target_transform=cfg.target_transform,
         **cfg.tuned_params,
     )
 
@@ -85,7 +86,8 @@ def run_train(
         history,
         n_folds=5,
         quantiles=cfg.quantiles,
-        max_iter=cfg.tuned_params.get("max_iter", 200),
+        target_transform=cfg.target_transform,
+        model_params=cfg.tuned_params,
     )
 
     if metrics.n_folds == 0:

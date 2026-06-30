@@ -132,8 +132,18 @@ def walk_forward_backtest(
     quantiles: Iterable[float] = DEFAULT_QUANTILES,
     max_iter: int = 100,
     random_state: int = 0,
+    target_transform: str | None = None,
+    model_params: dict | None = None,
 ) -> EvaluationMetrics:
-    """Évalue ``QuantileGradientBoostingForecaster`` en walk-forward."""
+    """Évalue ``QuantileGradientBoostingForecaster`` en walk-forward.
+
+    ``model_params`` permet d'évaluer **exactement** le modèle qui sera déployé
+    (hyperparamètres tunés : max_depth, l2, etc.). Sans lui, l'évaluation
+    utiliserait des valeurs par défaut différentes du modèle final, ce qui
+    fausse la décision de promotion.
+    """
+    params = dict(model_params or {})
+    params.setdefault("max_iter", max_iter)
     X, y, meta = prepare_training_table(history_df)
     folds = _fold_indices(meta, n_folds=n_folds, min_train_size=min_train_size)
     if not folds:
@@ -151,8 +161,9 @@ def walk_forward_backtest(
     for fold_idx, (train_idx, test_idx) in enumerate(folds):
         model = QuantileGradientBoostingForecaster(
             quantiles=tuple(quantile_list),
-            max_iter=max_iter,
             random_state=random_state,
+            target_transform=target_transform,
+            **params,
         ).fit(X.loc[train_idx], y.loc[train_idx])
         preds = model.predict_quantiles(X.loc[test_idx])
         y_test = y.loc[test_idx].to_numpy()

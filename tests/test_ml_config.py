@@ -13,6 +13,7 @@ def test_default_config_uses_5_50_95():
     assert cfg.coverage_target == 0.80
     assert cfg.coverage_tolerance == 0.15
     assert cfg.relative_mape_margin == 0.10
+    assert cfg.target_transform == "log1p"
     assert cfg.tuned_params == cfg_mod.DEFAULT_HGB_PARAMS
 
 
