@@ -32,6 +32,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
 
 from stocks.ml.config import DEFAULT_HGB_PARAMS, MLConfig, load_config, save_config
+from stocks.ml.evaluation import walk_forward_backtest
 from stocks.ml.features import prepare_training_table
 
 log = logging.getLogger(__name__)
@@ -51,7 +52,13 @@ PARAM_GRID = {
 
 
 def _pinball_score(q: float):
-    """Construit un scorer sklearn pour la pinball loss (négatif car sklearn maximise)."""
+    """Construit un scorer sklearn pour la pinball loss (négatif car sklearn maximise).
+
+    Le score est calculé dans l'espace d'entraînement du modèle. Avec une cible
+    log1p, c'est donc l'espace log : la pinball y est **équilibrée entre SKU**
+    (les gros volumes ne dominent pas), ce qui aligne le tuning sur l'erreur
+    relative (MAPE) plutôt que sur l'erreur absolue dominée par le café.
+    """
     def _score(estimator, X, y):
         preds = estimator.predict(X)
         diff = y - preds
@@ -67,6 +74,18 @@ def _grid_size(grid: dict) -> int:
     return math.prod(len(v) for v in grid.values())
 
 
+def _backtest_mape(history_df: pd.DataFrame, cfg: MLConfig, params: dict) -> float:
+    """MAPE walk-forward d'un jeu d'hyperparamètres (inf si pas assez de données)."""
+    metrics = walk_forward_backtest(
+        history_df,
+        n_folds=5,
+        quantiles=cfg.quantiles,
+        target_transform=cfg.target_transform,
+        model_params=params,
+    )
+    return metrics.mape if metrics.n_folds else float("inf")
+
+
 def tune_hyperparameters(
     history_df: pd.DataFrame,
     n_iter: int = None,
@@ -75,11 +94,12 @@ def tune_hyperparameters(
     sku_col: str = "stock_sku",
     random_state: int = 0,
     grid: Iterable[dict] | dict | None = None,
+    target_transform: str | None = None,
 ) -> tuple[dict, float]:
     """Cherche les meilleurs hyperparamètres HGB sur le quantile cible.
 
     Retourne ``(best_params, best_score)`` où ``best_score`` est la pinball
-    loss (positive) — plus c'est petit, mieux c'est.
+    loss (positive, échelle d'origine) — plus c'est petit, mieux c'est.
     """
     total_combinations = _grid_size(grid)
 
@@ -94,6 +114,8 @@ def tune_hyperparameters(
     )
 
     X, y, _ = prepare_training_table(history_df)
+    if target_transform == "log1p":
+        y = np.log1p(y)
 
     if X[sku_col].dtype.name != "category":
         X = X.copy()
@@ -251,16 +273,18 @@ def tune_and_save(history_df: pd.DataFrame,
                   config_path=None) -> MLConfig:
     """Tune puis persiste la config. Retourne la ``MLConfig`` mise à jour."""
     cfg = load_config(config_path)
+    transform = cfg.target_transform
 
     # 1) Coarse search avec la grosse grille
     log.info(
-        "Tuning coarse: n_iter=%s sur grille grossiere (RandomizedSearchCV)...",
-        n_iter_coarse,
+        "Tuning coarse: n_iter=%s sur grille grossiere (RandomizedSearchCV, transform=%s)...",
+        n_iter_coarse, transform,
     )
     coarse_best, coarse_score = tune_hyperparameters(
         history_df,
         n_iter=n_iter_coarse,
         grid=PARAM_GRID,   # la grosse grille
+        target_transform=transform,
     )
     log.info(
         "Fin coarse: pinball=%.4f, params=%s",
@@ -278,6 +302,7 @@ def tune_and_save(history_df: pd.DataFrame,
         history_df,
         n_iter=n_iter_fine,
         grid=fine_grid,
+        target_transform=transform,
     )
     log.info(
         "Fin fine: pinball=%.4f, params=%s",
@@ -298,16 +323,33 @@ def tune_and_save(history_df: pd.DataFrame,
         phase, best_score, best_params,
     )
 
-    cfg.tuned_params = {**DEFAULT_HGB_PARAMS, **best_params}
+    # Garde-fou : on n'adopte les nouveaux hyperparamètres que s'ils améliorent
+    # réellement le backtest (MAPE) face aux params actuels. La CV pinball du
+    # tuner ne capture pas toujours la généralisation ; sans ce filet, --tune
+    # pourrait dégrader une config déjà bonne.
+    candidate = {**DEFAULT_HGB_PARAMS, **best_params}
+    current_mape = _backtest_mape(history_df, cfg, cfg.tuned_params)
+    candidate_mape = _backtest_mape(history_df, cfg, candidate)
+    log.info(
+        "Validation tuning : MAPE actuelle=%.2f%% vs candidate=%.2f%%",
+        current_mape * 100, candidate_mape * 100,
+    )
+
+    if candidate_mape >= current_mape:
+        log.warning(
+            "Tuning ignore : les hyperparametres actuels sont au moins aussi bons "
+            "(MAPE %.2f%% <= %.2f%%). Config inchangee.",
+            current_mape * 100, candidate_mape * 100,
+        )
+        return cfg
+
+    cfg.tuned_params = candidate
     cfg.tuned_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     cfg.tuning_score = best_score
     save_config(cfg, config_path)
-
     log.info(
-        "Config ML enregistree dans %s (tuned_at=%s, score=%.4f)",
-        config_path,
-        cfg.tuned_at,
-        cfg.tuning_score,
+        "Config ML mise a jour dans %s (MAPE %.2f%% -> %.2f%%, tuned_at=%s)",
+        config_path, current_mape * 100, candidate_mape * 100, cfg.tuned_at,
     )
 
     return cfg

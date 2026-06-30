@@ -42,8 +42,8 @@ def test_tune_hyperparameters_returns_best_params(long_history):
     assert score >= 0  # pinball loss positive
 
 
-def test_tune_and_save_persists_config(tmp_path, monkeypatch, long_history):
-    """tune_and_save doit écrire tuned_params + tuned_at dans config.json."""
+def test_tune_and_save_persists_config_when_better(tmp_path, monkeypatch, long_history):
+    """tune_and_save écrit la nouvelle config si elle améliore le backtest."""
     target = tmp_path / "config.json"
     monkeypatch.setattr(cfg_mod, "CONFIG_PATH", target)
 
@@ -54,16 +54,38 @@ def test_tune_and_save_persists_config(tmp_path, monkeypatch, long_history):
         "min_samples_leaf": [5],
     }
     monkeypatch.setattr(tuning, "PARAM_GRID", grid)
+    # Candidate (max_iter=50) meilleur que la config courante (défaut 200).
+    monkeypatch.setattr(
+        tuning, "_backtest_mape",
+        lambda hist, cfg, params: 0.4 if params.get("max_iter") == 50 else 0.9,
+    )
     cfg = tuning.tune_and_save(long_history, n_iter_coarse=2, n_iter_fine=2)
 
     assert target.exists()
     assert cfg.tuned_at is not None
-    assert cfg.tuning_score is not None
     assert cfg.tuned_params["max_iter"] == 50
 
     reloaded = cfg_mod.load_config(target)
     assert reloaded.tuned_params["max_iter"] == 50
-    assert reloaded.tuned_at is not None
+
+
+def test_tune_and_save_keeps_config_when_not_better(tmp_path, monkeypatch, long_history):
+    """Garde-fou : si le tuning ne bat pas la config actuelle, on ne change rien."""
+    target = tmp_path / "config.json"
+    monkeypatch.setattr(cfg_mod, "CONFIG_PATH", target)
+
+    grid = {"max_iter": [50], "max_depth": [3], "learning_rate": [0.05], "min_samples_leaf": [5]}
+    monkeypatch.setattr(tuning, "PARAM_GRID", grid)
+    # Candidate (max_iter=50) PIRE que la config courante (défaut 200).
+    monkeypatch.setattr(
+        tuning, "_backtest_mape",
+        lambda hist, cfg, params: 0.9 if params.get("max_iter") == 50 else 0.4,
+    )
+    cfg = tuning.tune_and_save(long_history, n_iter_coarse=2, n_iter_fine=2)
+
+    # Config inchangée (params par défaut conservés) et fichier non réécrit.
+    assert cfg.tuned_params["max_iter"] == cfg_mod.DEFAULT_HGB_PARAMS["max_iter"]
+    assert not target.exists()
 
 
 def test_pinball_score_is_negative_for_minimization():
