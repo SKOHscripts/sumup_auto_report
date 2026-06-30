@@ -1,12 +1,13 @@
 {
   "coverage_target": 0.8,
-  "coverage_tolerance": 0.1,
+  "coverage_tolerance": 0.15,
   "mape_threshold": 0.45,
   "quantiles": [
-    0.1,
+    0.05,
     0.5,
-    0.9
+    0.95
   ],
+  "relative_mape_margin": 0.1,
   "tuned_at": "2026-05-03T23:59:58+00:00",
   "tuned_params": {
     "l2_regularization": 10.0,

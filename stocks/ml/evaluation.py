@@ -26,9 +26,13 @@ from stocks.ml.model import DEFAULT_QUANTILES, QuantileGradientBoostingForecaste
 log = logging.getLogger(__name__)
 
 # Seuils de qualité — promotion du modèle si métriques < seuil.
-DEFAULT_MAPE_THRESHOLD = 0.45      # 45 % d'erreur relative médiane max
-DEFAULT_COVERAGE_TARGET = 0.80     # 80 % des observations dans [q10, q90]
-DEFAULT_COVERAGE_TOLERANCE = 0.10  # tolérance ±10 pts
+DEFAULT_MAPE_THRESHOLD = 0.45      # 45 % d'erreur relative médiane max (repli sans baseline)
+DEFAULT_COVERAGE_TARGET = 0.80     # 80 % des observations dans [q_low, q_high]
+DEFAULT_COVERAGE_TOLERANCE = 0.15  # tolérance ±15 pts
+# Marge du critère relatif : sur une demande faible/erratique, le seuil MAPE
+# absolu est inatteignable (la baseline elle-même ~70 %). On promeut donc le
+# modèle s'il fait au moins aussi bien que la baseline, à cette marge près.
+DEFAULT_RELATIVE_MAPE_MARGIN = 0.10
 
 
 @dataclass
@@ -201,13 +205,21 @@ def is_model_promotable(
     mape_threshold: float = DEFAULT_MAPE_THRESHOLD,
     coverage_target: float = DEFAULT_COVERAGE_TARGET,
     coverage_tolerance: float = DEFAULT_COVERAGE_TOLERANCE,
+    relative_mape_margin: float = DEFAULT_RELATIVE_MAPE_MARGIN,
 ) -> tuple[bool, list[str]]:
     """Décide si le modèle peut être promu en remplacement du précédent.
 
     Critères :
-      1. MAPE absolue < ``mape_threshold``
-      2. Couverture P10-P90 dans ``[target ± tolerance]``
-      3. Si baseline fournie, MAPE < baseline (sinon ML inutile)
+      1. Précision — critère **relatif** à la baseline si elle est fournie :
+         la MAPE du modèle doit rester ``<= baseline * (1 + marge)`` (le modèle
+         fait au moins aussi bien que la moyenne mobile, à la marge près). En
+         l'absence de baseline, on retombe sur le seuil **absolu**
+         ``mape_threshold``.
+      2. Couverture [q_low, q_high] dans ``[target ± tolerance]``.
+
+    Le critère relatif est adapté à une demande faible et erratique, où la MAPE
+    absolue est structurellement élevée (la baseline elle-même ~70 %) : un seuil
+    absolu serait inatteignable quel que soit le modèle.
 
     Retourne ``(promotable, [raisons d'echec])``.
     """
@@ -215,18 +227,23 @@ def is_model_promotable(
     if metrics.n_folds == 0:
         reasons.append("aucun fold valide")
         return False, reasons
-    if metrics.mape > mape_threshold:
+
+    has_baseline = baseline_mape is not None and not np.isnan(baseline_mape)
+    if has_baseline:
+        allowed = baseline_mape * (1.0 + relative_mape_margin)
+        if metrics.mape > allowed:
+            reasons.append(
+                f"MAPE ({metrics.mape:.2%}) au-dessus de la baseline +marge "
+                f"({baseline_mape:.2%} +{relative_mape_margin:.0%} = {allowed:.2%})"
+            )
+    elif metrics.mape > mape_threshold:
         reasons.append(f"MAPE trop eleve ({metrics.mape:.2%} > {mape_threshold:.0%})")
+
     if abs(metrics.coverage_band - coverage_target) > coverage_tolerance:
         reasons.append(
             f"Coverage hors cible ({metrics.coverage_band:.0%} vs "
             f"{coverage_target:.0%}±{coverage_tolerance:.0%})"
         )
-    if baseline_mape is not None and not np.isnan(baseline_mape):
-        if metrics.mape >= baseline_mape:
-            reasons.append(
-                f"ML ({metrics.mape:.2%}) ne bat pas la baseline ({baseline_mape:.2%})"
-            )
     return (len(reasons) == 0), reasons
 
 

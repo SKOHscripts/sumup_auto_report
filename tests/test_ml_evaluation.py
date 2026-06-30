@@ -133,6 +133,34 @@ def test_is_model_promotable_rejects_when_worse_than_baseline():
     assert any("baseline" in r.lower() for r in reasons)
 
 
+def test_is_model_promotable_within_relative_margin():
+    """ML légèrement moins bon que la baseline mais dans la marge → promu.
+
+    Reflète la politique « demande intermittente » : MAPE absolue inatteignable,
+    on accepte un modèle ~= baseline (à la marge près) pour ses intervalles.
+    """
+    metrics = ev.EvaluationMetrics(
+        mae=9.0, mape=0.73, pinball_low=2.0, pinball_med=3.0, pinball_high=2.0,
+        coverage_band=0.69, n_samples=200, n_folds=5,
+    )
+    promotable, reasons = ev.is_model_promotable(
+        metrics, baseline_mape=0.70, relative_mape_margin=0.10,
+    )
+    assert promotable is True  # 0.73 <= 0.70 * 1.10 = 0.77 et coverage dans 80±15
+    assert reasons == []
+
+
+def test_is_model_promotable_uses_absolute_threshold_without_baseline():
+    """Sans baseline, on retombe sur le seuil MAPE absolu."""
+    metrics = ev.EvaluationMetrics(
+        mae=9.0, mape=0.73, pinball_low=2.0, pinball_med=3.0, pinball_high=2.0,
+        coverage_band=0.80, n_samples=200, n_folds=5,
+    )
+    promotable, reasons = ev.is_model_promotable(metrics, baseline_mape=None)
+    assert promotable is False
+    assert any("MAPE" in r for r in reasons)
+
+
 def test_is_model_promotable_no_folds():
     metrics = ev.EvaluationMetrics(n_folds=0)
     promotable, reasons = ev.is_model_promotable(metrics)

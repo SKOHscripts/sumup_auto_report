@@ -11,7 +11,8 @@ def test_default_config_uses_5_50_95():
     assert cfg.quantiles == (0.05, 0.5, 0.95)
     assert cfg.mape_threshold == 0.45
     assert cfg.coverage_target == 0.80
-    assert cfg.coverage_tolerance == 0.10
+    assert cfg.coverage_tolerance == 0.15
+    assert cfg.relative_mape_margin == 0.10
     assert cfg.tuned_params == cfg_mod.DEFAULT_HGB_PARAMS
 
 

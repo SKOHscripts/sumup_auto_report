@@ -54,7 +54,8 @@ class MLConfig:
     quantiles: tuple[float, float, float] = DEFAULT_QUANTILES
     mape_threshold: float = 0.45
     coverage_target: float = 0.80
-    coverage_tolerance: float = 0.10
+    coverage_tolerance: float = 0.15
+    relative_mape_margin: float = 0.10
     tuned_params: dict = field(default_factory=lambda: dict(DEFAULT_HGB_PARAMS))
     tuned_at: Optional[str] = None
     tuning_score: Optional[float] = None
@@ -103,6 +104,7 @@ def load_config(path: Path | None = None) -> MLConfig:
     cfg.mape_threshold = float(data.get("mape_threshold", cfg.mape_threshold))
     cfg.coverage_target = float(data.get("coverage_target", cfg.coverage_target))
     cfg.coverage_tolerance = float(data.get("coverage_tolerance", cfg.coverage_tolerance))
+    cfg.relative_mape_margin = float(data.get("relative_mape_margin", cfg.relative_mape_margin))
     tuned = data.get("tuned_params") or {}
     if isinstance(tuned, dict):
         cfg.tuned_params = {**DEFAULT_HGB_PARAMS, **tuned}

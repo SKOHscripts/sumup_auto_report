@@ -100,6 +100,7 @@ def run_train(
         mape_threshold=cfg.mape_threshold,
         coverage_target=cfg.coverage_target,
         coverage_tolerance=cfg.coverage_tolerance,
+        relative_mape_margin=cfg.relative_mape_margin,
     )
     baseline_pct = baseline * 100 if not math.isnan(baseline) else float("nan")
     log.info(
