@@ -29,7 +29,13 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
+# Active l'API halving (import à effet de bord requis avant HalvingRandomSearchCV).
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401  pylint: disable=unused-import
+from sklearn.model_selection import (
+    HalvingRandomSearchCV,
+    RandomizedSearchCV,
+    TimeSeriesSplit,
+)
 
 from stocks.ml.config import DEFAULT_HGB_PARAMS, MLConfig, load_config, save_config
 from stocks.ml.evaluation import walk_forward_backtest
@@ -86,7 +92,7 @@ def _backtest_mape(history_df: pd.DataFrame, cfg: MLConfig, params: dict) -> flo
     return metrics.mape if metrics.n_folds else float("inf")
 
 
-def tune_hyperparameters(
+def tune_hyperparameters(  # pylint: disable=too-many-arguments,too-many-locals
     history_df: pd.DataFrame,
     n_iter: int = None,
     n_splits: int = 4,
@@ -95,233 +101,115 @@ def tune_hyperparameters(
     random_state: int = 0,
     grid: Iterable[dict] | dict | None = None,
     target_transform: str | None = None,
+    search: str = "halving",
+    n_jobs: int = -1,
+    factor: int = 3,
 ) -> tuple[dict, float]:
     """Cherche les meilleurs hyperparamètres HGB sur le quantile cible.
 
+    ``search`` :
+      - ``"halving"`` (défaut) : successive halving avec ``max_iter`` comme
+        ressource. Beaucoup de combinaisons sont testées à petit budget (peu
+        d'arbres), et seules les meilleures sont ré-évaluées à plein budget →
+        ~10× plus rapide, donc bien plus d'échantillonnage à temps égal.
+      - ``"random"`` : RandomizedSearchCV classique (repli).
+
+    ``n_jobs`` répartit les fits sur les cœurs (``-1`` = tous). Pour distribuer
+    sur plusieurs machines, encapsuler l'appel dans un backend joblib
+    (``with joblib.parallel_backend("dask"): ...``) — aucun autre changement.
+
     Retourne ``(best_params, best_score)`` où ``best_score`` est la pinball
-    loss (positive, échelle d'origine) — plus c'est petit, mieux c'est.
+    loss (positive) — plus c'est petit, mieux c'est.
     """
-    total_combinations = _grid_size(grid)
-
-    # Si n_iter non spécifié ou supérieur au total → on teste tout
-    effective_n_iter = min(n_iter, total_combinations) if n_iter else total_combinations
-
-    log.info(
-        "RandomizedSearchCV: %d/%d combinaisons testées (%s)",
-        effective_n_iter,
-        total_combinations,
-        "EXHAUSTIF" if effective_n_iter == total_combinations else "échantillonnage",
-    )
+    grid = dict(grid or PARAM_GRID)
 
     X, y, _ = prepare_training_table(history_df)
     if target_transform == "log1p":
         y = np.log1p(y)
-
     if X[sku_col].dtype.name != "category":
         X = X.copy()
         X[sku_col] = X[sku_col].astype("category")
 
     splitter = TimeSeriesSplit(n_splits=n_splits)
-    grid = grid or PARAM_GRID
-
     base = HistGradientBoostingRegressor(
         loss="quantile",
         quantile=target_quantile,
         random_state=random_state,
         categorical_features=[sku_col],
     )
-    search = RandomizedSearchCV(
-        estimator=base,
-        param_distributions=grid,
-        n_iter=effective_n_iter,
-        scoring=_pinball_score(target_quantile),
-        cv=splitter,
-        random_state=random_state,
-        n_jobs=-1,  # all processors
-        verbose=2,
-        refit=False,
-    )
-    search.fit(X, y)
-    best_params = dict(search.best_params_)
-    best_score = -float(search.best_score_)
-    log.info(
-        "Tuning : meilleurs params = %s (pinball=%.4f)",
-        best_params, best_score,
-    )
+    scorer = _pinball_score(target_quantile)
+
+    if search == "halving":
+        # max_iter devient la « ressource » : on le retire de la grille.
+        max_iter_vals = grid.pop("max_iter", [1000])
+        max_resources = int(max(max_iter_vals))
+        min_resources = max(20, max_resources // (factor ** 3))
+        estimator = HalvingRandomSearchCV(
+            estimator=base,
+            param_distributions=grid,
+            factor=factor,
+            resource="max_iter",
+            max_resources=max_resources,
+            min_resources=min_resources,
+            n_candidates=n_iter or "exhaust",
+            scoring=scorer,
+            cv=splitter,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            refit=False,
+        ).fit(X, y)
+        best_params = dict(estimator.best_params_)
+        # La ressource (max_iter) n'est pas dans best_params_ : on l'ajoute.
+        best_params["max_iter"] = int(getattr(estimator, "max_resources_", max_resources))
+        log.info(
+            "Halving : %s candidats initiaux, ressource max_iter<=%d",
+            getattr(estimator, "n_candidates_", ["?"])[0], max_resources,
+        )
+    else:
+        total = _grid_size(grid)
+        effective_n_iter = min(n_iter, total) if n_iter else total
+        estimator = RandomizedSearchCV(
+            estimator=base,
+            param_distributions=grid,
+            n_iter=effective_n_iter,
+            scoring=scorer,
+            cv=splitter,
+            random_state=random_state,
+            n_jobs=n_jobs,
+            refit=False,
+        ).fit(X, y)
+        best_params = dict(estimator.best_params_)
+
+    best_score = -float(estimator.best_score_)
+    log.info("Tuning : meilleurs params = %s (pinball=%.4f)", best_params, best_score)
 
     return best_params, best_score
 
 
-def build_fine_grid(best_params: dict) -> dict:
-    """Grille fine locale autour de best_params.
-
-    Paramètres attendus dans best_params:
-      - max_iter (int)
-      - max_depth (int | None)
-      - learning_rate (float)
-      - min_samples_leaf (int)
-      - l2_regularization (float)  <- nouveau
-      - max_leaf_nodes (int | None) <- nouveau
-    """
-    max_iter = int(best_params.get("max_iter", 200))
-    max_depth = best_params.get("max_depth", 4)
-    lr = float(best_params.get("learning_rate", 0.05))
-    min_leaf = int(best_params.get("min_samples_leaf", 20))
-    l2 = float(best_params.get("l2_regularization", 0.0))
-    max_leaf = best_params.get("max_leaf_nodes", 31)
-
-    # --- max_iter : petits pas autour de la valeur ---
-
-    if max_iter <= 300:
-        step = 25
-    elif max_iter <= 600:
-        step = 50
-    else:
-        step = 100
-    max_iter_vals = sorted({
-        max(50, max_iter - 2 * step),
-        max(50, max_iter - step),
-        max_iter,
-        max_iter + step,
-        max_iter + 2 * step,
-    })
-
-    # --- max_depth : voisinage immédiat ---
-
-    if max_depth is None:
-        max_depth_vals = [3, 4, 5, None]
-    else:
-        max_depth_vals = sorted({
-            max(2, max_depth - 1),
-            max_depth,
-            max_depth + 1,
-        })
-        max_depth_vals.append(None)
-
-    # --- learning_rate : +- 20% et +- 40% ---
-    lr_step = lr * 0.2
-    lr_vals = sorted({
-        round(max(lr - 2 * lr_step, 0.005), 3),
-        round(max(lr - lr_step, 0.005), 3),
-        round(lr, 3),
-        round(min(lr + lr_step, 0.2), 3),
-        round(min(lr + 2 * lr_step, 0.2), 3),
-    })
-
-    # --- min_samples_leaf : petits incréments entiers ---
-
-    if min_leaf <= 10:
-        leaf_candidates = {
-            max(2, min_leaf - 2),
-            max(2, min_leaf - 1),
-            min_leaf,
-            min_leaf + 1,
-            min_leaf + 2,
-        }
-    else:
-        leaf_step = max(2, min_leaf // 5)
-        leaf_candidates = {
-            max(2, min_leaf - 2 * leaf_step),
-            max(2, min_leaf - leaf_step),
-            min_leaf,
-            min_leaf + leaf_step,
-            min_leaf + 2 * leaf_step,
-        }
-    min_leaf_vals = sorted(leaf_candidates)
-
-    # --- l2_regularization : voisinage multiplicatif (échelle log) ---
-
-    if l2 == 0.0:
-        # Si coarse a choisi 0, on teste autour de 0 et les petites valeurs
-        l2_vals = [0.0, 0.05, 0.1, 0.2, 0.5]
-    else:
-        l2_vals = sorted({
-            0.0,                             # toujours tester 0 comme référence
-            round(max(l2 * 0.5, 0.01), 3),
-            round(l2, 3),
-            round(min(l2 * 2.0, 10.0), 3),
-            round(min(l2 * 4.0, 10.0), 3),
-        })
-
-    # --- max_leaf_nodes : voisinage entier ---
-
-    if max_leaf is None:
-        max_leaf_vals = [31, 63, 127, None]
-    else:
-        max_leaf_vals = sorted({
-            max(7, max_leaf // 2),
-            max(7, max_leaf - 8),
-            max_leaf,
-            max_leaf + 8,
-            max_leaf * 2,
-        })
-        max_leaf_vals.append(None)
-
-    return {
-        "max_iter": max_iter_vals,
-        "max_depth": max_depth_vals,
-        "learning_rate": lr_vals,
-        "min_samples_leaf": min_leaf_vals,
-        "l2_regularization": l2_vals,
-        "max_leaf_nodes": max_leaf_vals,
-    }
-
-
 def tune_and_save(history_df: pd.DataFrame,
-                  n_iter_coarse: int = 200,
-                  n_iter_fine: int = None,
+                  n_candidates: int = 300,
+                  n_jobs: int = -1,
                   config_path=None) -> MLConfig:
-    """Tune puis persiste la config. Retourne la ``MLConfig`` mise à jour."""
+    """Tune (successive halving) puis persiste la config si elle s'améliore.
+
+    ``n_candidates`` combinaisons sont échantillonnées puis filtrées par
+    halving (peu coûteux). ``n_jobs`` répartit les fits sur les cœurs.
+    Retourne la ``MLConfig`` (mise à jour seulement si le backtest s'améliore).
+    """
     cfg = load_config(config_path)
-    transform = cfg.target_transform
-
-    # 1) Coarse search avec la grosse grille
     log.info(
-        "Tuning coarse: n_iter=%s sur grille grossiere (RandomizedSearchCV, transform=%s)...",
-        n_iter_coarse, transform,
+        "Tuning halving : %d candidats, n_jobs=%s, transform=%s...",
+        n_candidates, n_jobs, cfg.target_transform,
     )
-    coarse_best, coarse_score = tune_hyperparameters(
+    best_params, best_score = tune_hyperparameters(
         history_df,
-        n_iter=n_iter_coarse,
-        grid=PARAM_GRID,   # la grosse grille
-        target_transform=transform,
+        n_iter=n_candidates,
+        grid=PARAM_GRID,
+        target_transform=cfg.target_transform,
+        search="halving",
+        n_jobs=n_jobs,
     )
-    log.info(
-        "Fin coarse: pinball=%.4f, params=%s",
-        coarse_score, coarse_best,
-    )
-
-    # 2) Fine search autour de coarse_best
-    fine_grid = build_fine_grid(coarse_best)
-    log.info(
-        "Tuning fine: n_iter=%s autour du best coarse (grid taille=%d)...",
-        n_iter_fine,
-        _grid_size(fine_grid)
-    )
-    fine_best, fine_score = tune_hyperparameters(
-        history_df,
-        n_iter=n_iter_fine,
-        grid=fine_grid,
-        target_transform=transform,
-    )
-    log.info(
-        "Fin fine: pinball=%.4f, params=%s",
-        fine_score, fine_best,
-    )
-
-    # On garde le meilleur des deux (score = pinball loss, donc plus petit = mieux)
-
-    if fine_score < coarse_score:
-        phase = "fine"
-        best_params, best_score = fine_best, fine_score
-    else:
-        phase = "coarse"
-        best_params, best_score = coarse_best, coarse_score
-
-    log.info(
-        "Tuning termine (phase retenue=%s): pinball=%.4f, params=%s",
-        phase, best_score, best_params,
-    )
+    log.info("Fin tuning : pinball=%.4f, params=%s", best_score, best_params)
 
     # Garde-fou : on n'adopte les nouveaux hyperparamètres que s'ils améliorent
     # réellement le backtest (MAPE) face aux params actuels. La CV pinball du

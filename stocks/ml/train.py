@@ -143,18 +143,18 @@ def run_train(
     return 0 if promoted else 4
 
 
-def run_tune(n_iter_coarse: int = 200) -> int:
-    """Tuning RandomizedSearchCV puis sauvegarde de la config + train final."""
+def run_tune(n_candidates: int = 300, n_jobs: int = -1) -> int:
+    """Tuning par successive halving puis sauvegarde de la config + train final."""
     history = load_weekly_usage()
 
     if len(history) == 0:
         log.error("Aucun historique persistant. Lancer 'python -m stocks.ml.bootstrap' avant.")
 
         return 1
-    log.info("Tuning des hyperparametres (n_iter_coarse=%s)...", n_iter_coarse)
-    new_cfg = tune_and_save(history, n_iter_coarse=n_iter_coarse)
+    log.info("Tuning des hyperparametres (n_candidates=%s, n_jobs=%s)...", n_candidates, n_jobs)
+    new_cfg = tune_and_save(history, n_candidates=n_candidates, n_jobs=n_jobs)
     log.info(
-        "Config sauvegardee : %s (params=%s, score_pinball=%.4f)",
+        "Config : %s (params=%s, score_pinball=%.4f)",
         "stocks/models/config.json", new_cfg.tuned_params, new_cfg.tuning_score or 0.0,
     )
     # On lance ensuite un train normal pour valider la config tunee.
@@ -261,8 +261,10 @@ def main():
     parser.add_argument("--no-promote", action="store_true", help="N'archive pas et ne met pas a jour current")
 
     # Tuning.
-    parser.add_argument("--n_iter_coarse", type=int, default=None,
-                        help="Iterations de RandomizedSearchCV (defaut : 200)")
+    parser.add_argument("--n-candidates", type=int, default=None,
+                        help="Nombre de combinaisons echantillonnees par le halving (defaut : 300)")
+    parser.add_argument("--jobs", type=int, default=-1,
+                        help="Nombre de coeurs pour le tuning (-1 = tous ; defaut : -1)")
 
     # Configurables (persistes dans config.json).
     parser.add_argument("--quantiles", type=_parse_quantiles, default=None,
@@ -287,7 +289,7 @@ def main():
         sys.exit(run_diagnose(args.diagnose_csv))
 
     if args.tune:
-        run_tune(n_iter_coarse=args.n_iter_coarse)
+        sys.exit(run_tune(n_candidates=args.n_candidates or 300, n_jobs=args.jobs))
     run_train(cfg, force=args.force, do_promote=not args.no_promote)
 
 
