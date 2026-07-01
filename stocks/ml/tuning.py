@@ -32,6 +32,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 # Active l'API halving (import à effet de bord requis avant HalvingRandomSearchCV).
 from sklearn.experimental import enable_halving_search_cv  # noqa: F401  pylint: disable=unused-import
 from sklearn.model_selection import (
+    HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
     TimeSeriesSplit,
@@ -139,32 +140,35 @@ def tune_hyperparameters(  # pylint: disable=too-many-arguments,too-many-locals
     )
     scorer = _pinball_score(target_quantile)
 
-    if search == "halving":
+    if search in ("halving", "halving_grid"):
         # max_iter devient la « ressource » : on le retire de la grille.
         max_iter_vals = grid.pop("max_iter", [1000])
         max_resources = int(max(max_iter_vals))
         min_resources = max(20, max_resources // (factor ** 3))
-        estimator = HalvingRandomSearchCV(
-            estimator=base,
-            param_distributions=grid,
-            factor=factor,
-            resource="max_iter",
-            max_resources=max_resources,
-            min_resources=min_resources,
-            n_candidates=n_iter or "exhaust",
-            scoring=scorer,
-            cv=splitter,
-            random_state=random_state,
-            n_jobs=n_jobs,
-            refit=False,
-        ).fit(X, y)
+        total = _grid_size(grid)
+        common = {
+            "estimator": base, "resource": "max_iter", "factor": factor,
+            "max_resources": max_resources, "min_resources": min_resources,
+            "scoring": scorer, "cv": splitter, "random_state": random_state,
+            "n_jobs": n_jobs, "refit": False,
+        }
+        # Exhaustif si demandé explicitement, ou si n_candidates couvre toute la grille.
+        exhaustive = search == "halving_grid" or (n_iter is not None and n_iter >= total)
+        if exhaustive:
+            log.info("Halving GRID exhaustif : %d combinaisons (hors max_iter)", total)
+            estimator = HalvingGridSearchCV(param_grid=grid, **common).fit(X, y)
+        else:
+            n_cand = min(n_iter, total) if n_iter else "exhaust"
+            estimator = HalvingRandomSearchCV(
+                param_distributions=grid, n_candidates=n_cand, **common,
+            ).fit(X, y)
+            log.info(
+                "Halving aleatoire : %s candidats initiaux (grille=%d), ressource max_iter<=%d",
+                getattr(estimator, "n_candidates_", ["?"])[0], total, max_resources,
+            )
         best_params = dict(estimator.best_params_)
         # La ressource (max_iter) n'est pas dans best_params_ : on l'ajoute.
         best_params["max_iter"] = int(getattr(estimator, "max_resources_", max_resources))
-        log.info(
-            "Halving : %s candidats initiaux, ressource max_iter<=%d",
-            getattr(estimator, "n_candidates_", ["?"])[0], max_resources,
-        )
     else:
         total = _grid_size(grid)
         effective_n_iter = min(n_iter, total) if n_iter else total
@@ -189,24 +193,28 @@ def tune_hyperparameters(  # pylint: disable=too-many-arguments,too-many-locals
 def tune_and_save(history_df: pd.DataFrame,
                   n_candidates: int = 300,
                   n_jobs: int = -1,
+                  exhaustive: bool = False,
                   config_path=None) -> MLConfig:
     """Tune (successive halving) puis persiste la config si elle s'améliore.
 
     ``n_candidates`` combinaisons sont échantillonnées puis filtrées par
-    halving (peu coûteux). ``n_jobs`` répartit les fits sur les cœurs.
-    Retourne la ``MLConfig`` (mise à jour seulement si le backtest s'améliore).
+    halving (peu coûteux). Si ``exhaustive=True``, TOUTE la grille est balayée
+    (HalvingGridSearchCV) au lieu d'un échantillon. ``n_jobs`` répartit les fits
+    sur les cœurs. Retourne la ``MLConfig`` (mise à jour seulement si le
+    backtest s'améliore).
     """
     cfg = load_config(config_path)
     log.info(
-        "Tuning halving : %d candidats, n_jobs=%s, transform=%s...",
-        n_candidates, n_jobs, cfg.target_transform,
+        "Tuning halving : %s, n_jobs=%s, transform=%s...",
+        "GRILLE EXHAUSTIVE" if exhaustive else f"{n_candidates} candidats",
+        n_jobs, cfg.target_transform,
     )
     best_params, best_score = tune_hyperparameters(
         history_df,
         n_iter=n_candidates,
         grid=PARAM_GRID,
         target_transform=cfg.target_transform,
-        search="halving",
+        search="halving_grid" if exhaustive else "halving",
         n_jobs=n_jobs,
     )
     log.info("Fin tuning : pinball=%.4f, params=%s", best_score, best_params)

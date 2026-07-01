@@ -143,7 +143,7 @@ def run_train(
     return 0 if promoted else 4
 
 
-def run_tune(n_candidates: int = 300, n_jobs: int = -1) -> int:
+def run_tune(n_candidates: int = 300, n_jobs: int = -1, exhaustive: bool = False) -> int:
     """Tuning par successive halving puis sauvegarde de la config + train final."""
     history = load_weekly_usage()
 
@@ -151,8 +151,11 @@ def run_tune(n_candidates: int = 300, n_jobs: int = -1) -> int:
         log.error("Aucun historique persistant. Lancer 'python -m stocks.ml.bootstrap' avant.")
 
         return 1
-    log.info("Tuning des hyperparametres (n_candidates=%s, n_jobs=%s)...", n_candidates, n_jobs)
-    new_cfg = tune_and_save(history, n_candidates=n_candidates, n_jobs=n_jobs)
+    log.info(
+        "Tuning des hyperparametres (%s, n_jobs=%s)...",
+        "grille exhaustive" if exhaustive else f"n_candidates={n_candidates}", n_jobs,
+    )
+    new_cfg = tune_and_save(history, n_candidates=n_candidates, n_jobs=n_jobs, exhaustive=exhaustive)
     log.info(
         "Config : %s (params=%s, score_pinball=%.4f)",
         "stocks/models/config.json", new_cfg.tuned_params, new_cfg.tuning_score or 0.0,
@@ -265,6 +268,8 @@ def main():
                         help="Nombre de combinaisons echantillonnees par le halving (defaut : 300)")
     parser.add_argument("--jobs", type=int, default=-1,
                         help="Nombre de coeurs pour le tuning (-1 = tous ; defaut : -1)")
+    parser.add_argument("--exhaustive", action="store_true",
+                        help="Tuning : balaye TOUTE la grille (HalvingGridSearchCV) au lieu d'un echantillon")
 
     # Configurables (persistes dans config.json).
     parser.add_argument("--quantiles", type=_parse_quantiles, default=None,
@@ -289,7 +294,8 @@ def main():
         sys.exit(run_diagnose(args.diagnose_csv))
 
     if args.tune:
-        sys.exit(run_tune(n_candidates=args.n_candidates or 300, n_jobs=args.jobs))
+        sys.exit(run_tune(n_candidates=args.n_candidates or 300, n_jobs=args.jobs,
+                          exhaustive=args.exhaustive))
     run_train(cfg, force=args.force, do_promote=not args.no_promote)
 
 

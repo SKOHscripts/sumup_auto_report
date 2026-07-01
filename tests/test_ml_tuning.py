@@ -101,3 +101,15 @@ def test_pinball_score_is_negative_for_minimization():
     scorer = tuning._pinball_score(0.5)
     score = scorer(est, X, y)
     assert score <= 0  # pinball loss negatif sous convention sklearn
+
+
+def test_tune_hyperparameters_exhaustive_grid(long_history):
+    """search='halving_grid' balaye toute la grille et renvoie max_iter (ressource)."""
+    grid = {"max_iter": [50, 100], "max_depth": [2, 3],
+            "learning_rate": [0.05], "min_samples_leaf": [5]}
+    best, score = tuning.tune_hyperparameters(
+        long_history, n_splits=3, grid=grid, search="halving_grid",
+    )
+    assert "max_iter" in best
+    assert "max_depth" in best
+    assert score >= 0
