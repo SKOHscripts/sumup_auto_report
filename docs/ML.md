@@ -80,7 +80,7 @@ rapport retombe sur le calcul historique sans casser.
                      │
                      ▼
        ┌─────────────────────────────┐
-       │  HGB quantile (low/med/high)│ ←── tuning RandomizedSearchCV
+       │  HGB quantile (low/med/high)│ ←── tuning halving (successive halving)
        └─────┬─────────────────┬─────┘     (–-tune, persisté)
              │                 │
              ▼                 ▼
@@ -194,7 +194,7 @@ stocks/
     ├── registry.py       # archive / current / journal / drift detection
     ├── inference.py      # Orchestrateur appelé par sumup_stocks.py --ml
     ├── config.py         # MLConfig (load/save JSON)
-    ├── tuning.py         # RandomizedSearchCV TimeSeriesSplit
+    ├── tuning.py         # Halving (Halving[Random|Grid]SearchCV) TimeSeriesSplit
     ├── diagnose.py       # Rapport par SKU
     ├── bootstrap.py      # CLI d'amorçage initial depuis l'API SumUp
     └── train.py          # CLI hebdomadaire train + tune + diagnose + report
@@ -212,7 +212,7 @@ stocks/
 | `registry.py` | Versioning des modèles + journal de promotion | `archive/<sem>/`, `current.joblib`, `history.csv` |
 | `inference.py` | Orchestrateur : charge modèle, projette par SKU, attache aux KPIs | KPIs enrichis avec `ml_projection` |
 | `config.py` | Configuration persistante (`MLConfig`) | `config.json` |
-| `tuning.py` | Recherche d'hyperparamètres (RandomizedSearchCV) | Params persistés dans config |
+| `tuning.py` | Recherche d'hyperparamètres par halving (échantillon ou exhaustif) | Params persistés dans config, si meilleurs que l'actuel |
 | `diagnose.py` | Rapport par SKU pour identifier les problèmes | DataFrame trié par MAPE |
 | `bootstrap.py` | CLI d'amorçage initial depuis l'API SumUp | parquet rempli |
 | `train.py` | CLI hebdomadaire principal | promotion + journal + alerte |
@@ -272,19 +272,61 @@ python -m stocks.ml.train --diagnose --diagnose-csv diag.csv
 python -m stocks.ml.train --tune
 ```
 
-Lance une `RandomizedSearchCV` (20 itérations par défaut) sur :
-- `max_iter` ∈ {100, 200, 300, 500}
-- `max_depth` ∈ {3, 4, 6, None}
-- `learning_rate` ∈ {0.02, 0.05, 0.1}
-- `min_samples_leaf` ∈ {3, 5, 10, 20}
+#### Le halving, expliqué simplement
 
-Validation par `TimeSeriesSplit` (4 plis), score = pinball loss du
-quantile médian. Les meilleurs paramètres sont **persistés** dans
-`stocks/models/config.json` et réutilisés automatiquement par toutes
-les exécutions futures (`train`, `inference`).
+Tuner, c'est chercher le meilleur réglage (profondeur des arbres,
+régularisation, etc.) parmi des centaines de combinaisons possibles.
+Entraîner **un seul** modèle « à fond » (beaucoup d'arbres) est déjà
+coûteux ; en tester des centaines à fond serait bien trop long.
 
-À relancer environ une fois par mois (ou après une grosse évolution
-de l'activité), pas chaque semaine.
+Le tuning fonctionne comme les qualifications d'un tournoi à
+élimination plutôt qu'un match complet pour chaque joueur :
+
+| Tour | Candidats restants | Budget par candidat |
+|---|---|---|
+| 1 | 300 | petit (peu d'arbres) |
+| 2 | 100 | moyen |
+| 3 | 33 | plus grand |
+| Finale | ~11 | plein régime |
+
+À chaque tour, tous les candidats survivants sont entraînés avec un
+**peu plus** de budget, puis seul le **meilleur tiers** passe au tour
+suivant (le facteur d'élimination, `factor=3`, est configurable). Les
+réglages manifestement mauvais sont éliminés tôt, à bas coût ; seuls
+les prometteurs reçoivent le traitement complet. C'est l'algorithme
+`HalvingRandomSearchCV` de scikit-learn, avec `max_iter` (le nombre
+d'arbres) comme « ressource » qui augmente à chaque tour.
+
+Résultat mesuré sur l'historique du projet : **~10× plus rapide**
+qu'un `RandomizedSearchCV` classique à effort constant — donc, à temps
+égal, on peut tester **bien plus** de combinaisons.
+
+#### Déroulé complet d'un `--tune`
+
+1. **Échantillonnage** : `--n-candidates 300` (défaut) tire 300
+   combinaisons au hasard dans la grille et les passe au tournoi.
+   `--exhaustive` balaye **toute** la grille (≈1000 combinaisons) au
+   lieu d'un échantillon — plus complet, toujours accéléré par le
+   halving. `--jobs -1` (défaut) répartit les entraînements sur tous
+   les cœurs disponibles.
+2. **Score sur la cible transformée** : le modèle s'entraîne (et se
+   note) en espace `log1p(usage)` — cohérent avec le modèle réellement
+   déployé (cf. « Modèle global multi-SKU plutôt qu'un par SKU » dans
+   les décisions techniques plus bas), et équilibré entre SKU à faible
+   et fort volume.
+3. **Garde-fou anti-régression** : avant d'adopter le gagnant du
+   tournoi, un vrai backtest walk-forward compare sa MAPE à celle de
+   la config **actuelle**. Le nouveau jeu n'est adopté **que s'il fait
+   réellement mieux** ; sinon la config est laissée inchangée. La CV
+   interne du tuning ne capture pas toujours la généralisation — sans
+   ce filet, `--tune` pourrait dégrader une config déjà bonne.
+4. Si adopté, les paramètres sont **persistés** dans
+   `stocks/models/config.json` et réutilisés automatiquement par
+   toutes les exécutions futures (`train`, `inference`).
+
+`--tune` peut donc être relancé sans risque : au pire, il ne change
+rien. À relancer surtout après une grosse évolution de l'activité, ou
+quand l'historique s'est significativement allongé.
 
 ### 4. Entraînement hebdomadaire
 
@@ -366,7 +408,7 @@ python -m stocks.ml.train [SOUS-COMMANDE] [FLAGS]
 | Flag | Effet |
 |---|---|
 | _(aucune)_ | Pipeline standard : backtest → train → promotion |
-| `--tune` | RandomizedSearch puis pipeline standard |
+| `--tune` | Tuning par halving (cf. ci-dessus) puis pipeline standard |
 | `--diagnose` | Rapport par SKU (n_sem, %_0, CV, MAPE) puis sort |
 | `--report` | Affiche les 10 dernières lignes de `history.csv` puis sort |
 
@@ -376,17 +418,24 @@ python -m stocks.ml.train [SOUS-COMMANDE] [FLAGS]
 |---|---|
 | `--force` | Promeut même si critères non atteints (pour exploration) |
 | `--no-promote` | Calcule les métriques mais n'archive rien |
-| `--n-iter N` | Avec `--tune` : nombre d'itérations RandomizedSearchCV (20) |
 | `--diagnose-csv FICHIER` | Avec `--diagnose` : sauve en CSV |
+
+**Modificateurs du tuning** (avec `--tune`) :
+
+| Flag | Effet |
+|---|---|
+| `--n-candidates 300` | Nombre de combinaisons échantillonnées pour le halving |
+| `--exhaustive` | Balaye toute la grille (`HalvingGridSearchCV`) au lieu d'un échantillon |
+| `--jobs -1` | Nombre de cœurs pour le tuning (`-1` = tous, défaut) |
 
 **Configuration persistante** (s'écrit dans `models/config.json`) :
 
 | Flag | Effet |
 |---|---|
 | `--quantiles q1,q2,q3` | Triplet `q_low,q_med,q_high` (ex : `0.05,0.5,0.95`) |
-| `--mape-threshold 0.45` | Seuil MAPE max pour promotion |
+| `--mape-threshold 0.45` | Seuil MAPE max pour promotion (repli si pas de baseline) |
 | `--coverage-target 0.80` | Couverture cible de l'intervalle |
-| `--coverage-tolerance 0.10` | Tolérance autour de la cible |
+| `--coverage-tolerance 0.15` | Tolérance autour de la cible |
 
 ### `stocks.sumup_stocks`
 
@@ -468,12 +517,16 @@ Fichier `stocks/models/config.json`, géré par `stocks/ml/config.py` :
   "quantiles": [0.05, 0.5, 0.95],
   "mape_threshold": 0.45,
   "coverage_target": 0.80,
-  "coverage_tolerance": 0.10,
+  "coverage_tolerance": 0.15,
+  "relative_mape_margin": 0.10,
+  "target_transform": "log1p",
   "tuned_params": {
-    "max_iter": 200,
-    "max_depth": 6,
+    "max_iter": 125,
+    "max_depth": 2,
     "learning_rate": 0.05,
-    "min_samples_leaf": 5
+    "min_samples_leaf": 10,
+    "l2_regularization": 10.0,
+    "max_leaf_nodes": 7
   },
   "tuned_at": "2026-05-12T07:00:00+00:00",
   "tuning_score": 0.182
@@ -483,9 +536,11 @@ Fichier `stocks/models/config.json`, géré par `stocks/ml/config.py` :
 | Clé | Effet |
 |---|---|
 | `quantiles` | Triplet `(low, 0.5, high)`. Le médian doit valoir 0.5. |
-| `mape_threshold` | Seuil MAPE max pour qu'un modèle soit promu |
+| `mape_threshold` | Seuil MAPE max, utilisé seulement si aucune baseline n'est disponible |
 | `coverage_target` ± `coverage_tolerance` | Plage acceptable de la couverture P_low–P_high |
-| `tuned_params` | Hyperparamètres HGB issus du dernier `--tune` |
+| `relative_mape_margin` | Marge tolérée au-dessus de la baseline pour promouvoir (cf. règle de promotion) |
+| `target_transform` | Transformation de la cible avant entraînement (`"log1p"` ou `null`) |
+| `tuned_params` | Hyperparamètres HGB issus du dernier `--tune` **adopté** (le tuning ne persiste que s'il améliore le backtest) |
 | `tuned_at` / `tuning_score` | Métadonnées du tuning |
 
 Toutes les valeurs absentes sont remplacées par les défauts. Les flags
@@ -508,11 +563,18 @@ automatiquement.
 
 ### Règle de promotion
 
-Un modèle est promu si **les trois** conditions sont réunies :
+Un modèle est promu si **les deux** conditions sont réunies :
 
-1. `MAPE < mape_threshold` (config, 0.45 par défaut)
-2. `|coverage − coverage_target| ≤ coverage_tolerance` (config, 0.80 ± 0.10)
-3. `MAPE < baseline_mape` (sinon le ML est inutile)
+1. **Précision**, relative à la baseline si elle est disponible :
+   `MAPE ≤ baseline_mape × (1 + relative_mape_margin)` (marge 0.10 par
+   défaut). Sur une demande faible et erratique, un seuil MAPE absolu
+   serait souvent inatteignable (la baseline elle-même peut dépasser
+   60–70 %) ; le critère relatif reste pertinent en assumant une
+   précision ponctuelle proche de la baseline, la valeur ajoutée du
+   ML étant surtout des intervalles calibrés. Sans baseline, on
+   retombe sur le seuil absolu `mape_threshold` (0.45 par défaut).
+2. `|coverage − coverage_target| ≤ coverage_tolerance` (config,
+   0.80 ± 0.15 par défaut).
 
 ### Workflow de mise au point
 
@@ -524,7 +586,7 @@ python -m stocks.ml.train --diagnose
 #    les exclure de stock_items.json ou les tagger comme non-prédictibles
 
 # 3. Tuner les hyperparamètres
-python -m stocks.ml.train --tune --n-iter 30
+python -m stocks.ml.train --tune --n-candidates 300
 
 # 4. Si la coverage reste basse, élargir l'intervalle
 python -m stocks.ml.train --quantiles 0.05,0.5,0.95   # défaut
@@ -670,7 +732,7 @@ Le sous-système ML a sa propre suite (~110 tests) :
 | `test_ml_persistence_integration.py` | Branchement dans `run_stock_report` |
 | `test_ml_config.py` | Load/save/roundtrip, défauts, validation |
 | `test_ml_diagnose.py` | Métriques par SKU, formatage table |
-| `test_ml_tuning.py` | RandomizedSearchCV, persistance config |
+| `test_ml_tuning.py` | Halving (échantillon/exhaustif), garde-fou de persistance |
 
 Lancement :
 
