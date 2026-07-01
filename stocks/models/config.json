@@ -3,20 +3,20 @@
   "coverage_tolerance": 0.15,
   "mape_threshold": 0.45,
   "quantiles": [
-    0.05,
+    0.02,
     0.5,
-    0.95
+    0.98
   ],
   "relative_mape_margin": 0.1,
   "target_transform": "log1p",
-  "tuned_at": "2026-05-03T23:59:58+00:00",
+  "tuned_at": "2026-07-01T09:19:00+00:00",
   "tuned_params": {
-    "l2_regularization": 10.0,
-    "learning_rate": 0.05,
+    "l2_regularization": 0.0,
+    "learning_rate": 0.1,
     "max_depth": 2,
-    "max_iter": 125,
-    "max_leaf_nodes": 7,
-    "min_samples_leaf": 10
+    "max_iter": 1000,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 3
   },
-  "tuning_score": 1.1960164484396214
+  "tuning_score": 0.22389962207932596
 }
