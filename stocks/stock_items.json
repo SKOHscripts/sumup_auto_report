@@ -314,7 +314,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 19.0,
+      "stock_on_hand": 43.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": "",
@@ -421,6 +421,15 @@
           "counted_qty": 19.0,
           "previous_stock_on_hand": 14.0,
           "new_stock_on_hand": 19.0,
+          "source": "gdrive_excel"
+        },
+        {
+          "type": "purchase",
+          "date": "2026-07-02",
+          "buyer": "",
+          "qty_added": 24.0,
+          "previous_stock_on_hand": 19.0,
+          "new_stock_on_hand": 43.0,
           "source": "gdrive_excel"
         }
       ]
@@ -1165,7 +1174,7 @@
     "consumption_per_sale": 1,
     "supplier_lead_time_days": 4,
     "stock_state": {
-      "stock_on_hand": 5.0,
+      "stock_on_hand": 29.0,
       "stock_reserved": 0,
       "incoming_qty": 0,
       "incoming_eta": null,
@@ -1289,6 +1298,15 @@
           "consumed_qty": 4.0,
           "previous_stock_on_hand": 9.0,
           "new_stock_on_hand": 5.0
+        },
+        {
+          "type": "purchase",
+          "date": "2026-07-02",
+          "buyer": "",
+          "qty_added": 24.0,
+          "previous_stock_on_hand": 5.0,
+          "new_stock_on_hand": 29.0,
+          "source": "gdrive_excel"
         }
       ]
     }

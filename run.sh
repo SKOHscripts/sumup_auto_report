@@ -78,6 +78,7 @@ case "$MODULE" in
 
         # Mise à jour du modèle
         "$PYTHON" -m stocks.ml.train --tune
+        "$PYTHON" -m stocks.ml.train
 
         # Rapport hebdomadaire + recalage local (décompte des ventes)
         "$PYTHON" -m stocks.sumup_stocks --ml "$@"
