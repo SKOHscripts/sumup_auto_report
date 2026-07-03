@@ -294,8 +294,8 @@ def main():
         sys.exit(run_diagnose(args.diagnose_csv))
 
     if args.tune:
-        sys.exit(run_tune(n_candidates=args.n_candidates or 300, n_jobs=args.jobs,
-                          exhaustive=args.exhaustive))
+        run_tune(n_candidates=args.n_candidates or 300, n_jobs=args.jobs,
+                 exhaustive=args.exhaustive)
     run_train(cfg, force=args.force, do_promote=not args.no_promote)
 
 
