@@ -767,7 +767,7 @@ def render_dashboard(stats, output_path):
         style="italic", alpha=0.8
         )
 
-    add_card_background(fig=fig, rect=[0.02, 0.04, 0.46, 0.34], title="Évolution des inscriptions")
+    add_card_background(fig=fig, rect=[0.02, 0.04, 0.46, 0.34], title="Adhésions cumulées")
     ax4 = fig.add_axes([0.05, 0.06, 0.40, 0.27], zorder=2)
     ax4.set_facecolor(COLORS["card"])
 
@@ -781,16 +781,16 @@ def render_dashboard(stats, output_path):
         mois_counts = Counter(mois_inscriptions)
         mois_tries = sorted(mois_counts.keys())
         values = [mois_counts[m] for m in mois_tries]
+        cumulatif = list(np.cumsum(values))
 
-        ax4.fill_between(range(len(mois_tries)), values, alpha=0.2, color=COLORS["accent"])
+        ax4.fill_between(range(len(mois_tries)), cumulatif, alpha=0.2, color=COLORS["accent"])
         ax4.plot(
-            range(len(mois_tries)), values, marker="o", color=COLORS["accent"],
+            range(len(mois_tries)), cumulatif, marker="o", color=COLORS["accent"],
             linewidth=3, markersize=7, markerfacecolor=COLORS["card"], markeredgewidth=2
             )
 
-        max_idx = values.index(max(values))
         ax4.annotate(
-            f"{max(values)}", (max_idx, max(values)),
+            f"{cumulatif[-1]}", (len(mois_tries) - 1, cumulatif[-1]),
             textcoords="offset points", xytext=(0, 12),
             ha="center", fontsize=10, fontweight="bold", color=COLORS["primary"],
             bbox={"boxstyle": "round,pad=0.3", "facecolor": COLORS["accent"], "alpha": 0.2}
@@ -802,10 +802,10 @@ def render_dashboard(stats, output_path):
             rotation=45, ha="right", fontsize=8
             )
         ax4.set_xlabel("Mois", color=COLORS["text_light"], fontsize=9)
-        ax4.set_ylabel("Inscriptions", color=COLORS["text_light"], fontsize=9)
+        ax4.set_ylabel("Adhésions cumulées", color=COLORS["text_light"], fontsize=9)
         ax4.tick_params(colors=COLORS["text_light"], labelsize=8)
         ax4.set_xlim(-0.5, len(mois_tries) - 0.5)
-        ax4.set_ylim(0, max(values) * 1.25 if max(values) > 0 else 1)
+        ax4.set_ylim(0, cumulatif[-1] * 1.15 if cumulatif[-1] > 0 else 1)
     else:
         ax4.text(0.5, 0.5, "Aucune donnée d'inscription", transform=ax4.transAxes,
                  ha="center", va="center", fontsize=11, color=COLORS["text_light"])
