@@ -685,7 +685,7 @@ def compute_dynamic_thresholds(item: dict, avg_rolling4: float, sales_7d: float)
 
     safety_stock = max(weekly_demand, sales_7d)
     # reorder_point = (weekly_demand * lead_time_weeks) + safety_stock
-    reorder_point = (weekly_demand * lead_time_weeks)
+    reorder_point = weekly_demand * lead_time_weeks
     target_stock = weekly_demand * max(2, lead_time_weeks + 1)
 
     target_stock = max(target_stock, reorder_point)
