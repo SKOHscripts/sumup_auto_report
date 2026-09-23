@@ -546,7 +546,6 @@ def compute_stats(lignes):
     return {
         "total_membres": total_membres,
         "cat_counts": cat_counts,
-        "news_counts": news_counts,
         "ages_precis": ages_precis,
         "dates_inscription": dates_inscription,
         "codes_postaux": codes_postaux,
@@ -633,8 +632,8 @@ def render_dashboard(stats, output_path):
     create_kpi_card(ax_kpi6, stats["n_villes_uniques"], "Villes",
                     COLORS["accent"], sample=f'n={stats["n_villes"]}')
 
-    add_card_background(fig=fig, rect=[0.02, 0.42, 0.31, 0.34], title="Répartition par catégorie")
-    ax1 = fig.add_axes([0.04, 0.44, 0.27, 0.28], zorder=2)
+    add_card_background(fig=fig, rect=[0.02, 0.42, 0.47, 0.34], title="Répartition par catégorie")
+    ax1 = fig.add_axes([0.04, 0.44, 0.30, 0.28], zorder=2)
     ax1.set_facecolor(COLORS["card"])
 
     palette = [
@@ -693,8 +692,8 @@ def render_dashboard(stats, output_path):
         style="italic", alpha=0.8
         )
 
-    add_card_background(fig=fig, rect=[0.35, 0.42, 0.30, 0.34], title="Distribution des âges")
-    ax2 = fig.add_axes([0.38, 0.44, 0.24, 0.27], zorder=2)
+    add_card_background(fig=fig, rect=[0.51, 0.42, 0.47, 0.34], title="Distribution des âges")
+    ax2 = fig.add_axes([0.54, 0.44, 0.42, 0.27], zorder=2)
     ax2.set_facecolor(COLORS["card"])
 
     if stats["ages_precis"]:
@@ -724,46 +723,6 @@ def render_dashboard(stats, output_path):
     ax2.text(
         0.98, 0.02, f'n={stats["n_ages"]}', transform=ax2.transAxes,
         ha="right", va="top", fontsize=7, color=COLORS["text_muted"],
-        style="italic", alpha=0.8
-        )
-
-    add_card_background(fig=fig, rect=[0.67, 0.42, 0.31, 0.34], title="Inscription newsletter")
-    ax3 = fig.add_axes([0.70, 0.44, 0.25, 0.27], zorder=2)
-    ax3.set_facecolor(COLORS["card"])
-
-    news_labels = list(stats["news_counts"].keys())
-    news_values = list(stats["news_counts"].values())
-    news_colors = [
-        COLORS["success"] if "Oui" in label
-        else COLORS["accent3"] if "Non" in label
-        else COLORS["secondary"]
-        for label in news_labels
-        ]
-
-    if news_values:
-        bars = ax3.barh(
-            news_labels, news_values, color=news_colors, height=0.55,
-            edgecolor=COLORS["card"], linewidth=2
-            )
-
-        for rect_bar, val in zip(bars, news_values):
-            ax3.text(
-                rect_bar.get_width() + 1, rect_bar.get_y() + rect_bar.get_height() / 2,
-                f"{val}", va="center", fontsize=11, fontweight="bold", color=COLORS["primary"],
-            )
-
-        ax3.set_xlabel("Membres", color=COLORS["text_light"], fontsize=9)
-        ax3.tick_params(colors=COLORS["text_light"], labelsize=9)
-        ax3.set_xlim(0, max(news_values) * 1.25 if max(news_values) > 0 else 1)
-    else:
-        ax3.text(0.5, 0.5, "Aucune donnée newsletter", transform=ax3.transAxes,
-                 ha="center", va="center", fontsize=11, color=COLORS["text_light"])
-        ax3.set_xticks([])
-        ax3.set_yticks([])
-
-    ax3.text(
-        0.98, 0.02, f'n={stats["n_newsletter"]}', transform=ax3.transAxes,
-        ha="right", va="bottom", fontsize=7, color=COLORS["text_muted"],
         style="italic", alpha=0.8
         )
 
@@ -908,7 +867,7 @@ def render_dashboard(stats, output_path):
     ax_sep.set_ylim(0, 1)
     ax_sep.axis("off")
 
-    for ax in [ax1, ax2, ax3, ax4, ax_villes, ax_cp]:
+    for ax in [ax1, ax2, ax4, ax_villes, ax_cp]:
         for spine in ax.spines.values():
             spine.set_visible(False)
 
