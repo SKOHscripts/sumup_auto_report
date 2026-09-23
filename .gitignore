@@ -7,3 +7,8 @@ __pycache__/
 *.png
 !assets/*.png
 .last_sumup_adhesions
+
+# Sorties du dashboard Paheko (données membres)
+membres_anonymises.csv
+paheko_membres_snapshot.json
+paheko_categories_snapshot.json
