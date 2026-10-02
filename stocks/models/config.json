@@ -9,14 +9,14 @@
   ],
   "relative_mape_margin": 0.1,
   "target_transform": "log1p",
-  "tuned_at": "2026-07-24T20:01:25+00:00",
+  "tuned_at": "2026-09-25T20:01:22+00:00",
   "tuned_params": {
-    "l2_regularization": 0.0,
-    "learning_rate": 0.08,
-    "max_depth": 2,
+    "l2_regularization": 0.5,
+    "learning_rate": 0.05,
+    "max_depth": 5,
     "max_iter": 1000,
-    "max_leaf_nodes": 63,
-    "min_samples_leaf": 3
+    "max_leaf_nodes": 31,
+    "min_samples_leaf": 20
   },
-  "tuning_score": 0.23228486891138012
+  "tuning_score": 0.25321403517169666
 }
